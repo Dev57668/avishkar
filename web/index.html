@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Avishkar</title>
+<style>
+:root{--bg:#f7f8fa;--fg:#14181f;--mut:#566074;--card:#fff;--bd:#d5dae3;--acc:#1f4fd8;--bad:#a4151e;--warn:#8a5a00;--ok:#14663a}
+@media (prefers-color-scheme:dark){:root{--bg:#0f1218;--fg:#e8ecf3;--mut:#9aa6bb;--card:#181d27;--bd:#2c3446;--acc:#7da2ff;--bad:#ff8a8f;--warn:#f0c060;--ok:#6fd49a}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 system-ui,sans-serif}
+header{padding:16px 24px;border-bottom:1px solid var(--bd);display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+h1{font-size:20px;margin:0}h2{font-size:16px;margin:0 0 8px}
+main{max-width:1100px;margin:0 auto;padding:16px 24px;display:grid;gap:16px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:8px;padding:16px}
+.mut{color:var(--mut)}
+button,input,select{font:inherit;color:inherit;background:var(--card);border:1px solid var(--bd);border-radius:6px;padding:6px 10px}
+button{cursor:pointer}button.p{background:var(--acc);color:#fff;border-color:var(--acc)}
+:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+table{border-collapse:collapse;width:100%}th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--bd);vertical-align:top}
+.tag{font-weight:600;padding:1px 6px;border:1px solid currentColor;border-radius:4px;font-size:13px}
+.critical,.high,.block,.would_block,.not_evaluated,.incomplete{color:var(--bad)}.medium,.warn{color:var(--warn)}.low,.pass,.complete{color:var(--ok)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+.stat b{display:block;font-size:26px}
+code{font-family:ui-monospace,monospace;font-size:13px;word-break:break-all}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.sr{position:absolute;left:-9999px}
+@media (max-width:600px){main{padding:12px}th:nth-child(n+4),td:nth-child(n+4){display:none}}
+</style>
+</head>
+<body>
+<header>
+  <h1>Avishkar <span class="mut" style="font-weight:400">AI-generated code security debt</span></h1>
+  <form id="keyform" class="row" aria-label="Sign in">
+    <label for="em">Email</label><input id="em" type="email" autocomplete="username" required size="22">
+    <label for="pw">Password</label><input id="pw" type="password" autocomplete="current-password" required size="16">
+    <button class="p">Sign in</button>
+  </form>
+  <span id="who" class="mut"></span>
+</header>
+<main>
+  <div id="status" role="status" aria-live="polite" class="mut"></div>
+  <section class="card" aria-labelledby="h-up">
+    <h2 id="h-up">Scan a repository snapshot</h2>
+    <form id="upform" class="row">
+      <label for="repo">Repository</label><input id="repo" required pattern="[\w.\-/]{1,100}" placeholder="org/name">
+      <label for="file">Zip archive</label><input id="file" type="file" accept=".zip" required>
+      <button class="p">Analyze</button>
+    </form>
+    <p class="mut" style="margin:8px 0 0">The index is a prioritization signal from uncalibrated provisional weights — not a breach probability or proof of safety.</p>
+  </section>
+  <section class="card" aria-labelledby="h-repos"><h2 id="h-repos">Repositories</h2><div id="repos" class="mut">Sign in to continue.</div></section>
+  <section class="card" id="detail" hidden aria-labelledby="h-d"></section>
+</main>
+<script>
+const $=s=>document.querySelector(s);
+let KEY=null,CUR=null,CFG={};
+try{KEY=sessionStorage.getItem('tk')}catch{}
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+async function api(path,opt={}){
+  const r=await fetch(path,{...opt,headers:{'Authorization':'Bearer '+KEY,...(opt.headers||{})}});
+  const j=await r.json().catch(()=>({}));
+  if(!r.ok)throw new Error((j.error&&j.error.message)||r.statusText);
+  return j;
+}
+const say=m=>$('#status').textContent=m;
+const tag=(v)=>`<span class="tag ${esc(v)}">${esc(String(v).replace(/_/g,' '))}</span>`;
+async function loadRepos(){
+  try{
+    const {items}=await api('/v1/repositories');
+    $('#repos').innerHTML=items.length?`<table><caption class="sr">Repositories</caption><thead><tr><th>Name</th><th>Runs</th><th>Index (0–100)</th><th>Raw debt units</th><th></th></tr></thead><tbody>`+
+      items.map(r=>`<tr><td>${esc(r.name)}</td><td>${r.runs}</td><td>${r.latestIndex??'n/a'}</td><td>${r.latestRawUnits??'n/a'}</td><td><button data-id="${esc(r.id)}" data-n="${esc(r.name)}">Open</button></td></tr>`).join('')+`</tbody></table>`:'No repositories yet. Upload a zip above.';
+    $('#repos').classList.remove('mut');
+  }catch(e){say(e.message)}
+}
+$('#repos').addEventListener('click',e=>{const b=e.target.closest('button[data-id]');if(b)openRepo(b.dataset.id,b.dataset.n)});
+async function openRepo(id,name,fstate='',fsev=''){
+  CUR={id,name};
+  const [runs,fnd]=await Promise.all([api(`/v1/repositories/${id}/analyses`),
+    api(`/v1/repositories/${id}/findings?limit=200${fstate?'&state='+fstate:''}${fsev?'&severity='+fsev:''}`)]);
+  const last=runs.items[0];
+  const sd=last?last.securityDebt:null;
+  const d=$('#detail');d.hidden=false;
+  d.innerHTML=`<h2 id="h-d">${esc(name)}</h2>
+  ${last?`<div class="stats">
+    <div class="stat card"><span class="mut">Analysis</span><b>${tag(last.status)}</b><span class="mut">${last.completeness.completedDetectors}/${last.completeness.requiredDetectors} required detectors</span></div>
+    <div class="stat card"><span class="mut">Normalized index</span><b>${sd.normalizedIndex??'Not calculated'}</b><span class="mut">${esc(sd.scoreVersion)}, uncalibrated, K=${sd.k}</span></div>
+    <div class="stat card"><span class="mut">Raw debt units</span><b>${sd.rawUnits??'—'}</b><span class="mut">gross incl. accepted risk: ${sd.grossUnits??'—'}</span></div>
+    <div class="stat card"><span class="mut">Policy decision</span><b>${tag(last.decision.outcome)}</b><span class="mut">${esc(last.decision.mode)} mode · ${last.decision.reasons.map(esc).join(', ')||'no predicates matched'}</span></div>
+  </div>`:''}
+  ${last&&last.status!=='complete'?`<p role="alert" class="incomplete"><b>Incomplete analysis.</b> Missing coverage: ${last.completeness.missing.map(esc).join(', ')}. This is not a pass.</p>`:''}
+  <h2 style="margin-top:16px">Findings</h2>
+  <div class="row"><label for="fs">State</label><select id="fs"><option value="">all</option>${['open','fixed','accepted_risk','false_positive','duplicate','not_applicable'].map(s=>`<option ${s===fstate?'selected':''}>${s}</option>`).join('')}</select>
+  <label for="fv">Severity</label><select id="fv"><option value="">all</option>${['critical','high','medium','low','informational'].map(s=>`<option ${s===fsev?'selected':''}>${s}</option>`).join('')}</select></div>
+  <table><caption class="sr">Findings</caption><thead><tr><th>Severity</th><th>Finding</th><th>Location</th><th>Confidence</th><th>State</th><th>Action</th></tr></thead><tbody>${
+   fnd.items.map(f=>`<tr><td>${tag(f.severity)}</td><td><b>${esc(f.title)}</b><br><span class="mut">${esc(f.rule_id)} · ${esc(f.category)}</span><br><code>${esc(f.evidence)}</code><br><span class="mut">Fix: ${esc(f.remediation)} (effort: ${esc(f.effort)})</span></td><td><code>${esc(f.location)}</code></td><td>${esc(f.confidence)}</td><td>${esc(f.state)}</td>
+   <td><select aria-label="Disposition for ${esc(f.title)}" data-f="${esc(f.id)}" data-v="${f.version}"><option value="">Set…</option><option value="false_positive">False positive</option><option value="not_applicable">Not applicable</option><option value="accepted_risk">Accept risk (30 d)</option><option value="open">Reopen</option></select>${CFG.ai&&CFG.ai.enabled?`<br><button data-x="${esc(f.id)}">Explain (AI)</button>`:''}</td></tr>${f.explanation&&f.explanation.content?`<tr><td></td><td colspan="5"><b>AI explanation (advisory, does not affect the score):</b> ${esc(f.explanation.content.summary)} <i>${esc(f.explanation.content.why_it_matters)}</i><ol>${f.explanation.content.remediation_steps.map(x=>'<li>'+esc(x)+'</li>').join('')}</ol></td></tr>`:''}`).join('')||'<tr><td colspan="6">No findings.</td></tr>'}</tbody></table>
+  <h2 style="margin-top:16px">Run history</h2>
+  <table><thead><tr><th>When</th><th>Status</th><th>Index</th><th>Raw</th><th>Decision</th></tr></thead><tbody>${runs.items.map(r=>`<tr><td>${new Date(r.startedAt*1000).toLocaleString()}</td><td>${tag(r.status)}</td><td>${r.securityDebt.normalizedIndex??'n/a'}</td><td>${r.securityDebt.rawUnits??'n/a'}</td><td>${tag(r.decision.outcome)}</td></tr>`).join('')}</tbody></table>`;
+  $('#fs').onchange=()=>openRepo(id,name,$('#fs').value,$('#fv').value);
+  $('#fv').onchange=()=>openRepo(id,name,$('#fs').value,$('#fv').value);
+  d.querySelectorAll('button[data-x]').forEach(b=>b.onclick=async()=>{
+    b.disabled=true;say('Requesting explanation…');
+    try{const r=await api(`/v1/findings/${b.dataset.x}/explanation`,{method:'POST'});say(r.status==='ok'?'Explanation added.':'AI explanation unavailable ('+r.status+'). Scan results are unaffected.')}
+    catch(e){say('Failed: '+e.message)}
+    openRepo(id,name,$('#fs').value,$('#fv').value);
+  });
+  d.querySelectorAll('select[data-f]').forEach(s=>s.onchange=async()=>{
+    if(!s.value)return;
+    const rationale=prompt('Rationale (required, stored in the audit trail):');
+    if(!rationale||rationale.length<5){s.value='';return}
+    const body={type:s.value,rationale,expected_version:+s.dataset.v};
+    if(s.value==='accepted_risk')body.expires_at=Date.now()/1000+30*86400;
+    try{await api(`/v1/findings/${s.dataset.f}/dispositions`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});say('Disposition saved. Rescan to refresh the score.')}
+    catch(e){say('Failed: '+e.message)}
+    openRepo(id,name,$('#fs').value,$('#fv').value);
+  });
+  d.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion:reduce)').matches?'auto':'smooth'});
+}
+async function start(){
+  try{const me=await api('/v1/auth/me');$('#who').textContent=`${me.email||me.id} (${me.role})`;CFG=await api('/v1/config');
+    if(CFG.sandbox&&!CFG.sandbox.isolationBoundary)say('Sandbox mode "'+CFG.sandbox.mode+'" is not an isolation boundary: scan only code you trust.');
+    loadRepos()}catch(e){KEY=null;say('Sign in required.')}
+}
+$('#keyform').onsubmit=async e=>{e.preventDefault();
+  try{const r=await fetch('/v1/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:$('#em').value,password:$('#pw').value})});
+    const j=await r.json();if(!r.ok)throw new Error(j.error.message);
+    KEY=j.token;try{sessionStorage.setItem('tk',KEY)}catch{};$('#pw').value='';say('Signed in.');start()}
+  catch(e){say('Login failed: '+e.message)}};
+$('#upform').onsubmit=async e=>{
+  e.preventDefault();
+  if(!KEY){say('Enter your API key first.');return}
+  const fd=new FormData();fd.append('repository',$('#repo').value);fd.append('archive',$('#file').files[0]);
+  say('Queued…');
+  try{const q=await api('/v1/analyses',{method:'POST',body:fd});
+    let r;for(let i=0;i<120;i++){r=await api(q.statusUrl);if(!['queued','running'].includes(r.status))break;say('Analysis '+r.status+'…');await new Promise(x=>setTimeout(x,1000))}
+    say(`Analysis ${r.status}: decision ${r.decision.outcome.replace(/_/g,' ')}.`);
+    await loadRepos();openRepo(q.repositoryId,$('#repo').value)}
+  catch(e){say('Failed: '+e.message)}
+};
+if(KEY)start();
+</script>
+</body>
+</html>

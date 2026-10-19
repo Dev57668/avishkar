@@ -1,0 +1,8 @@
+{
+  "version": "policy-1",
+  "mode": "report_only",
+  "predicates": [
+    {"id": "confirmed_secret", "description": "High-confidence secret exposure", "category": "secret", "min_confidence": "high", "min_severity": "critical", "action": "block"},
+    {"id": "new_high_confidence_finding", "description": "New high-confidence high/critical finding", "min_confidence": "high", "min_severity": "high", "new_only": true, "action": "warn"}
+  ]
+}

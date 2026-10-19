@@ -1,0 +1,13 @@
+# Isolated scan worker. Build: docker build -f infra/Dockerfile.worker -t avishkar-worker:latest .
+# Pin the base image by digest in production (spec App. N: never "latest").
+FROM python:3.12-slim
+RUN useradd -u 65534 -M -s /usr/sbin/nologin scanner 2>/dev/null || true
+WORKDIR /app
+COPY avishkar/__init__.py avishkar/
+COPY avishkar/domain avishkar/domain
+COPY avishkar/workers avishkar/workers
+COPY config config
+ENV PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=/app
+# No pip install: the worker uses only the standard library. No network at runtime (--network none).
+USER 65534:65534
+ENTRYPOINT ["python", "-I", "-m", "avishkar.workers.sandbox_child"]

@@ -1,0 +1,1 @@
+{"version":"0.0.1","configurations":[{"name":"avishkar-v2","runtimeExecutable":"python","runtimeArgs":["-m","avishkar","serve","--port","8011","--db","data/e2e.db"],"port":8011}]}
