@@ -88,10 +88,12 @@ Multi-statement writes use `Database.transaction()`; `SELECT`s end their transac
   real Claude API and a real GitHub App. See `docs/MERGE_PLAN.md` for how this package relates to `backend/`.
 
 ## Not verified here / limitations (be honest before relying on it)
-* **Docker sandbox, PostgreSQL, Semgrep and Gitleaks were not executed locally** (no Docker/Postgres; Semgrep's native
-  engine does not run on this Windows box; Gitleaks absent). They are covered by static/mocked tests here and by
-  CI jobs `postgres` and `docker-sandbox` that have **not been run yet** — treat them as unproven until that CI is green.
-  Dockerfile pins contain placeholders on purpose.
+* **Verified in CI on Linux (GitHub Actions, all three jobs green):** the full integration suite
+  on PostgreSQL 16; and in a real container (`--network none`, read-only, non-root, no capabilities, no host secrets,
+  OOM => incomplete) the Docker sandbox running Semgrep + Gitleaks under the `full` profile. Those runs found and fixed
+  three real bugs (`python -I` ignoring PYTHONPATH in the image, unwritable result dir for uid 65534, a `preexec_fn`
+  deadlock). Not verified locally on this Windows machine (no Docker/Postgres; Semgrep's engine does not run here).
+  The Dockerfile base image is not yet pinned by digest (TODO in the file).
 * The GitHub client was tested against a mocked GitHub API, not live GitHub.
 * The Anthropic provider was tested via a fake provider; no live API call was made.
 * Detectors are regex heuristics + a tiny advisory sample; score weights/K are uncalibrated (spec App. P).
