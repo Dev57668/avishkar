@@ -4,11 +4,12 @@ on: [push, pull_request]
 jobs:
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with: {python-version: "3.12"}
-      - run: pip install -r requirements.txt
+      - run: pip install -r requirements.txt -r backend/requirements.txt
       - run: python -m pytest -q
       # Self-scan; exit 3 (incomplete analysis) fails the job. Policy stays report-only.
       - run: python -m avishkar scan avishkar --sarif avishkar.sarif
@@ -21,6 +22,7 @@ jobs:
   # Runs the WHOLE integration suite on PostgreSQL (the unit suite alone only proves SQLite).
   postgres:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     services:
       postgres:
         image: postgres:16
@@ -35,20 +37,18 @@ jobs:
       - uses: actions/setup-python@v5
         with: {python-version: "3.12"}
       - run: pip install -r requirements.txt "psycopg[binary]>=3.1"
-      - run: python -m pytest tests/integration tests/unit/test_db_dialect.py -q
+      - run: python -m pytest tests/integration tests/unit/test_db_dialect.py -v -x -o faulthandler_timeout=90
 
   # Builds the worker image and runs the real Docker sandbox + Semgrep + Gitleaks end to end.
   docker-sandbox:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with: {python-version: "3.12"}
       - run: pip install -r requirements.txt
-      # Pins are placeholders in the Dockerfile on purpose: set real digest/checksum before relying on this job.
-      - run: |
-          docker build -f infra/Dockerfile.worker -t avishkar-worker:ci \
-            --build-arg GITLEAKS_SHA256="${{ vars.GITLEAKS_SHA256 }}" .
+      - run: docker build -f infra/Dockerfile.worker -t avishkar-worker:ci .
       - run: python -m pytest tests/integration/test_docker_live.py -q -rs
         env:
           AVISHKAR_WORKER_IMAGE: avishkar-worker:ci
