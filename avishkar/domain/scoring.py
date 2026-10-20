@@ -25,7 +25,10 @@ class ScoreConfig:
 
     @classmethod
     def load(cls, path: Path | None = None) -> "ScoreConfig":
-        d = json.loads((path or CONFIG_DIR / "score-v1.json").read_text())
+        """`AVISHKAR_SCORE_CONFIG` selects a profile (e.g. config/profiles/full.json) when no path is given."""
+        import os
+        env = os.environ.get("AVISHKAR_SCORE_CONFIG")
+        d = json.loads((path or (Path(env) if env else CONFIG_DIR / "score-v1.json")).read_text())
         if d["normalization_k"] <= 0:
             raise ValueError("K must be positive")
         return cls(d["version"], d["impact"], d["exposure"], d["confidence"],

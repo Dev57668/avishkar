@@ -8,3 +8,5 @@ PyJWT[crypto]>=2.8
 cryptography>=42
 anthropic>=0.39        # optional: AI explanations (AVISHKAR_AI_ENABLED=1)
 # psycopg[binary]>=3.1 # optional: PostgreSQL (DATABASE_URL=postgresql://...)
+# opentelemetry-sdk>=1.25                      # optional: traces (AVISHKAR_OTEL=1)
+# opentelemetry-exporter-otlp-proto-http>=1.25  # optional: OTLP export

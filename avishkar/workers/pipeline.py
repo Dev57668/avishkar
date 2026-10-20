@@ -147,11 +147,17 @@ def assemble(cfg: ScoreConfig, pol: policy_mod.Policy, collected: dict, baseline
     completeness = Completeness("complete" if not failed else "incomplete", tuple(cfg.required_detectors),
                                 tuple(completed), failed)
     seen: dict[str, FindingRecord] = {}
+    secret_sites: set[tuple] = set()  # two secret detectors flagging one line count once
     now = time.time()
-    for r in raw:
+    for r in sorted(raw, key=lambda r: (-r.confidence.rank, r.detector_id, r.rule_id, r.path, r.line)):
         fp = r.fp
         if fp in seen:
             continue
+        if r.category == "secret":
+            site = (r.path, r.line)
+            if site in secret_sites:
+                continue
+            secret_sites.add(site)
         prior = baseline.get(fp)
         state, is_new, days = State.OPEN, True, 0
         if prior:

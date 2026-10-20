@@ -18,6 +18,25 @@ class Store:
     def __init__(self, url: str = "data/avishkar_v2.db"):
         self.d = Database(url)
 
+    # ------------------------------------------------------------ shared counters & login throttle
+    # Kept in the database (not process memory) so every API replica sees the same lockouts and counters.
+    def incr_metric(self, name):
+        self.d.execute("INSERT INTO metric_counter(name,value) VALUES(?,1) "
+                       "ON CONFLICT(name) DO UPDATE SET value=metric_counter.value+1", (name,))
+
+    def metrics(self):
+        return {r["name"]: r["value"] for r in self.d.query("SELECT name,value FROM metric_counter")}
+
+    def login_failures(self, key, since):
+        return self.d.query("SELECT COUNT(*) AS n FROM login_failure WHERE key=? AND ts>?", (key, since))[0]["n"]
+
+    def add_login_failure(self, key):
+        self.d.execute("INSERT INTO login_failure(key,ts) VALUES(?,?)", (key, time.time()))
+        self.d.execute("DELETE FROM login_failure WHERE ts<?", (time.time() - 86400,))
+
+    def clear_login_failures(self, key):
+        self.d.execute("DELETE FROM login_failure WHERE key=?", (key,))
+
     # ------------------------------------------------------------ audit
     def audit(self, actor, action, otype, oid, outcome="ok", corr=None, detail=None, org=None):
         self.d.execute("INSERT INTO audit_event(organization_id,actor,action,object_type,object_id,ts,outcome,"
@@ -119,13 +138,13 @@ class Store:
         """Finalize a run row and upsert the finding ledger (one transaction)."""
         now = time.time()
         d = self.d
-        with d.lock:
+        with d.transaction():
             d.execute("UPDATE analysis_run SET policy_version=?,status=?,completed_at=?,completeness=?,score=?,"
                       "decision=?,stages=?,notes=? WHERE id=?",
                       (result["decision"]["policyVersion"], result["status"], result["completedAt"],
                        json.dumps(result["completeness"]), json.dumps(result["securityDebt"]),
                        json.dumps(result["decision"]), json.dumps(result["stages"]),
-                       json.dumps(result["notes"]), run_id), commit=False)
+                       json.dumps(result["notes"]), run_id))
             for f in result["findings"]:
                 r = f.raw
                 row = d.query("SELECT id,state FROM finding WHERE repository_id=? AND fingerprint=?",
@@ -133,7 +152,7 @@ class Store:
                 if row:
                     fid = row[0]["id"]
                     newstate = "open" if row[0]["state"] == "fixed" else row[0]["state"]
-                    d.execute("UPDATE finding SET last_seen=?, state=? WHERE id=?", (now, newstate, fid), commit=False)
+                    d.execute("UPDATE finding SET last_seen=?, state=? WHERE id=?", (now, newstate, fid))
                 else:
                     fid = _id("fnd")
                     d.execute(
@@ -142,14 +161,13 @@ class Store:
                         " VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
                         (fid, repo_id, f.fingerprint, r.detector_id, r.rule_id, r.category, r.severity.value,
                          r.confidence.value, r.exposure.value, r.title, r.remediation, r.effort,
-                         "open", now, now), commit=False)
+                         "open", now, now))
                 d.execute("INSERT INTO finding_instance(finding_id,analysis_run_id,path,line_start,evidence,state)"
-                          " VALUES(?,?,?,?,?,?)", (fid, run_id, r.path, r.line, r.evidence, f.state.value), commit=False)
+                          " VALUES(?,?,?,?,?,?)", (fid, run_id, r.path, r.line, r.evidence, f.state.value))
             if result["status"] == "complete":  # only a complete scan may mark findings fixed
                 for fp in result["fixed"]:
                     d.execute("UPDATE finding SET state='fixed', version=version+1 WHERE repository_id=? AND fingerprint=?",
-                              (repo_id, fp), commit=False)
-            d.commit()
+                              (repo_id, fp))
 
     def run(self, rid):
         rows = self.d.query("SELECT * FROM analysis_run WHERE id=?", (rid,))
@@ -184,6 +202,13 @@ class Store:
         nxt = rows[limit - 1]["id"] if len(rows) > limit else None
         return rows[:limit], nxt
 
+    def run_findings(self, run_id):
+        """Findings observed in one run, joined with their ledger state."""
+        return self.d.query(
+            "SELECT f.id,f.fingerprint,f.rule_id,f.title,f.severity,f.confidence,f.category,f.remediation,f.state,"
+            "i.path,i.line_start,i.evidence FROM finding_instance i JOIN finding f ON f.id=i.finding_id "
+            "WHERE i.analysis_run_id=? ORDER BY f.id", (run_id,))
+
     def finding(self, fid, org):
         r = self.d.query("SELECT f.* FROM finding f JOIN repository r ON r.id=f.repository_id "
                          "WHERE f.id=? AND r.organization_id=?", (fid, org))
@@ -196,17 +221,16 @@ class Store:
         return f
 
     def disposition(self, fid, org, dtype, rationale, actor, expires_at, expected_version):
-        with self.d.lock:
+        with self.d.transaction():
             f = self.finding(fid, org)
             if not f:
                 return "not_found", None
             if f["version"] != expected_version:
                 return "conflict", f
             self.d.execute("INSERT INTO disposition VALUES(?,?,?,?,?,?,?)",
-                           (_id("dsp"), fid, dtype, rationale, actor, expires_at, time.time()), commit=False)
-            self.d.execute("UPDATE finding SET state=?, version=version+1 WHERE id=?", (dtype, fid), commit=False)
-            self.d.commit()
-            return "ok", self.finding(fid, org)
+                           (_id("dsp"), fid, dtype, rationale, actor, expires_at, time.time()))
+            self.d.execute("UPDATE finding SET state=?, version=version+1 WHERE id=?", (dtype, fid))
+        return "ok", self.finding(fid, org)
 
     def expire_exceptions(self, org):
         """Expired accepted-risk reverts to open so normal policy evaluation resumes."""
@@ -244,9 +268,16 @@ class Store:
                 if ex:
                     return ex[0], False
             jid, now = _id("job"), time.time()
-            self.d.execute("INSERT INTO job VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
-                           (jid, org, repo_id, run_id, kind, json.dumps(payload), "queued", 0, max_attempts,
-                            now, None, None, None, idem_key, now, now))
+            try:
+                self.d.execute("INSERT INTO job VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                               (jid, org, repo_id, run_id, kind, json.dumps(payload), "queued", 0, max_attempts,
+                                now, None, None, None, idem_key, now, now))
+            except Exception:
+                # another replica inserted the same idempotency key between our check and insert
+                ex = self.job_by_idem(org, idem_key) if idem_key else None
+                if ex:
+                    return ex, False
+                raise
             return self.job(jid), True
 
     def job_by_idem(self, org, idem_key):

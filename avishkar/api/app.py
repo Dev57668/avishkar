@@ -19,6 +19,8 @@ from pydantic import BaseModel, ConfigDict, Field
 from ..adapters import github as gh
 from ..adapters.ai import ExplanationService
 from ..adapters.store import Store
+from .. import telemetry
+from ..domain import reporting
 from ..domain.policy import Policy
 from ..domain.scoring import ScoreConfig
 from ..workers import runner as runner_mod
@@ -90,6 +92,8 @@ def create_app(db_url: str | None = None, *, secret_key: str | None = None, scor
                policy: Policy | None = None, sandbox: Sandbox | None = None, github: gh.GitHubClient | None = None,
                ai: ExplanationService | None = None, start_worker: bool | None = None,
                webhook_secret: str | None = None, max_active_jobs: int | None = None) -> FastAPI:
+    telemetry.configure_logging()
+    telemetry.configure_tracing()
     cfg = score_cfg or ScoreConfig.load()
     pol = policy or Policy.load()
     store = Store(db_url or os.environ.get("DATABASE_URL", "data/avishkar_v2.db"))
@@ -99,16 +103,14 @@ def create_app(db_url: str | None = None, *, secret_key: str | None = None, scor
     ai = ai or ExplanationService()
     wh_secret = webhook_secret if webhook_secret is not None else os.environ.get("GITHUB_WEBHOOK_SECRET", "")
     quota = max_active_jobs or int(os.environ.get("AVISHKAR_MAX_ACTIVE_JOBS", "20"))
-    throttle = LoginThrottle()
+    throttle = LoginThrottle(store)
     dummy_hash = hash_password(secrets.token_urlsafe(12))
     runner = JobRunner(store, cfg, pol, sbx, github)
     if start_worker is None:
         start_worker = os.environ.get("AVISHKAR_EMBEDDED_WORKER", "1") != "0"
     worker = WorkerThread(runner)
-    metrics: dict[str, int] = {}
-
     def count(k):
-        metrics[k] = metrics.get(k, 0) + 1
+        store.incr_metric(k)
 
     @asynccontextmanager
     async def lifespan(app):
@@ -122,7 +124,6 @@ def create_app(db_url: str | None = None, *, secret_key: str | None = None, scor
                   description="AI Generated Code Security Debt Scorer. The score is a prioritization "
                               "signal, not proof of safety.")
     app.state.store, app.state.runner, app.state.tokens = store, runner, tokens
-    app.state.metrics = metrics
 
     @app.middleware("http")
     async def correlation(request: Request, call_next):
@@ -248,7 +249,7 @@ def create_app(db_url: str | None = None, *, secret_key: str | None = None, scor
 
     @app.get("/v1/metrics")
     def get_metrics(p: Principal = Depends(admin)):
-        return {"counters": dict(metrics)}
+        return {"counters": store.metrics()}
 
     # ------------------------------------------------------------ repositories & analyses
     def _run_out(r: dict, repo_id: str):
@@ -328,6 +329,14 @@ def create_app(db_url: str | None = None, *, secret_key: str | None = None, scor
         if not r or not store.repo(r["repository_id"], p.org_id):
             raise ApiError(404, "not_found", "Not found")
         return r["score"] or {"status": "pending"}
+
+    @app.get("/v1/analyses/{run_id}/sarif")
+    def sarif(run_id: str, p: Principal = Depends(viewer)):
+        r = store.run(run_id)
+        if not r or not store.repo(r["repository_id"], p.org_id):
+            raise ApiError(404, "not_found", "Not found")
+        return JSONResponse(reporting.to_sarif(r, store.run_findings(run_id)),
+                            media_type="application/sarif+json")
 
     @app.get("/v1/repositories/{repo_id}/findings")
     def findings(repo_id: str, state: str | None = None, severity: str | None = None,

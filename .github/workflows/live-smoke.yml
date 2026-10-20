@@ -1,0 +1,20 @@
+name: live-smoke
+# Manual, opt-in. Exercises the paths CI cannot: real Claude API and real GitHub App credentials.
+# Configure repository secrets first; the job skips cleanly for anything not configured.
+on: workflow_dispatch
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.12"}
+      - run: pip install -r requirements.txt
+      - run: python scripts/smoke_live.py
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GITHUB_APP_ID: ${{ secrets.GITHUB_APP_ID_SMOKE }}
+          GITHUB_APP_PRIVATE_KEY: ${{ secrets.GITHUB_APP_PRIVATE_KEY_SMOKE }}
+          GITHUB_SMOKE_INSTALLATION_ID: ${{ secrets.GITHUB_SMOKE_INSTALLATION_ID }}
+          GITHUB_SMOKE_REPO: ${{ vars.GITHUB_SMOKE_REPO }}

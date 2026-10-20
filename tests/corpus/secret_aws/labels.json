@@ -1,0 +1,11 @@
+{
+ "expected": [
+  {
+   "rule": "SEC-AWS-KEY",
+   "path": "c.py"
+  }
+ ],
+ "adjudicated": false,
+ "reviewers": 0,
+ "note": "synthetic label authored by the implementer, not adjudicated"
+}

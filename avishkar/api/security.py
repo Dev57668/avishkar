@@ -74,19 +74,16 @@ class TokenService:
 
 
 class LoginThrottle:
-    """Lock an email out after repeated failures (in-memory; use a shared store with multiple API replicas)."""
+    """Lock an email out after repeated failures. State lives in the store, so it holds across replicas/restarts."""
 
-    def __init__(self, max_fail=5, window=900):
-        self.max_fail, self.window, self.fails = max_fail, window, {}
+    def __init__(self, store, max_fail=5, window=900):
+        self.store, self.max_fail, self.window = store, max_fail, window
 
     def blocked(self, key: str) -> bool:
-        now = time.time()
-        recent = [t for t in self.fails.get(key, []) if now - t < self.window]
-        self.fails[key] = recent
-        return len(recent) >= self.max_fail
+        return self.store.login_failures(key, time.time() - self.window) >= self.max_fail
 
     def fail(self, key: str):
-        self.fails.setdefault(key, []).append(time.time())
+        self.store.add_login_failure(key)
 
     def ok(self, key: str):
-        self.fails.pop(key, None)
+        self.store.clear_login_failures(key)

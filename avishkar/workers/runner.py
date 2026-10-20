@@ -13,6 +13,8 @@ from ..adapters import github as gh
 from ..adapters.store import Store
 from ..domain.policy import Policy
 from ..domain.scoring import ScoreConfig
+from .. import telemetry
+from ..domain import reporting
 from . import pipeline
 from .sandbox import Sandbox
 
@@ -34,12 +36,14 @@ class JobRunner:
             return False
         try:
             payload = json.loads(job["payload"])
-            if job["kind"] == "archive":
-                self._archive(job, payload)
-            elif job["kind"] == "github":
-                self._github(job, payload)
-            else:
-                raise ValueError(f"unknown job kind {job['kind']}")
+            with telemetry.span("job", job_id=job["id"], run_id=job["run_id"], kind=job["kind"], org_id=job["organization_id"],
+                                attempt=job["attempts"]):
+                if job["kind"] == "archive":
+                    self._archive(job, payload)
+                elif job["kind"] == "github":
+                    self._github(job, payload)
+                else:
+                    raise ValueError(f"unknown job kind {job['kind']}")
             self.store.complete_job(job["id"])
         except Exception as e:  # infrastructure failure (not a scan verdict): retry, then quarantine
             self.store.fail_job(job["id"], f"{type(e).__name__}: {e}", self.retry_delay)
@@ -58,15 +62,18 @@ class JobRunner:
     def _finish(self, job, collected):
         self.store.set_run_status(job["run_id"], "running")
         base = self.store.baseline(job["repository_id"])
-        res = pipeline.assemble(self.cfg, self.pol, collected, base)
-        self.store.save_run(job["repository_id"], job["run_id"], res)
+        with telemetry.span("assemble", stage="assemble", run_id=job["run_id"]):
+            res = pipeline.assemble(self.cfg, self.pol, collected, base)
+        with telemetry.span("persist", stage="persist", run_id=job["run_id"], status=res["status"]):
+            self.store.save_run(job["repository_id"], job["run_id"], res)
         self.store.audit("worker", "analysis_finished", "analysis_run", job["run_id"], res["status"],
                          org=job["organization_id"])
         return res
 
     def _archive(self, job, payload):
         zp = Path(payload["spool_path"])
-        collected = self.sandbox.collect(self.cfg.required_detectors, zip_path=zp)
+        with telemetry.span("sandbox_collect", stage="collect", run_id=job["run_id"]):
+            collected = self.sandbox.collect(self.cfg.required_detectors, zip_path=zp)
         self._finish(job, collected)
         zp.unlink(missing_ok=True)  # kept across retries; removed on success or when dead-lettered
 
@@ -82,7 +89,8 @@ class JobRunner:
         zp = SPOOL_DIR / f"{job['id']}.zip"
         zp.write_bytes(data)
         try:
-            collected = self.sandbox.collect(self.cfg.required_detectors, zip_path=zp)
+            with telemetry.span("sandbox_collect", stage="collect", run_id=job["run_id"]):
+                collected = self.sandbox.collect(self.cfg.required_detectors, zip_path=zp)
         finally:
             zp.unlink(missing_ok=True)
         res = self._finish(job, collected)
@@ -97,6 +105,13 @@ class JobRunner:
         text += "\n".join(f"- [{f.raw.severity.value}] {f.raw.path}:{f.raw.line} {f.raw.title}"
                           for f in sorted(res["findings"], key=lambda f: -f.raw.severity.rank)[:50])
         self.github.complete_check_run(inst, repo, check_id, concl, summary, text)
+        if p.get("pr") and gh.pr_comments_enabled():
+            try:  # advisory; a comment failure must not fail an otherwise finished analysis
+                rows = sorted(self.store.run_findings(job["run_id"]), key=lambda f: -["informational", "low", "medium", "high", "critical"].index(f["severity"]))
+                body = reporting.render_summary(res["status"], sd, res["decision"], res["completeness"], rows)
+                self.github.upsert_pr_comment(inst, repo, int(p["pr"]), body, reporting.MARKER)
+            except Exception as e:
+                telemetry.log.warning("pr_comment_failed", extra={"ctx": {"job_id": job["id"], "outcome": type(e).__name__}})
 
     def _finalize_dead(self, job, error):
         """A quarantined job still yields an explicit incomplete run so nothing looks clean or pending."""

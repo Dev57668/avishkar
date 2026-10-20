@@ -1,0 +1,1 @@
+el.innerHTML = location.hash;

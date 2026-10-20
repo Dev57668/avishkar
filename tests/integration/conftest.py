@@ -28,14 +28,26 @@ def zip_dir(d: Path, extra=None) -> bytes:
     return buf.getvalue()
 
 
+def _truncate_all(url):
+    from avishkar.adapters.db import SCHEMA, Database
+    import re
+    db = Database(url)  # creates the schema if missing
+    names = re.findall(r"CREATE TABLE IF NOT EXISTS (\w+)", SCHEMA)
+    db.execute("TRUNCATE " + ",".join(names) + " RESTART IDENTITY CASCADE")
+    db.conn.close()
+
+
 class Env:
     """Test harness: app + client + helpers. Worker thread is off; tests drain the queue deterministically."""
 
     def __init__(self, tmp_path, **kw):
         runner_mod.SPOOL_DIR = tmp_path / "spool"
         self.sandbox = kw.pop("sandbox", None) or Sandbox("inline")
-        self.app = create_app(str(tmp_path / "t.db"), secret_key="s" * 40, sandbox=self.sandbox,
-                              start_worker=False, **kw)
+        # CI runs the whole suite on PostgreSQL when AVISHKAR_TEST_DATABASE_URL is set.
+        self.db_url = os.environ.get("AVISHKAR_TEST_DATABASE_URL") or str(tmp_path / "t.db")
+        if self.db_url.startswith("postgres"):
+            _truncate_all(self.db_url)
+        self.app = create_app(self.db_url, secret_key="s" * 40, sandbox=self.sandbox, start_worker=False, **kw)
         self.client = TestClient(self.app)
         self.store = self.app.state.store
         self.runner = self.app.state.runner

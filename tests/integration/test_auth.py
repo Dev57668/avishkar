@@ -34,8 +34,8 @@ def test_login_throttle(env):
     assert r.status_code == 429
 
 
-def test_throttle_unit():
-    t = LoginThrottle(max_fail=2, window=60)
+def test_throttle_unit(env):
+    t = LoginThrottle(env.store, max_fail=2, window=60)
     t.fail("a"); assert not t.blocked("a")
     t.fail("a"); assert t.blocked("a")
     t.ok("a"); assert not t.blocked("a")
@@ -108,3 +108,19 @@ def test_cross_tenant_isolation(env):
     # same repo name in another org is a different repository
     q2 = env.scan("acme/secret-repo", zip_dir(FIX / "secure"), headers=eve)
     assert q2.json()["repositoryId"] != rid
+
+
+def test_throttle_is_shared_across_replicas_and_restarts(tmp_path):
+    a = Env(tmp_path)
+    for _ in range(5):
+        a.client.post("/v1/auth/login", json={"email": "admin@acme.test", "password": "wrong-wrong-1"})
+    from avishkar.api.app import create_app
+    from fastapi.testclient import TestClient
+    b = TestClient(create_app(a.db_url, secret_key="s" * 40, sandbox=a.sandbox, start_worker=False))
+    r = b.post("/v1/auth/login", json={"email": "admin@acme.test", "password": PW})
+    assert r.status_code == 429  # second API instance on the same DB honors the lockout
+
+
+def test_metrics_endpoint_shared_counters(env):
+    env.store.incr_metric("x"); env.store.incr_metric("x")
+    assert env.client.get("/v1/metrics", headers=env.h).json()["counters"]["x"] == 2

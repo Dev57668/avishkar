@@ -32,7 +32,8 @@ class SandboxError(Exception):
 
 
 def _scrubbed_env() -> dict:
-    keep = {"SYSTEMROOT", "PATH", "TEMP", "TMP", "LANG"}  # SYSTEMROOT/PATH needed for Python on Windows
+    keep = {"SYSTEMROOT", "PATH", "TEMP", "TMP", "LANG", "SEMGREP_PATH", "GITLEAKS_PATH",
+            "AVISHKAR_SEMGREP_RULES", "AVISHKAR_TOOL_TIMEOUT"}  # tool locations only; never credentials  # SYSTEMROOT/PATH needed for Python on Windows
     env = {k: v for k, v in os.environ.items() if k.upper() in keep}
     env["PYTHONPATH"] = str(PKG_PARENT)
     env["PYTHONDONTWRITEBYTECODE"] = "1"

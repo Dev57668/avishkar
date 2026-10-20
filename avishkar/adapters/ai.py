@@ -16,6 +16,8 @@ from typing import Protocol
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
+from ..domain.redaction import redact_text  # noqa: F401  (re-exported)
+
 PROMPT_VERSION = "explain-v1"
 MAX_SNIPPET = 300
 
@@ -26,19 +28,6 @@ Cite only the supplied rule_id. If evidence is insufficient, list what is missin
 Respond with ONLY one JSON object with exactly these keys:
 summary (string), why_it_matters (string), remediation_steps (array of strings), verification_test (string),
 missing_evidence (array of strings), cited_rule_id (string equal to the supplied rule_id)."""
-
-_SECRETISH = [
-    re.compile(r"AKIA[0-9A-Z]{16}"), re.compile(r"gh[pousr]_[A-Za-z0-9]{20,}"), re.compile(r"xox[baprs]-[\w-]{10,}"),
-    re.compile(r"-----BEGIN [A-Z ]*PRIVATE KEY-----"),
-    re.compile(r"""(?i)(api[_-]?key|secret|passwd|password|token)(\s*[:=]\s*)["'][^"']{6,}["']"""),
-]
-
-
-def redact_text(s: str) -> str:
-    for rx in _SECRETISH:
-        s = rx.sub(lambda m: "[REDACTED]" if m.lastindex is None else f"{m.group(1)}{m.group(2)}[REDACTED]", s)
-    return s
-
 
 class Explanation(BaseModel):
     model_config = ConfigDict(extra="forbid")

@@ -60,12 +60,39 @@ Provider outage never affects scan completeness. Kill switch: unset the flag.
 `DATABASE_URL=postgresql://user:pw@host/db` + `pip install "psycopg[binary]"`. One SQL source with placeholder/DDL
 translation (`adapters/db.py`).
 
+## 7. Real scanners (Semgrep, Gitleaks)
+`config/profiles/full.json` (`AVISHKAR_SCORE_CONFIG=config/profiles/full.json`, version `score-v1-full`) additionally
+*requires* Semgrep and Gitleaks. They run inside the sandbox with a pinned local rule pack
+(`infra/semgrep-rules.yml`, never `--config auto`), Gitleaks with `--redact`. Missing binary, crash, timeout or bad output
+=> the run is incomplete. A secret flagged by two detectors on one line counts once. `infra/Dockerfile.worker` installs
+both (pin the base digest and Gitleaks checksum placeholders before use). Python rules now use an AST detector
+(`workers/pyast.py`) that resolves aliases and ignores comments/strings; JS/TS still use regex rules.
+
+## 8. Shared state for multiple API replicas
+Login lockout and counters are in the database (`login_failure`, `metric_counter`); job quotas and the queue already were.
+Multi-statement writes use `Database.transaction()`; `SELECT`s end their transaction on PostgreSQL.
+
+## 9. Interop and operations
+* SARIF 2.1.0: `GET /v1/analyses/{id}/sarif`, `python -m avishkar scan DIR --sarif out.sarif`. Debt fields live under
+  `runs[0].properties.avishkar`; an incomplete run has `executionSuccessful=false`.
+* PR summary comment (opt-in `AVISHKAR_PR_COMMENTS=1`, needs the extra *Pull requests: write* permission): one comment
+  per PR, edited in place via a hidden marker; never contains source or secrets.
+* Telemetry: JSON logs + optional OpenTelemetry (`AVISHKAR_OTEL=1`, `OTEL_EXPORTER_OTLP_ENDPOINT`). Attribute allowlist:
+  no source, paths, secrets or prompts.
+* Calibration: `python -m avishkar calibrate tests/corpus` -> precision/recall per rule, one-factor-at-a-time monotonicity,
+  replay/gaming checks, candidate-K table, and the list of blockers. It never marks the score calibrated; the shipped
+  corpus is 6 synthetic, **un-adjudicated** cases.
+* Dashboard: admin tabs for users, API keys, GitHub installations, jobs (requeue dead), audit and counters; SARIF export.
+* CI (`.github/workflows/ci.yml`): unit+integration, self-scan, calibration report, the whole integration suite on
+  PostgreSQL, and a Docker job that runs the real sandbox/Semgrep/Gitleaks tests. `live-smoke.yml` (manual) checks the
+  real Claude API and a real GitHub App. See `docs/MERGE_PLAN.md` for how this package relates to `backend/`.
+
 ## Not verified here / limitations (be honest before relying on it)
-* **Docker sandbox and PostgreSQL were not executed** in this environment (no Docker/Postgres installed). They are
-  covered by static tests only (hardened command line, DDL translation). Run the suite and one real scan against
-  both before production.
+* **Docker sandbox, PostgreSQL, Semgrep and Gitleaks were not executed locally** (no Docker/Postgres; Semgrep's native
+  engine does not run on this Windows box; Gitleaks absent). They are covered by static/mocked tests here and by
+  CI jobs `postgres` and `docker-sandbox` that have **not been run yet** — treat them as unproven until that CI is green.
+  Dockerfile pins contain placeholders on purpose.
 * The GitHub client was tested against a mocked GitHub API, not live GitHub.
 * The Anthropic provider was tested via a fake provider; no live API call was made.
-* Login throttle and the quota counters are per-process memory. Behind several API replicas, move them to the DB.
 * Detectors are regex heuristics + a tiny advisory sample; score weights/K are uncalibrated (spec App. P).
-* No MFA/SSO, no SARIF export, no OpenTelemetry, no TLS termination (put it behind a proxy).
+* No MFA/SSO and no TLS termination (put it behind a proxy). OpenTelemetry export was tested with an in-memory exporter only.

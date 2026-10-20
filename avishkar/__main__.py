@@ -27,6 +27,10 @@ def main(argv=None) -> int:
     c.add_argument("path")
     c.add_argument("--json", action="store_true")
     c.add_argument("--fail-on", choices=["warn", "block"], default=None)
+    c.add_argument("--sarif", metavar="FILE", help="also write SARIF 2.1.0 (for GitHub code scanning)")
+    k = sub.add_parser("calibrate", help="evidence report for the scoring calibration protocol (App. P)")
+    k.add_argument("corpus")
+    k.add_argument("--json", action="store_true")
     a = ap.parse_args(argv)
 
     if a.cmd == "serve":
@@ -70,6 +74,12 @@ def main(argv=None) -> int:
         print(st.create_user(org["id"], a.email, hash_password(pw), a.role))
         return 0
 
+    if a.cmd == "calibrate":
+        from .calibration import render_markdown, run_calibration
+        rep = run_calibration(Path(a.corpus))
+        print(json.dumps(rep, indent=2, default=str) if a.json else render_markdown(rep))
+        return 0
+
     from .domain.policy import Policy
     from .domain.scoring import ScoreConfig
     from .workers.pipeline import run_scan
@@ -91,6 +101,15 @@ def main(argv=None) -> int:
         for f in sorted(res["findings"], key=lambda f: -f.raw.severity.rank):
             r = f.raw
             print(f"  [{r.severity.value:>8}/{r.confidence.value:<6}] {r.path}:{r.line}  {r.rule_id}  {r.title}")
+    if a.sarif:
+        from .domain import reporting
+        rows = [{"rule_id": f.raw.rule_id, "title": f.raw.title, "severity": f.raw.severity.value,
+                 "confidence": f.raw.confidence.value, "category": f.raw.category, "remediation": f.raw.remediation,
+                 "state": f.state.value, "path": f.raw.path, "line_start": f.raw.line, "evidence": f.raw.evidence,
+                 "fingerprint": f.fingerprint} for f in res["findings"]]
+        run = {"id": res["id"], "status": res["status"], "score": sd, "completeness": res["completeness"],
+               "decision": dec, "commit_sha": None}
+        Path(a.sarif).write_text(json.dumps(reporting.to_sarif(run, rows), indent=2))
     if res["status"] != "complete":
         return 3  # missing analysis is never a pass
     if a.fail_on == "block" and dec["outcome"] in ("block", "would_block"):

@@ -50,6 +50,17 @@ code{font-family:ui-monospace,monospace;font-size:13px;word-break:break-all}
     <p class="mut" style="margin:8px 0 0">The index is a prioritization signal from uncalibrated provisional weights — not a breach probability or proof of safety.</p>
   </section>
   <section class="card" aria-labelledby="h-repos"><h2 id="h-repos">Repositories</h2><div id="repos" class="mut">Sign in to continue.</div></section>
+  <section class="card" id="admin" hidden aria-labelledby="h-admin">
+    <h2 id="h-admin">Administration</h2>
+    <div class="row" role="tablist" aria-label="Admin sections">
+      <button role="tab" data-tab="users" aria-selected="true">Users</button>
+      <button role="tab" data-tab="keys" aria-selected="false">API keys</button>
+      <button role="tab" data-tab="gh" aria-selected="false">GitHub</button>
+      <button role="tab" data-tab="jobs" aria-selected="false">Jobs</button>
+      <button role="tab" data-tab="audit" aria-selected="false">Audit &amp; metrics</button>
+    </div>
+    <div id="admin-body" role="tabpanel" style="margin-top:12px"></div>
+  </section>
   <section class="card" id="detail" hidden aria-labelledby="h-d"></section>
 </main>
 <script>
@@ -96,7 +107,8 @@ async function openRepo(id,name,fstate='',fsev=''){
    fnd.items.map(f=>`<tr><td>${tag(f.severity)}</td><td><b>${esc(f.title)}</b><br><span class="mut">${esc(f.rule_id)} · ${esc(f.category)}</span><br><code>${esc(f.evidence)}</code><br><span class="mut">Fix: ${esc(f.remediation)} (effort: ${esc(f.effort)})</span></td><td><code>${esc(f.location)}</code></td><td>${esc(f.confidence)}</td><td>${esc(f.state)}</td>
    <td><select aria-label="Disposition for ${esc(f.title)}" data-f="${esc(f.id)}" data-v="${f.version}"><option value="">Set…</option><option value="false_positive">False positive</option><option value="not_applicable">Not applicable</option><option value="accepted_risk">Accept risk (30 d)</option><option value="open">Reopen</option></select>${CFG.ai&&CFG.ai.enabled?`<br><button data-x="${esc(f.id)}">Explain (AI)</button>`:''}</td></tr>${f.explanation&&f.explanation.content?`<tr><td></td><td colspan="5"><b>AI explanation (advisory, does not affect the score):</b> ${esc(f.explanation.content.summary)} <i>${esc(f.explanation.content.why_it_matters)}</i><ol>${f.explanation.content.remediation_steps.map(x=>'<li>'+esc(x)+'</li>').join('')}</ol></td></tr>`:''}`).join('')||'<tr><td colspan="6">No findings.</td></tr>'}</tbody></table>
   <h2 style="margin-top:16px">Run history</h2>
-  <table><thead><tr><th>When</th><th>Status</th><th>Index</th><th>Raw</th><th>Decision</th></tr></thead><tbody>${runs.items.map(r=>`<tr><td>${new Date(r.startedAt*1000).toLocaleString()}</td><td>${tag(r.status)}</td><td>${r.securityDebt.normalizedIndex??'n/a'}</td><td>${r.securityDebt.rawUnits??'n/a'}</td><td>${tag(r.decision.outcome)}</td></tr>`).join('')}</tbody></table>`;
+  <table><thead><tr><th>When</th><th>Status</th><th>Index</th><th>Raw</th><th>Decision</th><th>Export</th></tr></thead><tbody>${runs.items.map(r=>`<tr><td>${new Date(r.startedAt*1000).toLocaleString()}</td><td>${tag(r.status)}</td><td>${r.securityDebt.normalizedIndex??'n/a'}</td><td>${r.securityDebt.rawUnits??'n/a'}</td><td>${tag(r.decision.outcome)}</td><td><button data-sarif="${esc(r.id)}">SARIF</button></td></tr>`).join('')}</tbody></table>`;
+  d.querySelectorAll('button[data-sarif]').forEach(b=>b.onclick=async()=>{const j=await api('/v1/analyses/'+b.dataset.sarif+'/sarif');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(j,null,2)],{type:'application/json'}));a.download=b.dataset.sarif+'.sarif';a.click()});
   $('#fs').onchange=()=>openRepo(id,name,$('#fs').value,$('#fv').value);
   $('#fv').onchange=()=>openRepo(id,name,$('#fs').value,$('#fv').value);
   d.querySelectorAll('button[data-x]').forEach(b=>b.onclick=async()=>{
@@ -117,9 +129,73 @@ async function openRepo(id,name,fstate='',fsev=''){
   });
   d.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion:reduce)').matches?'auto':'smooth'});
 }
+
+/* ---------------- admin screens (admin role only; the API enforces the role regardless) ---------------- */
+const roleOpts=['viewer','analyst','admin'].map(r=>`<option>${r}</option>`).join('');
+const tbl=(cap,heads,rows)=>`<table><caption class="sr">${cap}</caption><thead><tr>${heads.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.join('')||`<tr><td colspan="${heads.length}">None.</td></tr>`}</tbody></table>`;
+const ts=t=>t?new Date(t*1000).toLocaleString():'';
+const ADMIN={
+  async users(){
+    const {items}=await api('/v1/users');
+    return `<form id="f-user" class="row"><label for="u-e">Email</label><input id="u-e" type="email" required>
+      <label for="u-p">Password (10+)</label><input id="u-p" type="password" minlength="10" required autocomplete="new-password">
+      <label for="u-r">Role</label><select id="u-r">${roleOpts}</select><button class="p">Add user</button></form>`+
+      tbl('Users',['Email','Role','Active',''],items.map(u=>`<tr><td>${esc(u.email)}</td><td>${esc(u.role)}</td><td>${u.active?'yes':'no'}</td><td><button data-deluser="${esc(u.id)}" aria-label="Deactivate ${esc(u.email)}">Deactivate</button></td></tr>`));
+  },
+  async keys(){
+    const {items}=await api('/v1/api-keys');
+    return `<form id="f-key" class="row"><label for="k-l">Label</label><input id="k-l" required maxlength="100">
+      <label for="k-r">Role</label><select id="k-r"><option>analyst</option><option>viewer</option><option>admin</option></select><button class="p">Create key</button></form>
+      <p id="k-new" class="mut" role="status"></p>`+
+      tbl('API keys',['Label','Role','Active','Created',''],items.map(k=>`<tr><td>${esc(k.label)}</td><td>${esc(k.role)}</td><td>${k.active?'yes':'revoked'}</td><td>${ts(k.created_at)}</td><td>${k.active?`<button data-revoke="${esc(k.id)}">Revoke</button>`:''}</td></tr>`));
+  },
+  async gh(){
+    const [{items},cfg]=await Promise.all([api('/v1/github/installations'),api('/v1/config')]);
+    return `<p class="mut">GitHub integration: ${cfg.github.configured?'configured (webhook secret + app credentials present)':'<b>not configured</b> - set GITHUB_WEBHOOK_SECRET, GITHUB_APP_ID and GITHUB_APP_PRIVATE_KEY'}. Webhook URL: <code>/v1/github/webhook</code></p>
+      <form id="f-gh" class="row"><label for="g-i">Installation ID</label><input id="g-i" pattern="\d{1,20}" required>
+      <label for="g-a">Account</label><input id="g-a" required maxlength="100"><button class="p">Link installation</button></form>`+
+      tbl('GitHub installations',['Installation','Account','Active'],items.map(i=>`<tr><td>${esc(i.installation_id)}</td><td>${esc(i.account)}</td><td>${i.active?'yes':'no'}</td></tr>`));
+  },
+  async jobs(){
+    const {items}=await api('/v1/jobs');
+    return tbl('Jobs',['Job','Kind','Status','Attempts','Error','Updated',''],items.map(j=>`<tr><td><code>${esc(j.id)}</code></td><td>${esc(j.kind)}</td><td>${esc(j.status)}</td><td>${j.attempts}/${j.max_attempts}</td><td>${esc(j.error||'')}</td><td>${ts(j.updated_at)}</td><td>${j.status==='dead'?`<button data-requeue="${esc(j.id)}">Requeue</button>`:''}</td></tr>`));
+  },
+  async audit(){
+    const [a,m]=await Promise.all([api('/v1/audit'),api('/v1/metrics')]);
+    return `<h3>Counters</h3><p>${Object.entries(m.counters).map(([k,v])=>`<code>${esc(k)}</code>=${v}`).join(' · ')||'none yet'}</p>`+
+      tbl('Audit events',['When','Actor','Action','Object','Outcome'],a.items.slice(0,50).map(e=>`<tr><td>${ts(e.ts)}</td><td>${esc(e.actor)}</td><td>${esc(e.action)}</td><td><code>${esc(e.object_id)}</code></td><td>${esc(e.outcome)}</td></tr>`));
+  }
+};
+let ADMIN_TAB='users';
+async function showAdmin(tab=ADMIN_TAB){
+  ADMIN_TAB=tab;
+  document.querySelectorAll('#admin [role=tab]').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.tab===tab)));
+  const body=$('#admin-body');
+  try{body.innerHTML=await ADMIN[tab]()}catch(e){body.textContent='Failed: '+e.message}
+}
+$('#admin').addEventListener('click',async e=>{
+  const t=e.target.closest('[data-tab]');if(t)return showAdmin(t.dataset.tab);
+  try{
+    const du=e.target.closest('[data-deluser]');if(du&&confirm('Deactivate this user? Their sessions end immediately.')){await api('/v1/users/'+du.dataset.deluser,{method:'DELETE'});say('User deactivated.');return showAdmin()}
+    const rv=e.target.closest('[data-revoke]');if(rv&&confirm('Revoke this API key?')){await api('/v1/api-keys/'+rv.dataset.revoke,{method:'DELETE'});say('Key revoked.');return showAdmin()}
+    const rq=e.target.closest('[data-requeue]');if(rq){await api(`/v1/jobs/${rq.dataset.requeue}/requeue`,{method:'POST'});say('Job requeued.');return showAdmin()}
+  }catch(err){say('Failed: '+err.message)}
+});
+$('#admin').addEventListener('submit',async e=>{
+  e.preventDefault();const f=e.target.id;
+  const post=(u,b)=>api(u,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)});
+  try{
+    if(f==='f-user'){await post('/v1/users',{email:$('#u-e').value,password:$('#u-p').value,role:$('#u-r').value});say('User created.')}
+    if(f==='f-key'){const r=await post('/v1/api-keys',{label:$('#k-l').value,role:$('#k-r').value});await showAdmin();$('#k-new').innerHTML=`New key (copy now, shown once): <code>${esc(r.key)}</code>`;say('API key created.');return}
+    if(f==='f-gh'){await post('/v1/github/installations',{installation_id:$('#g-i').value,account:$('#g-a').value});say('Installation linked.')}
+    showAdmin();
+  }catch(err){say('Failed: '+err.message)}
+});
+
 async function start(){
   try{const me=await api('/v1/auth/me');$('#who').textContent=`${me.email||me.id} (${me.role})`;CFG=await api('/v1/config');
     if(CFG.sandbox&&!CFG.sandbox.isolationBoundary)say('Sandbox mode "'+CFG.sandbox.mode+'" is not an isolation boundary: scan only code you trust.');
+    if(me.role==='admin'){$('#admin').hidden=false;showAdmin()}else{$('#admin').hidden=true}
     loadRepos()}catch(e){KEY=null;say('Sign in required.')}
 }
 $('#keyform').onsubmit=async e=>{e.preventDefault();

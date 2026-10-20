@@ -44,3 +44,40 @@ def test_failed_statement_rolls_back(tmp_path):
         pass
     assert len(db.query("SELECT * FROM organization")) == 1
     db.execute("INSERT INTO organization VALUES('o3','b',0)")  # connection still healthy
+
+
+def test_transaction_is_atomic_and_nests(tmp_path):
+    db = Database(str(tmp_path / "x.db"))
+    try:
+        with db.transaction():
+            db.execute("INSERT INTO organization VALUES('o1','a',0)")
+            with db.transaction():  # nested joins the outer unit
+                db.execute("INSERT INTO organization VALUES('o2','b',0)")
+            assert len(db.query("SELECT * FROM organization")) == 2  # reads see own uncommitted writes
+            raise RuntimeError("abort")
+    except RuntimeError:
+        pass
+    assert db.query("SELECT * FROM organization") == []  # whole unit rolled back
+    with db.transaction():
+        db.execute("INSERT INTO organization VALUES('o3','c',0)")
+    assert len(db.query("SELECT * FROM organization")) == 1
+
+
+def test_enqueue_survives_idempotency_race(tmp_path, monkeypatch):
+    from avishkar.adapters.store import Store
+    st = Store(str(tmp_path / "x.db"))
+    org = st.create_org("o")["id"]
+    first, created = st.enqueue(org, "r", "run1", "archive", {}, "k")
+    assert created
+    monkeypatch.setattr(st, "job_by_idem", lambda *a: first if not hasattr(st, "_seen") else None)
+    real = st.d.query
+    calls = {"n": 0}
+
+    def blind(sql, args=()):  # simulate the pre-check missing the concurrent insert
+        if "idempotency_key=?" in sql and calls["n"] == 0:
+            calls["n"] += 1
+            return []
+        return real(sql, args)
+    monkeypatch.setattr(st.d, "query", blind)
+    job, created = st.enqueue(org, "r", "run2", "archive", {}, "k")
+    assert not created and job["id"] == first["id"]

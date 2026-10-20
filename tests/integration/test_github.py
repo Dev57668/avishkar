@@ -112,7 +112,7 @@ def test_forged_and_altered_requests_rejected_without_parsing(tmp_path, keypair)
     assert deliver(e, "pull_request", pr_payload(), sig="sha256=" + "0" * 64).status_code == 401
     assert deliver(e, "pull_request", pr_payload(), secret="wrong").status_code == 401
     assert deliver(e, "pull_request", None, raw=b"not json", sig="sha256=bad").status_code == 401
-    assert e.app.state.metrics["webhook_bad_signature"] == 3
+    assert e.store.metrics()["webhook_bad_signature"] == 3
     assert e.store.jobs(e.org["id"]) == [] and fake.calls == []
 
 

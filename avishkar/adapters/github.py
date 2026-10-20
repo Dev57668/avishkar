@@ -113,12 +113,30 @@ class GitHubClient:
                       json={"name": CHECK_NAME, "head_sha": sha, "status": status})
         return r.json()["id"]
 
+    def upsert_pr_comment(self, installation_id: str, repo: str, pr_number: int, body: str, marker: str) -> str:
+        """Edit our previous summary comment in place (found by hidden marker) or create one. Returns created|updated."""
+        if not REPO_RE.match(repo) or not isinstance(pr_number, int):
+            raise GitHubError("invalid repository or pull request number")
+        tok = self.installation_token(installation_id)
+        r = self._req("GET", f"/repos/{repo}/issues/{pr_number}/comments?per_page=100", tok)
+        mine = next((c for c in r.json() if marker in (c.get("body") or "")), None)
+        if mine:
+            self._req("PATCH", f"/repos/{repo}/issues/comments/{mine['id']}", tok, json={"body": body})
+            return "updated"
+        self._req("POST", f"/repos/{repo}/issues/{pr_number}/comments", tok, json={"body": body})
+        return "created"
+
     def complete_check_run(self, installation_id: str, repo: str, check_id: int, conclusion: str, summary: str,
                            text: str = ""):
         tok = self.installation_token(installation_id)
         self._req("PATCH", f"/repos/{repo}/check-runs/{check_id}", tok, json={
             "status": "completed", "conclusion": conclusion,
             "output": {"title": CHECK_NAME, "summary": summary[:1000], "text": text[:60000]}})
+
+
+def pr_comments_enabled() -> bool:
+    """Needs the extra 'Pull requests: write' permission, so it is opt-in (AVISHKAR_PR_COMMENTS=1)."""
+    return os.environ.get("AVISHKAR_PR_COMMENTS") == "1"
 
 
 def normalize_event(event: str, payload: dict) -> dict | None:

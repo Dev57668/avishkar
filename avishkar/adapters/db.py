@@ -6,6 +6,7 @@ exercised only against a live server (see docs/POSTGRES.md); the unit suite runs
 """
 from __future__ import annotations
 
+import contextlib
 import re
 import sqlite3
 import threading
@@ -56,6 +57,9 @@ CREATE TABLE IF NOT EXISTS ref_head(
   PRIMARY KEY(repository_id, ref));
 CREATE TABLE IF NOT EXISTS explanation(
   finding_id TEXT PRIMARY KEY, status TEXT, content TEXT, model TEXT, prompt_version TEXT, created_at REAL);
+CREATE TABLE IF NOT EXISTS login_failure(key TEXT NOT NULL, ts REAL NOT NULL);
+CREATE TABLE IF NOT EXISTS metric_counter(name TEXT PRIMARY KEY, value INTEGER NOT NULL);
+CREATE INDEX IF NOT EXISTS ix_login_failure ON login_failure(key, ts);
 CREATE INDEX IF NOT EXISTS ix_run_repo ON analysis_run(repository_id, started_at);
 CREATE INDEX IF NOT EXISTS ix_finding_repo ON finding(repository_id, state);
 CREATE INDEX IF NOT EXISTS ix_job_status ON job(status, not_before);
@@ -70,6 +74,7 @@ def _pg_schema(sql: str) -> str:
 class Database:
     def __init__(self, url: str = "data/avishkar_v2.db"):
         self.lock = threading.RLock()
+        self._depth = 0
         self.pg = url.startswith(("postgres://", "postgresql://"))
         if self.pg:
             try:
@@ -93,30 +98,49 @@ class Database:
     def _sql(self, sql: str) -> str:
         return sql.replace("?", "%s") if self.pg else sql
 
+    @contextlib.contextmanager
+    def transaction(self):
+        """Group statements atomically. Nested use joins the outer transaction; reads inside see own writes."""
+        with self.lock:
+            self._depth += 1
+            try:
+                yield
+                if self._depth == 1:
+                    self.conn.commit()
+            except Exception:
+                self.conn.rollback()
+                raise
+            finally:
+                self._depth -= 1
+
+    def _end_read(self):
+        # PostgreSQL opens a transaction on SELECT; end it so no connection sits idle-in-transaction
+        # (which would hold locks and block DDL/maintenance).
+        if self.pg and self._depth == 0:
+            self.conn.commit()
+
     def query(self, sql: str, args=()) -> list[dict]:
         with self.lock:
             try:
                 cur = self.conn.cursor() if self.pg else self.conn
                 cur = cur.execute(self._sql(sql), tuple(args))
-                rows = cur.fetchall()
-                return [dict(r) for r in rows]
+                rows = [dict(r) for r in cur.fetchall()]
+                self._end_read()
+                return rows
             except Exception:
                 self.conn.rollback()
                 raise
 
-    def execute(self, sql: str, args=(), commit: bool = True) -> int:
+    def execute(self, sql: str, args=()) -> int:
         with self.lock:
             try:
                 cur = self.conn.cursor() if self.pg else self.conn
                 cur = cur.execute(self._sql(sql), tuple(args))
                 n = cur.rowcount
-                if commit:
+                if self._depth == 0:
                     self.conn.commit()
                 return n
             except Exception:
-                self.conn.rollback()
-                raise
-
-    def commit(self):
-        with self.lock:
-            self.conn.commit()
+                if self._depth == 0:
+                    self.conn.rollback()
+                raise  # inside transaction(): the context manager rolls back the whole unit

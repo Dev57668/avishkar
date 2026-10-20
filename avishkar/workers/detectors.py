@@ -103,6 +103,9 @@ PATTERN_RULES = [
 
 
 def detect_patterns(root: Path, files: list[Path]) -> list[RawFinding]:
+    """Python goes through the AST detector (alias-aware, ignores comments/strings); a file that does not
+    parse falls back to the regex rules so it is still covered. JS/TS use the regex rules."""
+    from .pyast import scan_python
     out = []
     for p in files:
         ext = p.suffix.lower()
@@ -110,6 +113,12 @@ def detect_patterns(root: Path, files: list[Path]) -> list[RawFinding]:
             continue
         rel = p.relative_to(root).as_posix()
         text = p.read_text(errors="replace")
+        if ext == ".py":
+            try:
+                out.extend(scan_python(text, rel))
+                continue
+            except (SyntaxError, ValueError, RecursionError):
+                pass  # regex fallback below
         for n, line in enumerate(text.splitlines(), 1):
             s = line.strip()
             if s.startswith(("#", "//", "*")):
@@ -191,3 +200,5 @@ DETECTORS: dict[str, Detector] = {
     "code-patterns": detect_patterns,
     "dependencies": detect_dependencies,
 }
+from .external import EXTERNAL_DETECTORS  # noqa: E402  (semgrep/gitleaks; used only when a profile requires them)
+DETECTORS.update(EXTERNAL_DETECTORS)

@@ -1,0 +1,44 @@
+# Pinned local rule pack (no network at scan time; --config auto would fetch rules and is not allowed in the sandbox).
+rules:
+  - id: avishkar.py.subprocess-shell-true
+    languages: [python]
+    severity: ERROR
+    message: subprocess called with shell=True
+    pattern: subprocess.$F(..., shell=True, ...)
+    metadata: {confidence: HIGH, category: injection}
+  - id: avishkar.py.flask-debug
+    languages: [python]
+    severity: WARNING
+    message: Flask app run with debug=True
+    pattern: $APP.run(..., debug=True, ...)
+    metadata: {confidence: MEDIUM, category: config}
+  - id: avishkar.py.requests-verify-false
+    languages: [python]
+    severity: WARNING
+    message: TLS verification disabled
+    pattern: requests.$M(..., verify=False, ...)
+    metadata: {confidence: HIGH, category: transport}
+  - id: avishkar.py.tempfile-mktemp
+    languages: [python]
+    severity: WARNING
+    message: tempfile.mktemp is race-prone
+    pattern: tempfile.mktemp(...)
+    metadata: {confidence: HIGH, category: filesystem}
+  - id: avishkar.py.assert-for-security
+    languages: [python]
+    severity: INFO
+    message: assert used in security check can be stripped with -O
+    pattern: assert $X.is_admin
+    metadata: {confidence: LOW, category: authz}
+  - id: avishkar.js.child-process-exec-template
+    languages: [javascript, typescript]
+    severity: ERROR
+    message: exec with template string (command injection)
+    pattern: $CP.exec(`...${$X}...`)
+    metadata: {confidence: MEDIUM, category: injection}
+  - id: avishkar.js.document-write
+    languages: [javascript, typescript]
+    severity: WARNING
+    message: document.write with dynamic content
+    pattern: document.write($X)
+    metadata: {confidence: MEDIUM, category: xss}

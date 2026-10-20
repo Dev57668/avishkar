@@ -1,0 +1,11 @@
+{
+  "version": "score-v1-full",
+  "status": "provisional-uncalibrated",
+  "impact": {"critical": 5, "high": 4, "medium": 3, "low": 2, "informational": 1},
+  "exposure": {"confirmed_external": 1.5, "prerequisites": 1.25, "internal": 1.0, "unreachable": 0.75, "unknown": 1.0},
+  "confidence": {"high": 1.0, "medium": 0.75, "low": 0.5},
+  "aging": {"enabled": false, "max_days": 90, "max_extra": 0.5},
+  "normalization_k": 20.0,
+  "required_detectors": ["secrets", "code-patterns", "dependencies", "semgrep", "gitleaks"],
+  "notes": "Requires Semgrep and Gitleaks in the sandbox image. Same formula as score-v1; scores are NOT comparable across profiles."
+}
