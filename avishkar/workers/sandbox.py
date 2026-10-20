@@ -40,24 +40,17 @@ def _scrubbed_env() -> dict:
     return env
 
 
-def _limits(mem_bytes: int, cpu_s: int):
-    def apply():  # POSIX only; runs in the child before exec
-        import resource
-        resource.setrlimit(resource.RLIMIT_AS, (mem_bytes, mem_bytes))
-        resource.setrlimit(resource.RLIMIT_CPU, (cpu_s, cpu_s))
-        resource.setrlimit(resource.RLIMIT_FSIZE, (200_000_000, 200_000_000))
-        resource.setrlimit(resource.RLIMIT_NPROC, (64, 64))
-        os.setsid()
-    return apply
-
-
 def _kill_tree(p: subprocess.Popen):
     try:
         if os.name == "nt":
             subprocess.run(["taskkill", "/F", "/T", "/PID", str(p.pid)], capture_output=True)
         else:
             import signal
-            os.killpg(os.getpgid(p.pid), signal.SIGKILL)
+            # Only signal the group if the child leads its own (start_new_session); never our own group.
+            if os.getpgid(p.pid) != os.getpgrp():
+                os.killpg(os.getpgid(p.pid), signal.SIGKILL)
+            else:
+                p.kill()
     except Exception:
         p.kill()
 
@@ -111,10 +104,13 @@ class Sandbox:
                 # -I ignores PYTHONPATH, so the package root is inserted explicitly (it is our own trusted code).
                 boot = "import sys;sys.path.insert(0,sys.argv.pop(1));from avishkar.workers.sandbox_child import main;raise SystemExit(main())"
                 cmd = [sys.executable, "-I", "-c", boot, str(PKG_PARENT), "--out", str(out / "result.json")]
-                cmd += args + (["--zip", str(zip_path)] if zip_path else ["--dir", str(source_dir)])
                 popen_kw = {"env": _scrubbed_env(), "cwd": str(work)}
                 if os.name != "nt":
-                    popen_kw["preexec_fn"] = _limits(self.memory_mb * 1024 * 1024 * 4, self.timeout)
+                    # No preexec_fn (unsafe with threads: it deadlocked under pytest/ASGI threads on Linux).
+                    # The child applies its own rlimits at startup; the new session lets us kill the whole tree.
+                    popen_kw["start_new_session"] = True
+                    args += ["--mem-bytes", str(self.memory_mb * 1024 * 1024 * 4), "--cpu-seconds", str(self.timeout)]
+                cmd += args + (["--zip", str(zip_path)] if zip_path else ["--dir", str(source_dir)])
             try:
                 p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, **popen_kw)
             except OSError as e:
