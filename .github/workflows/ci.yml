@@ -9,7 +9,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with: {python-version: "3.12"}
-      - run: pip install -r requirements.txt -r backend/requirements.txt
+      - run: pip install -r requirements.txt -r backend/requirements.txt opentelemetry-sdk
       - run: python -m pytest -q
       # Self-scan; exit 3 (incomplete analysis) fails the job. Policy stays report-only.
       - run: python -m avishkar scan avishkar --sarif avishkar.sarif
@@ -36,7 +36,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with: {python-version: "3.12"}
-      - run: pip install -r requirements.txt "psycopg[binary]>=3.1"
+      - run: pip install -r requirements.txt "psycopg[binary]>=3.1" opentelemetry-sdk
       - run: python -m pytest tests/integration tests/unit/test_db_dialect.py -v -x -o faulthandler_timeout=90
 
   # Builds the worker image and runs the real Docker sandbox + Semgrep + Gitleaks end to end.

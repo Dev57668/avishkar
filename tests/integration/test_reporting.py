@@ -3,6 +3,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
+
 from avishkar import telemetry
 from avishkar.calibration import render_markdown, run_calibration
 from avishkar.domain import reporting
@@ -136,6 +138,7 @@ def test_summary_incomplete_is_not_a_pass():
 
 # ------------------------------------------------------------------ telemetry
 def test_tracing_records_safe_attributes_only(tmp_path):
+    pytest.importorskip("opentelemetry.sdk")
     from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
     exp = InMemorySpanExporter()
     assert telemetry.configure_tracing(exp)
@@ -162,6 +165,7 @@ def test_span_is_noop_without_tracing():
 
 
 def test_span_marks_errors(tmp_path):
+    pytest.importorskip("opentelemetry.sdk")
     from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
     exp = InMemorySpanExporter()
     telemetry.configure_tracing(exp)

@@ -99,6 +99,10 @@ class Sandbox:
         try:
             out = work / "out"
             out.mkdir()
+            if self.mode == "docker":
+                # The container runs as uid 65534 and must write result.json here. This directory is a private
+                # per-job temp dir (parent is 0700) that is deleted afterwards, so world-writable is contained.
+                out.chmod(0o777)
             args = ["--required", ",".join(required)]
             if self.mode == "docker":
                 cmd = self._docker_cmd(out, source_dir, zip_path, args)
