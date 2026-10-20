@@ -108,4 +108,4 @@ def test_audit_trail(env):
 
 def test_config_reports_sandbox_and_ai(env):
     c = env.client.get("/v1/config", headers=env.h).json()
-    assert c["sandbox"]["mode"] == "inline" and c["ai"]["enabled"] is False and c["database"] == "sqlite"
+    assert c["sandbox"]["mode"] == "inline" and c["ai"]["enabled"] is False and c["database"] == ("postgresql" if env.db_url.startswith("postgres") else "sqlite")
