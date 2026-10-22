@@ -1,0 +1,14 @@
+{
+ "source": "synthetic",
+ "fully_labeled": true,
+ "vulns": [
+  {
+   "path": "a.py",
+   "line": 2,
+   "kind": "eval"
+  }
+ ],
+ "adjudicated": false,
+ "reviewers": 0,
+ "note": "labels authored by the implementer; not adjudicated"
+}

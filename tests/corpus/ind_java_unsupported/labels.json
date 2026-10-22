@@ -1,0 +1,9 @@
+{
+ "source": "independent",
+ "fully_labeled": false,
+ "vulns": [],
+ "adjudicated": false,
+ "reviewers": 0,
+ "note": "unsupported language: must be NOT EVALUATED, never clean",
+ "expected_status": "incomplete"
+}

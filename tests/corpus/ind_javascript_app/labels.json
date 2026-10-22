@@ -1,0 +1,59 @@
+{
+ "source": "independent",
+ "fully_labeled": true,
+ "vulns": [
+  {
+   "path": "app.js",
+   "line": 10,
+   "kind": "secret"
+  },
+  {
+   "path": "app.js",
+   "line": 11,
+   "kind": "secret"
+  },
+  {
+   "path": "app.js",
+   "line": 19,
+   "kind": "sqli"
+  },
+  {
+   "path": "app.js",
+   "line": 33,
+   "kind": "cmdi"
+  },
+  {
+   "path": "app.js",
+   "line": 41,
+   "kind": "eval"
+  },
+  {
+   "path": "app.js",
+   "line": 49,
+   "kind": "weakhash"
+  },
+  {
+   "path": "app.js",
+   "line": 58,
+   "kind": "path-traversal"
+  },
+  {
+   "path": "app.js",
+   "line": 65,
+   "kind": "xss"
+  },
+  {
+   "path": "app.js",
+   "line": 70,
+   "kind": "secret"
+  },
+  {
+   "path": "app.js",
+   "line": 92,
+   "kind": "info-disclosure"
+  }
+ ],
+ "adjudicated": false,
+ "reviewers": 0,
+ "note": "sample_projects/vulnerable-javascript"
+}

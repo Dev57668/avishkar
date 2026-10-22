@@ -1,0 +1,8 @@
+{
+ "source": "synthetic",
+ "fully_labeled": true,
+ "vulns": [],
+ "adjudicated": false,
+ "reviewers": 0,
+ "note": "placeholders are not credentials: any finding here is a false positive"
+}

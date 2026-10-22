@@ -1,0 +1,8 @@
+{
+ "source": "synthetic",
+ "fully_labeled": true,
+ "vulns": [],
+ "adjudicated": false,
+ "reviewers": 0,
+ "note": "`model.eval()` is not the builtin eval; a realistic false-positive trap"
+}

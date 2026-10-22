@@ -1,0 +1,149 @@
+{
+ "source": "independent",
+ "fully_labeled": true,
+ "vulns": [
+  {
+   "path": "app.py",
+   "line": 20,
+   "kind": "secret"
+  },
+  {
+   "path": "app.py",
+   "line": 21,
+   "kind": "secret"
+  },
+  {
+   "path": "app.py",
+   "line": 22,
+   "kind": "secret"
+  },
+  {
+   "path": "app.py",
+   "line": 35,
+   "kind": "sqli"
+  },
+  {
+   "path": "app.py",
+   "line": 46,
+   "kind": "cmdi"
+  },
+  {
+   "path": "app.py",
+   "line": 54,
+   "kind": "weakhash"
+  },
+  {
+   "path": "app.py",
+   "line": 62,
+   "kind": "path-traversal"
+  },
+  {
+   "path": "app.py",
+   "line": 70,
+   "kind": "eval"
+  },
+  {
+   "path": "app.py",
+   "line": 79,
+   "kind": "pickle"
+  },
+  {
+   "path": "app.py",
+   "line": 116,
+   "kind": "debug"
+  },
+  {
+   "path": "config.py",
+   "line": 12,
+   "kind": "secret"
+  },
+  {
+   "path": "config.py",
+   "line": 17,
+   "kind": "secret"
+  },
+  {
+   "path": "config.py",
+   "line": 18,
+   "kind": "secret"
+  },
+  {
+   "path": "config.py",
+   "line": 21,
+   "kind": "secret"
+  },
+  {
+   "path": "config.py",
+   "line": 24,
+   "kind": "secret"
+  },
+  {
+   "path": "config.py",
+   "line": 31,
+   "kind": "weakhash"
+  },
+  {
+   "path": "config.py",
+   "line": 39,
+   "kind": "weak-random"
+  },
+  {
+   "path": "config.py",
+   "line": 47,
+   "kind": "noverify"
+  },
+  {
+   "path": "config.py",
+   "line": 52,
+   "kind": "debug"
+  },
+  {
+   "path": "config.py",
+   "line": 53,
+   "kind": "secret"
+  },
+  {
+   "path": "utils.py",
+   "line": 14,
+   "kind": "path-traversal"
+  },
+  {
+   "path": "utils.py",
+   "line": 22,
+   "kind": "cmdi"
+  },
+  {
+   "path": "utils.py",
+   "line": 29,
+   "kind": "xxe"
+  },
+  {
+   "path": "utils.py",
+   "line": 41,
+   "kind": "sqli"
+  },
+  {
+   "path": "utils.py",
+   "line": 50,
+   "kind": "path-traversal"
+  },
+  {
+   "path": "utils.py",
+   "line": 60,
+   "kind": "redos"
+  },
+  {
+   "path": "utils.py",
+   "line": 70,
+   "kind": "tempfile"
+  },
+  {
+   "path": "utils.py",
+   "line": 82,
+   "kind": "info-disclosure"
+  }
+ ],
+ "adjudicated": false,
+ "reviewers": 0,
+ "note": "sample_projects/vulnerable-python; lines labeled from its own VULNERABILITY comments"
+}

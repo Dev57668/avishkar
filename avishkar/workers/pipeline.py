@@ -24,6 +24,11 @@ from .detectors import DETECTORS, SUPPORT_MATRIX
 MAX_FILES = 5000
 MAX_FILE_BYTES = 1_000_000
 MAX_TOTAL_BYTES = 50_000_000
+# Source languages we recognise but have no detector for. They are reported as NOT EVALUATED so a repo that is
+# mostly e.g. Java can never look "clean" just because nothing analysed it (spec §2: never silently treated as clean).
+UNSUPPORTED_SOURCE = {".java", ".kt", ".kts", ".go", ".rb", ".php", ".cs", ".c", ".cc", ".cpp", ".h", ".hpp", ".rs",
+                      ".swift", ".scala", ".pl", ".lua", ".dart", ".m", ".mm", ".vb", ".ps1", ".sh"}
+SUPPORTED_SOURCE = {".py", ".js", ".jsx", ".ts", ".tsx", ".mjs"}
 SKIP_DIRS = {".git", "node_modules", "__pycache__", ".venv", "venv", "dist", "build"}
 
 
@@ -123,8 +128,15 @@ def collect_findings(required: tuple[str, ...], source_dir: Path | None = None, 
                     stages[name] = "failed"
     finally:
         shutil.rmtree(workspace, ignore_errors=True)  # cleanup on success and failure
+    not_evaluated: dict[str, int] = {}
+    for f in files:
+        ext = f.suffix.lower()
+        if ext in UNSUPPORTED_SOURCE:
+            not_evaluated[ext] = not_evaluated.get(ext, 0) + 1
+    coverage = {"analyzedSourceFiles": sum(1 for f in files if f.suffix.lower() in SUPPORTED_SOURCE),
+                "notEvaluated": dict(sorted(not_evaluated.items()))}
     return {"raw": raw, "completed": completed, "failed": failed, "stages": stages,
-            "files": len(files), "notes": notes}
+            "files": len(files), "notes": notes, "coverage": coverage}
 
 
 def failed_collection(required, reason: str, stage: str = "sandbox") -> dict:
@@ -144,8 +156,24 @@ def assemble(cfg: ScoreConfig, pol: policy_mod.Policy, collected: dict, baseline
             failed.setdefault(d, f"malformed detector output: {type(e).__name__}")
         completed, raw = [], []
         stages["validation"] = "failed"
+    cov0 = collected.get("coverage") or {}
+    if cov0.get("notEvaluated") and cov0.get("analyzedSourceFiles") == 0:
+        # Only unsupported-language source was present: nothing was analysed, so "0 findings" would mislead.
+        failed.setdefault("coverage", "no supported-language source files were analysed")
     completeness = Completeness("complete" if not failed else "incomplete", tuple(cfg.required_detectors),
                                 tuple(completed), failed)
+    if cfg.rule_confidence:
+        # Measured tiers are a CAP keyed "RULE@reported-confidence": calibration may lower a finding's confidence
+        # (insufficient/poor evidence) but never raise it above what the detector itself reported.
+        from dataclasses import replace
+        from ..domain.models import Confidence
+
+        def capped(r):
+            tier = cfg.rule_confidence.get(f"{r.rule_id}@{r.confidence.value}")
+            if tier and Confidence(tier).rank < r.confidence.rank:
+                return replace(r, confidence=Confidence(tier))
+            return r
+        raw = [capped(r) for r in raw]
     seen: dict[str, FindingRecord] = {}
     secret_sites: set[tuple] = set()  # two secret detectors flagging one line count once
     now = time.time()
@@ -172,6 +200,12 @@ def assemble(cfg: ScoreConfig, pol: policy_mod.Policy, collected: dict, baseline
     if completeness.state == "complete":
         fixed = [fp for fp, b in baseline.items() if fp not in seen and b["state"] != State.FIXED.value]
     score = compute_score(cfg, findings, completeness)
+    cov = collected.get("coverage") or {"analyzedSourceFiles": None, "notEvaluated": {}}
+    score["coverage"] = cov  # a score only describes what was analysed; show what was not
+    notes = list(collected["notes"])
+    if cov["notEvaluated"]:
+        notes.append("NOT EVALUATED (unsupported language): " +
+                     ", ".join(f"{n} {e} file(s)" for e, n in cov["notEvaluated"].items()))
     decision = policy_mod.evaluate(pol, findings, completeness)
     return {
         "status": "complete" if completeness.state == "complete" else "incomplete",
@@ -180,7 +214,7 @@ def assemble(cfg: ScoreConfig, pol: policy_mod.Policy, collected: dict, baseline
                          "completedDetectors": len(completeness.completed),
                          "missing": completeness.missing, "failures": failed},
         "securityDebt": score, "decision": decision, "stages": stages,
-        "findings": findings, "fixed": fixed, "filesScanned": collected["files"], "notes": collected["notes"],
+        "findings": findings, "fixed": fixed, "filesScanned": collected["files"], "notes": notes,
         "supportMatrix": SUPPORT_MATRIX,
     }
 

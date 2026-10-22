@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import json
 import math
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 from .models import EXCLUDED_STATES, Completeness, FindingRecord, State
@@ -22,6 +22,8 @@ class ScoreConfig:
     aging_max_extra: float
     k: float
     required_detectors: tuple[str, ...]
+    # Per-rule confidence tier overrides (from measured precision). Empty in the shipped score-v1.
+    rule_confidence: dict = field(default_factory=dict)
 
     @classmethod
     def load(cls, path: Path | None = None) -> "ScoreConfig":
@@ -33,7 +35,7 @@ class ScoreConfig:
             raise ValueError("K must be positive")
         return cls(d["version"], d["impact"], d["exposure"], d["confidence"],
                    d["aging"]["enabled"], d["aging"]["max_days"], d["aging"]["max_extra"],
-                   float(d["normalization_k"]), tuple(d["required_detectors"]))
+                   float(d["normalization_k"]), tuple(d["required_detectors"]), dict(d.get("rule_confidence", {})))
 
 
 def aging_multiplier(cfg: ScoreConfig, days_open: int) -> float:

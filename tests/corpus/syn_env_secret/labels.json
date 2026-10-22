@@ -1,0 +1,14 @@
+{
+ "source": "synthetic",
+ "fully_labeled": true,
+ "vulns": [
+  {
+   "path": "app.env",
+   "line": 1,
+   "kind": "secret"
+  }
+ ],
+ "adjudicated": false,
+ "reviewers": 0,
+ "note": "secret in an .env file with an upper-case, prefixed name"
+}

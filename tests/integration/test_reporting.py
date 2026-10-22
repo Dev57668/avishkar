@@ -184,12 +184,12 @@ def test_span_marks_errors(tmp_path):
 def test_calibration_report_is_evidence_not_approval():
     r = run_calibration(CORPUS)
     assert r["calibrated"] is False and "NOT CALIBRATED" in r["verdict"]
-    assert any("adjudicated" in b for b in r["approvalBlockers"]) and any("too small" in b for b in r["approvalBlockers"])
+    assert any("adjudicated" in b for b in r["approvalBlockers"]) and any("independent" in b for b in r["approvalBlockers"])
     assert all(v["monotonic"] for v in r["factorSensitivity"].values())
     s = r["stabilityAndGaming"]
     assert s["identicalInputsIdenticalScore"] and s["corpusReplayIdentical"] and s["acceptingRiskDoesNotLowerIndex"] and s["fixingLowersIndex"]
-    assert r["detectors"]["byRule"]["PY-EVAL"]["precision"] == 1.0 and r["detectors"]["totalCases"] == 6
-    assert "currentK" in r["normalization"] and "indexByCandidateK" in r["normalization"]
+    assert r["detectors"]["byRule"]["PY-EVAL"]["precision"] == 1.0
+    assert "currentK" in r["normalization"] and "indexAtLandmarks" in r["normalization"]
     assert "Approval blockers" in render_markdown(r)
 
 
@@ -199,4 +199,5 @@ def test_calibration_counts_false_positives_and_misses(tmp_path):
     (d / "a.py").write_text("x = eval(s)\n")
     (d / "labels.json").write_text(json.dumps({"expected": [{"rule": "PY-SHELL", "path": "a.py"}]}))
     r = run_calibration(tmp_path)
-    assert r["detectors"]["byRule"]["PY-EVAL"]["fp"] == 1 and r["detectors"]["byRule"]["PY-SHELL"]["fn"] == 1
+    assert r["detectors"]["byRule"]["PY-EVAL"]["fp"] == 1  # finding with no matching label
+    assert r["detectors"]["recallByKind"]["cmdi"] == {"found": 0, "missed": 1, "recall": 0.0}  # label with no finding

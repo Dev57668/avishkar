@@ -37,6 +37,11 @@ def to_sarif(run: dict, findings: list[dict], tool_version: str = "2.0.0") -> di
         miss = (run.get("completeness") or {}).get("missing") or []
         invocation["toolExecutionNotifications"] = [{
             "level": "error", "message": {"text": "Analysis incomplete (NOT a pass). Missing: " + ", ".join(miss or ["unknown"])}}]
+    cov = sd.get("coverage") or {}
+    if cov.get("notEvaluated"):
+        invocation.setdefault("toolExecutionNotifications", []).append({
+            "level": "warning", "message": {"text": "Not evaluated (unsupported language): " +
+                                            ", ".join(f"{n} {e}" for e, n in cov["notEvaluated"].items())}})
     return {"$schema": SARIF_SCHEMA, "version": "2.1.0", "runs": [{
         "tool": {"driver": {"name": "Avishkar", "version": tool_version, "rules": rules}},
         "results": results, "invocations": [invocation],
@@ -59,6 +64,10 @@ def render_summary(run_status: str, score: dict, decision: dict, completeness: d
                   f"(policy `{decision['policyVersion']}`, {decision['mode'].replace('_', '-')} mode)",
                   f"- Raw debt units: **{score['rawUnits']}** · index {score['normalizedIndex']} "
                   f"(`{score['scoreVersion']}`, uncalibrated)", ""]
+        ne = (score.get("coverage") or {}).get("notEvaluated")
+        if ne:
+            lines += ["> **Not evaluated** (no detector for this language): " +
+                      ", ".join(f"{n} `{e}` file(s)" for e, n in ne.items()) + ". Results cover supported languages only.", ""]
         if findings:
             lines += ["| Severity | Finding | Location |", "|---|---|---|"]
             for f in findings[:limit]:

@@ -1,0 +1,14 @@
+{
+ "source": "synthetic",
+ "fully_labeled": true,
+ "vulns": [
+  {
+   "path": "a.py",
+   "line": 2,
+   "kind": "cors"
+  }
+ ],
+ "adjudicated": false,
+ "reviewers": 0,
+ "note": "header assigned by subscript: expected MISS for the regex CORS rule"
+}

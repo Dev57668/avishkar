@@ -1,0 +1,19 @@
+{
+ "source": "synthetic",
+ "fully_labeled": true,
+ "vulns": [
+  {
+   "path": "package.json",
+   "line": null,
+   "kind": "dependency"
+  },
+  {
+   "path": "package.json",
+   "line": null,
+   "kind": "dependency"
+  }
+ ],
+ "adjudicated": false,
+ "reviewers": 0,
+ "note": "lodash<4.17.21 plus a missing lockfile; both reported on package.json"
+}

@@ -1,0 +1,221 @@
+{
+  "version": "score-v1-candidate",
+  "status": "candidate-not-approved",
+  "impact": {
+    "critical": 5,
+    "high": 4,
+    "medium": 3,
+    "low": 2,
+    "informational": 1
+  },
+  "exposure": {
+    "confirmed_external": 1.5,
+    "prerequisites": 1.25,
+    "internal": 1.0,
+    "unreachable": 0.75,
+    "unknown": 1.0
+  },
+  "confidence": {
+    "high": 1.0,
+    "medium": 0.75,
+    "low": 0.5
+  },
+  "aging": {
+    "enabled": false,
+    "max_days": 90,
+    "max_extra": 0.5
+  },
+  "normalization_k": 13.048,
+  "required_detectors": [
+    "secrets",
+    "code-patterns",
+    "dependencies"
+  ],
+  "notes": "All numeric values are ordinal, provisional weights (spec Appendix A/P). K is not calibrated.",
+  "rule_confidence": {
+    "DEP-DJANGO-OLD@high": "low",
+    "DEP-LODASH@high": "low",
+    "DEP-NOLOCK@medium": "low",
+    "DEP-PYYAML@high": "low",
+    "DEP-UNPINNED@high": "low",
+    "JS-CMDI@medium": "low",
+    "JS-EVAL@medium": "low",
+    "JS-INNERHTML@medium": "low",
+    "JS-TLS@high": "low",
+    "PY-DEBUG@low": "low",
+    "PY-EVAL@medium": "low",
+    "PY-NOVERIFY@high": "low",
+    "PY-PICKLE@medium": "low",
+    "PY-SHELL@medium": "low",
+    "PY-SQLI@medium": "low",
+    "PY-WEAKHASH@medium": "low",
+    "PY-YAML@medium": "low",
+    "SEC-AWS-KEY@high": "low",
+    "SEC-AWS-KEY@low": "low",
+    "SEC-GENERIC@low": "low",
+    "SEC-GENERIC@medium": "low",
+    "SEC-GH-TOKEN@high": "low",
+    "SEC-PRIVKEY@high": "low",
+    "SEC-SLACK@high": "low"
+  },
+  "calibration": {
+    "anchor": "reference case 'ind_python_app' (21.0 raw units under the capped confidences; 31.75 under the current version) reads as index 80.0",
+    "anchorIsAHumanDecision": true,
+    "corpusCases": 43,
+    "independentCases": 3,
+    "adjudicatedCases": 0,
+    "capSemantics": "tier can only LOWER a finding's confidence, never raise it above the detector's own; rules with < 8 labeled findings are capped at 'low' (spec P.3)",
+    "ruleEvidence": {
+      "DEP-DJANGO-OLD@high": {
+        "tier": "low",
+        "evidence": "insufficient evidence (n=1 < 8)",
+        "precision": 1.0,
+        "n": 1
+      },
+      "DEP-LODASH@high": {
+        "tier": "low",
+        "evidence": "insufficient evidence (n=1 < 8)",
+        "precision": 1.0,
+        "n": 1
+      },
+      "DEP-NOLOCK@medium": {
+        "tier": "low",
+        "evidence": "insufficient evidence (n=1 < 8)",
+        "precision": 1.0,
+        "n": 1
+      },
+      "DEP-PYYAML@high": {
+        "tier": "low",
+        "evidence": "insufficient evidence (n=1 < 8)",
+        "precision": 1.0,
+        "n": 1
+      },
+      "DEP-UNPINNED@high": {
+        "tier": "low",
+        "evidence": "insufficient evidence (n=1 < 8)",
+        "precision": 1.0,
+        "n": 1
+      },
+      "JS-CMDI@medium": {
+        "tier": "low",
+        "evidence": "insufficient evidence (n=2 < 8)",
+        "precision": 1.0,
+        "n": 2
+      },
+      "JS-EVAL@medium": {
+        "tier": "low",
+        "evidence": "insufficient evidence (n=3 < 8)",
+        "precision": 0.667,
+        "n": 3
+      },
+      "JS-INNERHTML@medium": {
+        "tier": "low",
+        "evidence": "insufficient evidence (n=1 < 8)",
+        "precision": 1.0,
+        "n": 1
+      },
+      "JS-TLS@high": {
+        "tier": "low",
+        "evidence": "insufficient evidence (n=1 < 8)",
+        "precision": 1.0,
+        "n": 1
+      },
+      "PY-DEBUG@low": {
+        "tier": "low",
+        "evidence": "insufficient evidence (n=2 < 8)",
+        "precision": 1.0,
+        "n": 2
+      },
+      "PY-EVAL@medium": {
+        "tier": "low",
+        "evidence": "insufficient evidence (n=3 < 8)",
+        "precision": 1.0,
+        "n": 3
+      },
+      "PY-NOVERIFY@high": {
+        "tier": "low",
+        "evidence": "insufficient evidence (n=2 < 8)",
+        "precision": 1.0,
+        "n": 2
+      },
+      "PY-PICKLE@medium": {
+        "tier": "low",
+        "evidence": "insufficient evidence (n=2 < 8)",
+        "precision": 1.0,
+        "n": 2
+      },
+      "PY-SHELL@medium": {
+        "tier": "low",
+        "evidence": "insufficient evidence (n=5 < 8)",
+        "precision": 1.0,
+        "n": 5
+      },
+      "PY-SQLI@medium": {
+        "tier": "low",
+        "evidence": "insufficient evidence (n=4 < 8)",
+        "precision": 1.0,
+        "n": 4
+      },
+      "PY-WEAKHASH@medium": {
+        "tier": "low",
+        "evidence": "insufficient evidence (n=4 < 8)",
+        "precision": 1.0,
+        "n": 4
+      },
+      "PY-YAML@medium": {
+        "tier": "low",
+        "evidence": "insufficient evidence (n=1 < 8)",
+        "precision": 1.0,
+        "n": 1
+      },
+      "SEC-AWS-KEY@high": {
+        "tier": "low",
+        "evidence": "insufficient evidence (n=1 < 8)",
+        "precision": 1.0,
+        "n": 1
+      },
+      "SEC-AWS-KEY@low": {
+        "tier": "low",
+        "evidence": "insufficient evidence (n=1 < 8)",
+        "precision": 1.0,
+        "n": 1
+      },
+      "SEC-GENERIC@low": {
+        "tier": "low",
+        "evidence": "insufficient evidence (n=3 < 8)",
+        "precision": 0.333,
+        "n": 3
+      },
+      "SEC-GENERIC@medium": {
+        "tier": "low",
+        "evidence": "insufficient evidence (n=3 < 8)",
+        "precision": 1.0,
+        "n": 3
+      },
+      "SEC-GH-TOKEN@high": {
+        "tier": "low",
+        "evidence": "insufficient evidence (n=2 < 8)",
+        "precision": 1.0,
+        "n": 2
+      },
+      "SEC-PRIVKEY@high": {
+        "tier": "low",
+        "evidence": "insufficient evidence (n=1 < 8)",
+        "precision": 1.0,
+        "n": 1
+      },
+      "SEC-SLACK@high": {
+        "tier": "low",
+        "evidence": "insufficient evidence (n=1 < 8)",
+        "precision": 1.0,
+        "n": 1
+      }
+    },
+    "approvalBlockers": [
+      "labels are not adjudicated by >=2 reviewers (App. P.2)",
+      "only 3 independent (not written by the detector author) cases; synthetic cases measure self-consistency, not real-world precision",
+      "22 rule(s) have fewer than 8 labeled findings: confidence stays low"
+    ],
+    "notes": "Generated by `avishkar calibrate --fit`. Do NOT enable policy blocking on this version."
+  }
+}

@@ -31,6 +31,11 @@ def main(argv=None) -> int:
     k = sub.add_parser("calibrate", help="evidence report for the scoring calibration protocol (App. P)")
     k.add_argument("corpus")
     k.add_argument("--json", action="store_true")
+    k.add_argument("--fit", metavar="OUT.json", help="write a CANDIDATE score config (never approved) fitted to the corpus")
+    k.add_argument("--anchor-index", type=float, default=80.0,
+                   help="index the reference case should read as (a human decision; default 80)")
+    k.add_argument("--anchor-case", default=None,
+                   help="corpus case used as the K reference (default: heaviest independent case)")
     a = ap.parse_args(argv)
 
     if a.cmd == "serve":
@@ -77,6 +82,14 @@ def main(argv=None) -> int:
     if a.cmd == "calibrate":
         from .calibration import render_markdown, run_calibration
         rep = run_calibration(Path(a.corpus))
+        if a.fit:
+            from .calibration import build_candidate
+            from .domain.scoring import CONFIG_DIR
+            base_cfg = Path(os.environ.get("AVISHKAR_SCORE_CONFIG") or CONFIG_DIR / "score-v1.json")
+            cand = build_candidate(rep, base_cfg, Path(a.corpus), a.anchor_index, a.anchor_case)
+            Path(a.fit).parent.mkdir(parents=True, exist_ok=True)
+            Path(a.fit).write_text(json.dumps(cand, indent=2))
+            print(f"candidate written to {a.fit} (K={cand['normalization_k']}, status={cand['status']})", file=sys.stderr)
         print(json.dumps(rep, indent=2, default=str) if a.json else render_markdown(rep))
         return 0
 
