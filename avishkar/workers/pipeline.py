@@ -72,7 +72,9 @@ def extract_zip(src: "Path | bytes", dest: Path) -> None:
 
 
 def _collect_files(root: Path) -> tuple[list[Path], list[str]]:
-    files, notes, total = [], [], 0
+    files: list = []
+    notes: list = []
+    total = 0
     for p in sorted(root.rglob("*")):
         if any(part in SKIP_DIRS for part in p.relative_to(root).parts):
             continue
@@ -96,8 +98,12 @@ def collect_findings(required: tuple[str, ...], source_dir: Path | None = None, 
                      detectors: dict | None = None) -> dict:
     """Untrusted-content stage. Returns JSON-serializable detector output; the workspace is always removed."""
     detectors = detectors if detectors is not None else DETECTORS
-    raw, completed, failed, stages = [], [], {}, {}
-    files, notes = [], []
+    raw: list = []
+    completed: list = []
+    failed: dict = {}
+    stages: dict = {}
+    files: list = []
+    notes: list = []
     workspace = Path(tempfile.mkdtemp(prefix="avishkar-"))
     try:
         root = workspace / "src"
@@ -106,7 +112,7 @@ def collect_findings(required: tuple[str, ...], source_dir: Path | None = None, 
                 root.mkdir()
                 extract_zip(zip_path, root)
             else:
-                shutil.copytree(source_dir, root, symlinks=True, ignore=shutil.ignore_patterns(*SKIP_DIRS))
+                shutil.copytree(str(source_dir), root, symlinks=True, ignore=shutil.ignore_patterns(*SKIP_DIRS))
             files, notes = _collect_files(root)
             stages["checkout"] = "ok"
         except Exception as e:

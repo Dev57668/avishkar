@@ -18,6 +18,7 @@ from __future__ import annotations
 import json
 import math
 import statistics
+from typing import Any
 from dataclasses import replace
 from pathlib import Path
 
@@ -171,11 +172,11 @@ def _rec(sev, conf, exp, days=0, state=State.OPEN, n="a"):
 def factor_sensitivity(cfg: ScoreConfig) -> dict:
     """One-factor-at-a-time monotonicity checks (P.4). Aging is evaluated as if enabled."""
     on = replace(cfg, aging_enabled=True)
-    order = {"impact": [Severity.INFORMATIONAL, Severity.LOW, Severity.MEDIUM, Severity.HIGH, Severity.CRITICAL],
+    order: dict[str, list] = {"impact": [Severity.INFORMATIONAL, Severity.LOW, Severity.MEDIUM, Severity.HIGH, Severity.CRITICAL],
              "confidence": [Confidence.LOW, Confidence.MEDIUM, Confidence.HIGH],
              "exposure": [Exposure.UNREACHABLE, Exposure.INTERNAL, Exposure.PREREQUISITES, Exposure.CONFIRMED_EXTERNAL],
              "age_days": [0, 30, 60, 90, 365]}
-    out = {}
+    out: dict[str, Any] = {}
     for name, values in order.items():
         series = []
         for v in values:
@@ -228,7 +229,7 @@ def k_analysis(case_units: list[float], current_k: float) -> dict:
 # --------------------------------------------------------------------------- fitting (candidate, never approved)
 def propose_rule_confidence(by_rule: dict) -> dict:
     """Map measured precision to a confidence tier. Too little evidence => 'low' (report-only, cannot block)."""
-    out = {}
+    out: dict[str, Any] = {}
     for rule, v in by_rule.items():
         lb, n = v["wilsonLower95"], v["n"]
         if n < MIN_N or lb is None:
@@ -294,7 +295,7 @@ def run_calibration(corpus: Path, cfg: ScoreConfig | None = None, pol: Policy | 
     cfg, pol = cfg or ScoreConfig.load(), pol or Policy.load()
     det = evaluate_detectors(corpus, cfg, pol)
     units = [c["rawUnits"] for c in det["cases"] if c["status"] == "complete"]
-    report = {"scoreVersion": cfg.version, "calibrated": False, "detectors": det,
+    report: dict[str, Any] = {"scoreVersion": cfg.version, "calibrated": False, "detectors": det,
               "factorSensitivity": factor_sensitivity(cfg),
               "stabilityAndGaming": stability_and_gaming(cfg, pol, corpus),
               "normalization": k_analysis(units, cfg.k)}

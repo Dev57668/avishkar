@@ -164,7 +164,6 @@ def create_app(db_url: str | None = None, *, secret_key: str | None = None, scor
     wh_secret = webhook_secret if webhook_secret is not None else os.environ.get("GITHUB_WEBHOOK_SECRET", "")
     quota = max_active_jobs or int(os.environ.get("AVISHKAR_MAX_ACTIVE_JOBS", "20"))
     throttle = LoginThrottle(store)
-    dummy_hash = hash_password(secrets.token_urlsafe(12))
     runner = JobRunner(store, cfg, pol, sbx, github)
     if start_worker is None:
         start_worker = os.environ.get("AVISHKAR_EMBEDDED_WORKER", "1") != "0"
@@ -272,6 +271,7 @@ def create_app(db_url: str | None = None, *, secret_key: str | None = None, scor
     def _send_link(u: dict, purpose: str, ttl: float) -> None:
         tok = secrets.token_urlsafe(32)
         store.add_email_token(u["id"], purpose, hashlib.sha256(tok.encode()).hexdigest(), time.time() + ttl)
+        assert mail is not None  # callers check the mailer first
         (mail.send_verification if purpose == "verify" else mail.send_reset)(u["email"], tok)
 
     def _mail_budget(org: str, action: str, key: str, per_hour: int) -> bool:

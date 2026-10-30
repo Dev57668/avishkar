@@ -13,7 +13,9 @@ MARKER = "<!-- avishkar-summary -->"
 def to_sarif(run: dict, findings: list[dict], tool_version: str = "2.0.0") -> dict:
     """`findings` rows: rule_id,title,severity,confidence,category,remediation,path,line_start,evidence,fingerprint,state.
     Avishkar-specific debt fields live under run.properties, not in standard SARIF fields."""
-    rules, seen, results = [], {}, []
+    rules: list[dict] = []
+    seen: dict = {}
+    results: list[dict] = []
     for f in findings:
         rid = f["rule_id"]
         if rid not in seen:

@@ -53,7 +53,7 @@ def configure_tracing(exporter=None) -> bool:
             return False
         exporter, proc = OTLPSpanExporter(), BatchSpanProcessor
     else:
-        proc = SimpleSpanProcessor
+        proc = SimpleSpanProcessor  # type: ignore[assignment]
     provider = TracerProvider(resource=Resource.create({"service.name": os.environ.get("OTEL_SERVICE_NAME", "avishkar")}))
     provider.add_span_processor(proc(exporter))
     _tracer = provider.get_tracer("avishkar")  # private provider: never mutates global OTel state

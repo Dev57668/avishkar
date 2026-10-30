@@ -17,6 +17,7 @@ import shutil
 import tempfile
 import time
 from dataclasses import dataclass
+from typing import Any
 from pathlib import Path
 
 from .api.security import hash_password
@@ -83,7 +84,7 @@ def seed_demo(store, cfg: ScoreConfig, pol: Policy, sandbox, settings: DemoSetti
     if not org:
         raise RuntimeError("create the admin/organization before seeding the demo")
     org_id = org[0]["id"]
-    out = {"viewer": False, "repos": []}
+    out: dict[str, Any] = {"viewer": False, "repos": []}
     if settings.password and not store.user_by_email(settings.email):
         store.create_user(org_id, settings.email, hash_password(settings.password), "viewer")
         out["viewer"] = True
@@ -120,7 +121,7 @@ def demo_results(cfg: ScoreConfig | None = None, pol: Policy | None = None) -> d
     """Real scan results of every bundled sample as shipped and with all fixes applied. Used to publish
     web/demo_results.json (the landing page's numbers) and by a test that fails when the file goes stale."""
     cfg, pol = cfg or ScoreConfig.load(), pol or Policy.load()
-    out = {"scoreVersion": cfg.version, "k": cfg.k, "calibrated": False, "samples": {}}
+    out: dict[str, Any] = {"scoreVersion": cfg.version, "k": cfg.k, "calibrated": False, "samples": {}}
     for sample in samples.SAMPLES.values():
         if not (samples.SAMPLES_DIR / sample.folder).is_dir():
             continue

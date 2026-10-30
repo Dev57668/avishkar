@@ -68,7 +68,8 @@ def explain_score(cfg: ScoreConfig, run: dict, rows: list[dict]) -> dict:
     by_fp = {r["fingerprint"]: r for r in rows}
     comps = sd.get("components") or []
     gross = sd.get("grossUnits") or 0.0
-    out, excluded = [], Counter()
+    out: list[dict] = []
+    excluded: Counter = Counter()
     for c in comps:
         if not c["counted"]:
             excluded[c["state"]] += 1
@@ -217,7 +218,8 @@ def repo_dashboard(repo: dict, runs: list[dict], findings: list[dict], latest_ro
 
 def org_overview(repos: list[dict]) -> dict:
     """repos: [{id,name,runs,latest_run (decoded)|None, open_by_sev:Counter}]"""
-    rows, totals = [], Counter()
+    rows: list[dict] = []
+    totals: Counter = Counter()
     for r in repos:
         run = r["latest_run"]
         sd = (run or {}).get("score") or {}

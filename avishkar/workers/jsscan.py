@@ -253,14 +253,14 @@ class _Analyzer:
                             nxt = T[p + 2].text if self.txt(p + 1) == "as" and p + 2 < k else None
                             in_braces = any(self.is_p(q, "{") for q in range(j, p))
                             if self.txt(p + 1) == "as" and self.txt(p - 1) != "as":
-                                names[nxt] = f"{m}.{T[p].text}" if in_braces else m
+                                names[nxt or ""] = f"{m}.{T[p].text}" if in_braces else m
                             elif not (p > j and self.txt(p - 1) == "as"):
                                 names[T[p].text] = f"{m}.{T[p].text}" if in_braces else m
                         p += 1
                     alias.update(names)
         return alias
 
-    def _function_context(self) -> list[str | None]:
+    def _function_context(self) -> list[str]:
         """For every token index, the name of the nearest enclosing named function ('' when none)."""
         T, stack, out = self.T, [], []
 

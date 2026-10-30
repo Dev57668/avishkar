@@ -39,6 +39,18 @@ jobs:
       - run: pip install -r requirements.txt "psycopg[binary]>=3.1" opentelemetry-sdk
       - run: python -m pytest tests/integration tests/unit/test_db_dialect.py -v -x -o faulthandler_timeout=90
 
+  # Static checks: pyflakes-class errors (undefined names, unused variables) and types on the Linux platform.
+  lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.12"}
+      - run: pip install -r requirements.txt "ruff==0.17.3" "mypy==2.4.1"
+      - run: ruff check avishkar scripts --select E9,F --ignore F401
+      - run: mypy avishkar --ignore-missing-imports --platform linux
+
   # Builds the worker image and runs the real Docker sandbox + Semgrep + Gitleaks end to end.
   docker-sandbox:
     runs-on: ubuntu-latest

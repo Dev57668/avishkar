@@ -19,6 +19,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+from typing import Any
 from pathlib import Path
 
 from .pipeline import collect_findings, failed_collection
@@ -99,7 +100,7 @@ class Sandbox:
             args = ["--required", ",".join(required)]
             if self.mode == "docker":
                 cmd = self._docker_cmd(out, source_dir, zip_path, args)
-                popen_kw = {}
+                popen_kw: dict[str, Any] = {}
             else:
                 # -I ignores PYTHONPATH, so the package root is inserted explicitly (it is our own trusted code).
                 boot = "import sys;sys.path.insert(0,sys.argv.pop(1));from avishkar.workers.sandbox_child import main;raise SystemExit(main())"

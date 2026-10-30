@@ -162,7 +162,7 @@ class _Visitor(ast.NodeVisitor):
         if isinstance(t, ast.Attribute):
             return [t.attr]
         if isinstance(t, ast.Subscript) and _is_str(t.slice):
-            return [t.slice.value]
+            return [str(getattr(t.slice, "value"))]
         return []
 
     def _assign(self, targets, value, node):

@@ -2,7 +2,7 @@
 #   docker build -f infra/Dockerfile.api -t avishkar-api .
 # NOTE: this image runs the scan worker with AVISHKAR_SANDBOX=process (a child process, NOT an isolation boundary).
 # Never expose uploads to untrusted users from this image: use AVISHKAR_UPLOADS=admin|off (see docs/DEPLOY_ONLINE.md).
-FROM python:3.12-slim
+FROM python:3.12-slim@sha256:aa943ce411423c7582288f18707ff66eddcbaeb510502d747a72aeb34f30d159
 ENV PYTHONUNBUFFERED=1 PYTHONDONTWRITEBYTECODE=1 PIP_NO_CACHE_DIR=1
 WORKDIR /app
 COPY requirements.txt .
