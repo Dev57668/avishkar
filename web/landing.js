@@ -1,0 +1,287 @@
+// Page motion: the 3D "file under scan" demo (Fig 1) and a light reveal for sections.
+// The demo shows the product working on real scanner output. Reduced motion gets final states.
+import * as THREE from '/static/vendor/three.module.min.js';
+
+const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const gsap = window.gsap;
+const $ = s => document.querySelector(s);
+const band = v => v > 80 ? ['critical', '#ff4d5e'] : v > 60 ? ['high', '#ff4d5e'] : v > 40 ? ['elevated', '#ffb547'] : v > 20 ? ['moderate', '#ffb547'] : ['low', '#b7c3d1'];
+
+/* ------------------------------------------------------------ hero: the real sample file under scan */
+// The sheet is sample_projects/vulnerable-python/app.py, lines 14-79, verbatim. The findings and the final
+// index are the real output of `python -m avishkar scan sample_projects/vulnerable-python` (score-v1).
+const FIRST_LINE = 14;
+const SRC = `import os
+import hashlib
+import sqlite3
+from flask import Flask, request, jsonify
+
+# VULNERABILITY 1: Hardcoded Secret
+API_KEY = "sk-1234567890abcdef"
+DATABASE_PASSWORD = "admin123"
+JWT_SECRET = "super_secret_key_do_not_share"
+
+app = Flask(__name__)
+
+
+# VULNERABILITY 2: SQL Injection
+def login(username, password):
+    """Vulnerable login function using string concatenation"""
+    conn = sqlite3.connect('users.db')
+    cursor = conn.cursor()
+
+    # SQL Injection: User input directly concatenated into query
+    query = f"SELECT * FROM users WHERE username='{username}' AND password='{password}'"
+    cursor.execute(query)
+
+    result = cursor.fetchone()
+    conn.close()
+    return result
+
+
+# VULNERABILITY 3: Command Injection
+def ping_host(host):
+    """Vulnerable ping function"""
+    # Command Injection: User input directly passed to shell
+    result = os.system(f"ping {host}")
+    return result
+
+
+# VULNERABILITY 4: Weak Cryptography
+def hash_password(password):
+    """Insecure password hashing using MD5"""
+    # Weak Crypto: MD5 is cryptographically broken
+    return hashlib.md5(password.encode()).hexdigest()
+
+
+# VULNERABILITY 5: Path Traversal
+def read_file(filename):
+    """Vulnerable file read function"""
+    # Path Traversal: No validation of user-supplied filename
+    filepath = f"/uploads/{filename}"
+    with open(filepath, 'r') as f:
+        return f.read()
+
+
+# VULNERABILITY 6: Eval - Code Injection
+def calculate(expression):
+    """Dangerous eval usage"""
+    # Code Injection: eval executes arbitrary code
+    return eval(expression)
+
+
+# VULNERABILITY 7: Insecure Deserialization
+import pickle
+
+def load_user_data(data):
+    """Vulnerable pickle deserialization"""
+    # Insecure Deserialization: pickle.loads can execute arbitrary code
+    return pickle.loads(data)`.split('\n');
+const FINDINGS = [
+  { line: 20, rid: 'SEC-GENERIC', ttl: 'Hard-coded credential assignment', sev: 'high' },
+  { line: 46, rid: 'PY-SHELL',    ttl: 'Shell command execution',          sev: 'high' },
+  { line: 54, rid: 'PY-WEAKHASH', ttl: 'Weak hash algorithm',              sev: 'low' },
+  { line: 70, rid: 'PY-EVAL',     ttl: 'Dynamic code execution (eval/exec)', sev: 'high' },
+  { line: 79, rid: 'PY-PICKLE',   ttl: 'Unsafe deserialization (pickle)',  sev: 'medium' },
+];
+const REPO = { index: 79.6, findings: 12, files: 3, decision: 'would block' };
+
+function hero() {
+  const canvas = $('#scene');
+  let renderer;
+  try { renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: 'high-performance' }); }
+  catch { canvas.remove(); return null; }
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 1.75));
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(32, 1, 0.1, 200);
+  camera.position.set(0, 0, 34);
+
+  // Paint the source onto a canvas: gutter with real line numbers, comments dimmer than code.
+  const PX = 1400, LH = 44, PAD = 40, TPX = PAD * 2 + SRC.length * LH;
+  const W = 15, H = W * TPX / PX, U = W / PX;                  // world units; U = units per canvas px
+  const tc = document.createElement('canvas'); tc.width = PX; tc.height = TPX;
+  const tex = new THREE.CanvasTexture(tc); tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 8;
+  const paint = () => {
+    const g = tc.getContext('2d'); g.clearRect(0, 0, PX, TPX);
+    g.font = '27px "Geist Mono", ui-monospace, monospace'; g.textBaseline = 'middle';
+    SRC.forEach((s, i) => {
+      const y = PAD + i * LH + LH / 2, t = s.trim();
+      g.fillStyle = '#4a4a5c'; g.textAlign = 'right'; g.fillText(String(FIRST_LINE + i), 92, y);
+      g.textAlign = 'left';
+      g.fillStyle = t.startsWith('#') || t.startsWith('"""') ? '#55556a' : '#b4b4c8';
+      g.fillText(s, 128, y);
+    });
+    tex.needsUpdate = true;
+  };
+  paint(); document.fonts && document.fonts.load('27px "Geist Mono"').then(paint).catch(() => {});
+
+  const file = new THREE.Group();
+  const lineY = n => H / 2 - (PAD + (n - FIRST_LINE) * LH + LH / 2) * U;
+  const bg = new THREE.Mesh(new THREE.PlaneGeometry(W, H), new THREE.MeshBasicMaterial({ color: 0x08101a, transparent: true, opacity: 0.86 }));
+  // The light source: a wide cobalt bloom behind the sheet, so the code reads as lit from beneath.
+  const bloomTex = (() => { const c = document.createElement('canvas'); c.width = c.height = 256; const g = c.getContext('2d');
+    const gr = g.createRadialGradient(128, 128, 0, 128, 128, 128); gr.addColorStop(0, 'rgba(61,123,255,.3)'); gr.addColorStop(0.45, 'rgba(61,123,255,.09)'); gr.addColorStop(1, 'rgba(61,123,255,0)');
+    g.fillStyle = gr; g.fillRect(0, 0, 256, 256); return new THREE.CanvasTexture(c); })();
+  const bloom = new THREE.Mesh(new THREE.PlaneGeometry(W * 2.6, W * 2.6), new THREE.MeshBasicMaterial({ map: bloomTex, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
+  bloom.position.set(0, 0, -3);
+  bg.position.z = -0.03; file.add(bg);
+  const edge = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.PlaneGeometry(W, H)), new THREE.LineBasicMaterial({ color: 0x22364a }));
+  file.add(edge);
+  const text = new THREE.Mesh(new THREE.PlaneGeometry(W, H), new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false }));
+  file.add(text);
+
+  // One highlight row per finding: a wash across the line and a solid gutter mark, revealed when scanned.
+  const SEV = { high: 0xff4d5e, medium: 0xffb547, low: 0x7cb4ff };
+  FINDINGS.forEach(f => {
+    const row = new THREE.Group(); row.position.set(0, lineY(f.line), -0.02);
+    const wash = new THREE.Mesh(new THREE.PlaneGeometry(W, LH * U), new THREE.MeshBasicMaterial({ color: SEV[f.sev], transparent: true, opacity: 0, depthWrite: false }));
+    const mark = new THREE.Mesh(new THREE.PlaneGeometry(0.07, LH * U), new THREE.MeshBasicMaterial({ color: SEV[f.sev], transparent: true, opacity: 0 }));
+    mark.position.x = -W / 2 + 0.035; mark.position.z = 0.03;
+    row.add(wash, mark); file.add(row); f.wash = wash; f.mark = mark;
+  });
+
+  // The scan head: one soft band of light (cobalt halo, cyan glow, near-white core) with feathered ends.
+  // Its shape never changes; only its brightness eases, so it never pops in or out.
+  const beamTex = (() => { const Wc = 512, Hc = 128, c = document.createElement('canvas'); c.width = Wc; c.height = Hc;
+    const g = c.getContext('2d'), img = g.createImageData(Wc, Hc);
+    for (let y = 0; y < Hc; y++) {
+      const dy = (y - Hc / 2) / (Hc / 2), halo = Math.exp(-dy * dy * 5), glow = Math.exp(-dy * dy * 60), core = Math.exp(-dy * dy * 1400);
+      for (let x = 0; x < Wc; x++) {
+        const u = x / (Wc - 1), k = Math.min(1, u / 0.14, (1 - u) / 0.14), fade = k * k * (3 - 2 * k), i = (y * Wc + x) * 4;
+        img.data[i]     = Math.min(255, 61 * halo + 34 * glow + 225 * core);
+        img.data[i + 1] = Math.min(255, 123 * halo + 225 * glow + 250 * core);
+        img.data[i + 2] = 255;
+        img.data[i + 3] = Math.min(255, 255 * fade * (0.28 * halo + 0.55 * glow + core));
+      }
+    }
+    g.putImageData(img, 0, 0); const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t; })();
+  const beam = new THREE.Mesh(new THREE.PlaneGeometry(W * 1.04, 2.6), new THREE.MeshBasicMaterial({ map: beamTex, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 1 }));
+  const scanner = new THREE.Group(); scanner.add(beam); scanner.position.z = 0.15;
+
+  // The file scrolls up beneath a fixed scan head, like paper through a reader.
+  const rig = new THREE.Group(); rig.add(file, scanner);
+  const pivot = new THREE.Group(); pivot.add(bloom, rig); scene.add(pivot);
+  rig.rotation.set(-0.95, 0.12, 0.05);   // laid back like a page on a desk, so it fills the figure's width
+
+  let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const dg = new THREE.BufferGeometry(); const dp = new Float32Array(500 * 3);
+  for (let i = 0; i < dp.length; i += 3) { dp[i] = (rnd() - .5) * 70; dp[i + 1] = (rnd() - .5) * 44; dp[i + 2] = -12 - rnd() * 40; }
+  dg.setAttribute('position', new THREE.BufferAttribute(dp, 3));
+  const dust = new THREE.Points(dg, new THREE.PointsMaterial({ color: 0x2d6f8f, size: 0.09, transparent: true, opacity: 0.5 }));
+  scene.add(dust);
+
+  // Readout
+  const list = $('#hud-list'), nEl = $('#hud-n'), stEl = $('#hud-st'), lnEl = $('#hud-lines'), prog = $('#hud-prog');
+  const idxEl = $('#hud-idx'), bandEl = $('#hud-band');
+  const addFinding = f => {
+    const li = document.createElement('li');
+    li.innerHTML = `<span class="sev ${f.sev}">${f.sev}</span><span class="ttl">${f.ttl}</span><span class="loc">:${f.line}</span>`;
+    list.appendChild(li); nEl.textContent = list.children.length;
+    if (gsap && !REDUCED) gsap.from(li, { opacity: 0, x: -10, duration: .6, ease: 'power3.out' });
+  };
+  const finish = () => {                                       // scoring happens once the pass completes
+    stEl.textContent = 'scoring'; stEl.style.color = '';
+    nEl.textContent = `${REPO.findings} in ${REPO.files} files`;
+    const done = () => { stEl.textContent = 'complete'; stEl.style.color = 'var(--ok)'; idxEl.style.color = c; };
+    const o = { v: 0 }, [name, c] = band(REPO.index);
+    const show = () => { idxEl.textContent = o.v.toFixed(1); };
+    bandEl.textContent = `${name} · ${REPO.decision} if enforced`; bandEl.style.color = c;
+    if (gsap && !REDUCED) gsap.to(o, { v: REPO.index, duration: 0.7, ease: 'power2.out', onUpdate: show, onComplete: done });
+    else { o.v = REPO.index; show(); done(); }
+  };
+
+  const layout = () => {
+    const w = canvas.clientWidth, h = canvas.clientHeight;
+    renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix();
+    const wide = w > 900;
+    pivot.position.set(0, wide ? 0.6 : 1, wide ? -2 : -6);
+  };
+  // the figure box grows as findings arrive, so follow the box itself, not just the window
+  new ResizeObserver(layout).observe(canvas.parentElement); layout();
+
+
+  const state = { exit: 0 };
+  const SWEEP = 7.5, HOLD = 3.5, CYCLE = SWEEP + HOLD, HEAD = 1.2;
+  const yTop = lineY(FIRST_LINE) + 0.6, yBot = lineY(FIRST_LINE + SRC.length - 1) - 0.6;
+  let visible = true, last = performance.now(), clock = 2.4, lastCycle = 0, hudDone = false;
+  new IntersectionObserver(([e]) => { visible = e.isIntersecting; }).observe(canvas);
+
+  function frameFn(now) {
+    requestAnimationFrame(frameFn);
+    const dt = Math.min(0.05, (now - last) / 1000); last = now;
+    if (!visible) return;
+    clock += REDUCED ? 0 : dt;
+    const cyc = Math.floor(clock / CYCLE), t = REDUCED ? SWEEP : clock % CYCLE;
+    if (cyc !== lastCycle) { lastCycle = cyc; FINDINGS.forEach(f => { f.seen = false; }); if (hudDone) stEl.textContent = 'complete · replay'; }
+    const p = Math.min(1, t / SWEEP);
+    const sy = yTop + (yBot - yTop) * p;                         // scan position in file coordinates
+    // during HOLD the paper rewinds smoothly so the loop never jumps
+    const rew = t > SWEEP ? (t - SWEEP) / HOLD : 0, ease = rew * rew * (3 - 2 * rew);
+    const at = p < 1 ? sy : yBot + (yTop - yBot) * ease;
+    file.position.y = -at + HEAD; scanner.position.y = HEAD;      // head sits above the readout panel, always in view
+    // brightness eases toward its target: full while scanning, a low idle glow while the paper rewinds
+    const target = p < 1 ? 1 : 0.6;                              // steady while scanning, dimmer (never gone) when idle
+    beam.material.opacity += (target - beam.material.opacity) * Math.min(1, dt * 3.5);
+
+    if (!hudDone) {
+      lnEl.textContent = String(Math.round(p * SRC.length)).padStart(2, '0') + '/' + SRC.length + ' lines';
+      prog.style.width = (p * 100).toFixed(1) + '%';
+    }
+    for (const f of FINDINGS) {
+      const hit = lineY(f.line) > sy;
+      if (hit && !f.seen) { f.seen = true; if (!hudDone) addFinding(f); }
+      const pulse = 0.85 + 0.15 * Math.sin(clock * 2 + f.line), k = Math.min(1, dt * 4);
+      f.wash.material.opacity += ((f.seen ? 0.2 * pulse : 0) - f.wash.material.opacity) * k;
+      f.mark.material.opacity += ((f.seen ? 1 : 0) - f.mark.material.opacity) * k;
+    }
+    if (p >= 1 && !hudDone) { hudDone = true; finish(); }
+
+    camera.position.z = 17 - state.exit * 12;
+    camera.position.y = -state.exit * 3;
+    dust.rotation.z = clock * 0.01;                              // slow drift, no cursor tracking
+    renderer.render(scene, camera);
+  }
+  requestAnimationFrame(frameFn);
+  return state;
+}
+const heroState = hero();
+
+/* ------------------------------------------------------------ scan form: show the chosen archive */
+{
+  const input = document.getElementById('file'), t = document.getElementById('drop-t'), drop = input && input.closest('.drop');
+  if (input && t) {
+    input.addEventListener('change', () => { const f = input.files[0]; t.textContent = f ? `${f.name} · ${(f.size / 1024).toFixed(0)} KB` : 'Drop a .zip here or choose a file'; });
+    ['dragenter', 'dragover'].forEach(e => drop.addEventListener(e, () => drop.classList.add('over')));
+    ['dragleave', 'drop'].forEach(e => drop.addEventListener(e, () => drop.classList.remove('over')));
+  }
+}
+
+/* ------------------------------------------------------------ Fig 2: hover + scroll to scrub the scan */
+// Only while the cursor is over the snippet does the wheel drive the scan line; at either end the page scrolls on.
+{
+  const code = document.getElementById('code');
+  const canScrub = code && matchMedia('(hover: hover)').matches && !REDUCED;
+  if (code && canScrub) {
+    const ol = code.querySelector('ol'), lines = [...ol.querySelectorAll('li:not(.ann)')];
+    const target = ol.querySelector('li.target'), ann = document.getElementById('annot'), pEl = document.getElementById('scrub-p');
+    const beam = document.createElement('div'); beam.className = 'scrub-beam'; beam.setAttribute('aria-hidden', 'true');
+    code.classList.add('scrub'); code.appendChild(beam);
+    let p = 0;
+    const render = () => {
+      const y = ol.offsetTop + p * ol.offsetHeight;                 // beam position inside the panel
+      beam.style.transform = `translateY(${y}px)`;
+      lines.forEach(li => li.classList.toggle('seen', li.offsetTop + li.offsetHeight / 2 <= y));
+      const hit = target.classList.contains('seen');
+      target.classList.toggle('hit', hit); ann.classList.toggle('open', hit);
+      pEl.textContent = p >= 1 ? 'scan complete · 1 finding' : `scan ${Math.round(p * 100)}%`;
+    };
+    code.addEventListener('wheel', e => {
+      if ((e.deltaY > 0 && p >= 1) || (e.deltaY < 0 && p <= 0)) return;   // at the ends, let the page scroll on
+      e.preventDefault();
+      p = Math.min(1, Math.max(0, p + e.deltaY / 900));
+      render();
+    }, { passive: false });
+    render();
+  }
+}
+

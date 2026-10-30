@@ -3,69 +3,224 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Avishkar</title>
-<style>
-:root{--bg:#f7f8fa;--fg:#14181f;--mut:#566074;--card:#fff;--bd:#d5dae3;--acc:#1f4fd8;--bad:#a4151e;--warn:#8a5a00;--ok:#14663a}
-@media (prefers-color-scheme:dark){:root{--bg:#0f1218;--fg:#e8ecf3;--mut:#9aa6bb;--card:#181d27;--bd:#2c3446;--acc:#7da2ff;--bad:#ff8a8f;--warn:#f0c060;--ok:#6fd49a}}
-*{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 system-ui,sans-serif}
-header{padding:16px 24px;border-bottom:1px solid var(--bd);display:flex;gap:16px;align-items:center;flex-wrap:wrap}
-h1{font-size:20px;margin:0}h2{font-size:16px;margin:0 0 8px}
-main{max-width:1100px;margin:0 auto;padding:16px 24px;display:grid;gap:16px}
-.card{background:var(--card);border:1px solid var(--bd);border-radius:8px;padding:16px}
-.mut{color:var(--mut)}
-button,input,select{font:inherit;color:inherit;background:var(--card);border:1px solid var(--bd);border-radius:6px;padding:6px 10px}
-button{cursor:pointer}button.p{background:var(--acc);color:#fff;border-color:var(--acc)}
-:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
-table{border-collapse:collapse;width:100%}th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--bd);vertical-align:top}
-.tag{font-weight:600;padding:1px 6px;border:1px solid currentColor;border-radius:4px;font-size:13px}
-.critical,.high,.block,.would_block,.not_evaluated,.incomplete{color:var(--bad)}.medium,.warn{color:var(--warn)}.low,.pass,.complete{color:var(--ok)}
-.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
-.stat b{display:block;font-size:26px}
-code{font-family:ui-monospace,monospace;font-size:13px;word-break:break-all}
-.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-.sr{position:absolute;left:-9999px}
-@media (max-width:600px){main{padding:12px}th:nth-child(n+4),td:nth-child(n+4){display:none}}
-</style>
+<title>Avishkar: security debt scorer for AI-written code</title>
+<meta name="description" content="Hackathon project: scans repository snapshots with deterministic detectors and scores the security debt in AI-generated code.">
+<link rel="stylesheet" href="/static/site.css">
 </head>
 <body>
-<header>
-  <h1>Avishkar <span class="mut" style="font-weight:400">AI-generated code security debt</span></h1>
-  <form id="keyform" class="row" aria-label="Sign in">
-    <label for="em">Email</label><input id="em" type="email" autocomplete="username" required size="22">
-    <label for="pw">Password</label><input id="pw" type="password" autocomplete="current-password" required size="16">
-    <button class="p">Sign in</button>
-  </form>
-  <span id="who" class="mut"></span>
+<div class="wash" aria-hidden="true"><i></i><i></i><i></i></div>
+<div class="doodles" aria-hidden="true">
+  <svg class="dd" style="left:4%;top:14%;--d:26s" width="70" height="60" viewBox="0 0 70 60"><path d="M22 30c0-9 6-15 13-15s13 6 13 15-6 17-13 17-13-8-13-17zM35 15v32M24 22l-10-6M24 31H10M24 40l-10 6M46 22l10-6M46 31h14M46 40l10 6M30 13l-4-7M40 13l4-7"/></svg>
+  <svg class="dd" style="right:6%;top:30%;--d:31s" width="54" height="64" viewBox="0 0 54 64"><path d="M14 28v-9a13 13 0 0 1 26 0v9M9 28h36v28H9zM27 39v7"/></svg>
+  <svg class="dd" style="left:8%;top:62%;--d:29s" width="60" height="68" viewBox="0 0 60 68"><path d="M30 6l22 8v16c0 16-10 26-22 32C18 56 8 46 8 30V14zM20 34l7 7 13-14"/></svg>
+  <svg class="dd" style="right:12%;top:78%;--d:24s" width="66" height="66" viewBox="0 0 66 66"><path d="M28 10a18 18 0 1 0 0 36 18 18 0 0 0 0-36zM41 41l16 16"/></svg>
+  <svg class="dd" style="left:44%;top:8%;--d:33s" width="90" height="40" viewBox="0 0 90 40"><path d="M4 30c14-22 26 10 40-8s22-8 30 2M74 24l10-2-6 9"/></svg>
+  <span class="dt" style="right:22%;top:12%;--d:28s">{ }</span>
+  <span class="dt" style="left:26%;top:44%;--d:35s">&lt;/&gt;</span>
+  <span class="dt" style="right:4%;top:55%;--d:27s">eval() ?!</span>
+  <span class="dt" style="left:3%;top:88%;--d:30s">md5 &rarr; nope</span>
+  <span class="dt" style="left:58%;top:70%;--d:32s">TODO: fix L46</span>
+  <span class="dt" style="right:30%;top:94%;--d:26s">debt &darr;</span>
+</div>
+<nav class="nav" aria-label="Primary">
+  <a class="brand" href="#top" aria-label="Avishkar home">
+    <svg width="20" height="20" viewBox="0 0 22 22" aria-hidden="true"><path d="M3 5h7M3 9h11M6 13h9M3 17h5" stroke="#f2f2f7" stroke-width="1.6" stroke-linecap="round"/><path d="M17 3v16" stroke="#22e1ff" stroke-width="1.6" stroke-linecap="round"/></svg>
+    avishkar
+  </a>
+  <div class="nav-links"><a href="#demo">demo</a><a href="#how">how it works</a><a href="#results">results</a><a href="#app">dashboard</a><a href="#limits">limits</a></div>
+  <span id="who"></span>
+</nav>
+
+<!-- ============ TITLE BLOCK ============ -->
+<header class="wrap intro anchor" id="top">
+  <span class="scene">scene 1 &middot; the idea</span><br>
+  <div class="stamp">Avishkar Industrial-Ready Hackathon 2026 &middot; team submission</div>
+  <h1>Avishkar <span class="sub">a security-debt scorer for AI-written code</span></h1>
+  <p class="lede">AI assistants write code faster than anyone reviews it. We built a tool that scans a repository snapshot with deterministic detectors, turns what it finds into a <span class="mono">0&ndash;100</span> security-debt index, and points at <span class="hl">the exact lines responsible</span>.</p>
+  <div class="sticky" style="top:40px;right:24px;--r:3deg">everything on this page is real output from our scanner. no mockups!</div>
+  <ul class="facts">
+    <li><b>18</b> detection rules</li>
+    <li><b>3</b> required detectors</li>
+    <li><b>200+</b> automated tests</li>
+    <li>SARIF export</li>
+    <li>GitHub check runs</li>
+  </ul>
+  <div class="actions">
+    <a class="btn solid" href="#app">Try the dashboard &darr;</a>
+    <a class="btn" href="#how">How it works</a>
+  </div>
 </header>
-<main>
-  <div id="status" role="status" aria-live="polite" class="mut"></div>
-  <section class="card" aria-labelledby="h-up">
-    <h2 id="h-up">Scan a repository snapshot</h2>
-    <form id="upform" class="row">
-      <label for="repo">Repository</label><input id="repo" required pattern="[\w.\-/]{1,100}" placeholder="org/name">
-      <label for="file">Zip archive</label><input id="file" type="file" accept=".zip" required>
-      <button class="p">Analyze</button>
-    </form>
-    <p class="mut" style="margin:8px 0 0">The index is a prioritization signal from uncalibrated provisional weights — not a breach probability or proof of safety.</p>
-  </section>
-  <section class="card" aria-labelledby="h-repos"><h2 id="h-repos">Repositories</h2><div id="repos" class="mut">Sign in to continue.</div></section>
-  <section class="card" id="admin" hidden aria-labelledby="h-admin">
-    <h2 id="h-admin">Administration</h2>
-    <div class="row" role="tablist" aria-label="Admin sections">
-      <button role="tab" data-tab="users" aria-selected="true">Users</button>
-      <button role="tab" data-tab="keys" aria-selected="false">API keys</button>
-      <button role="tab" data-tab="gh" aria-selected="false">GitHub</button>
-      <button role="tab" data-tab="jobs" aria-selected="false">Jobs</button>
-      <button role="tab" data-tab="audit" aria-selected="false">Audit &amp; metrics</button>
+
+<!-- ============ FIG 1: DEMO ============ -->
+<section class="wrap anchor" id="demo">
+  <span class="scene" style="margin-top:28px">scene 2 &middot; watch it scan</span>
+  <figure class="fig" style="margin-top:6px"><span class="tape tl"></span><span class="tape tr"></span>
+    <div class="fig-body demo">
+      <div class="stage3d"><canvas id="scene" aria-hidden="true"></canvas></div>
+      <aside class="hud" aria-label="Demo replay of a scan of the bundled sample project">
+        <div class="hud-h"><span><span class="demo-tag">Demo replay</span> <b>vulnerable-python/app.py</b></span><span id="hud-lines">00/66 lines</span></div>
+        <div class="hud-score"><div class="big" id="hud-idx">&mdash;</div><span class="k">security debt index <i>/ 100, higher is worse</i></span><span class="bd" id="hud-band">scoring after scan</span></div>
+        <div class="hud-bar"><i id="hud-prog"></i></div>
+        <ul id="hud-list"></ul>
+        <div class="hud-f"><span>findings <b id="hud-n">0</b></span><span>status <b id="hud-st">scanning</b></span></div>
+      </aside>
     </div>
-    <div id="admin-body" role="tabpanel" style="margin-top:12px"></div>
-  </section>
-  <section class="card" id="detail" hidden aria-labelledby="h-d"></section>
-</main>
+    <figcaption><b>Fig 1.</b> Replay of <span class="mono">python -m avishkar scan sample_projects/vulnerable-python</span>: the scan light walks <span class="mono">app.py</span> and each finding appears as its line is reached.</figcaption>
+  </figure>
+  <div class="note-row"><p class="note red">&uarr; red lines on the page = findings</p><p class="note">score only shows up after the full pass &uarr;</p></div>
+</section>
+
+<!-- ============ HOW IT WORKS ============ -->
+<section class="wrap blk anchor" id="how">
+  <span class="scene">scene 3 &middot; what happens inside</span>
+  <h2><span class="num">01</span> How it works</h2>
+  <ol class="pipe">
+    <li><b>Upload</b><span>a .zip of the repo + a name</span></li>
+    <li><b>Safe unpack</b><span>path traversal, symlinks and zip bombs are rejected</span></li>
+    <li><b>Detectors</b><span>secrets &middot; code patterns &middot; Python AST, in an isolated process</span></li>
+    <li><b>Score</b><span>impact &times; exposure &times; confidence (&times; age, off by default) &rarr; <span class="mono">0&ndash;100</span> (score-v1). Fix effort is tracked separately, never in the score</span></li>
+    <li><b>Decide</b><span>pass / warn / would block, plus SARIF and a GitHub check</span></li>
+  </ol>
+  <p class="note n-pipe">if any detector crashes or times out, the run is marked <u>incomplete</u>, never &ldquo;clean&rdquo;</p>
+</section>
+
+<!-- ============ RESULTS ============ -->
+<section class="wrap blk anchor" id="results">
+  <span class="scene">scene 4 &middot; does it actually work?</span>
+  <h2><span class="num">02</span> Does fixing code actually move the score?</h2>
+  <div class="two">
+    <div>
+      <div class="note-row above"><p class="note">this one line is the whole bug &darr;</p><p class="note scrub-hint">hover here + scroll to run the scan &#8597;</p></div>
+      <figure class="fig anchor" style="margin-top:4px"><span class="tape tl"></span>
+      <div class="code" id="code">
+        <div class="code-h">net_tools.py <span id="scrub-p">assistant-written, unreviewed</span></div>
+        <ol>
+<li><span class="k">import</span> os</li>
+<li> </li>
+<li> </li>
+<li><span class="k">def</span> <span class="f">ping_host</span>(host: str) -&gt; int:</li>
+<li>    <span class="s">"""Return 0 if the host answers a single ping."""</span></li>
+<li class="target hit">    <span class="k">return</span> os.system(<span class="s">f"ping -c 1 {host}"</span>)</li>
+<li class="ann" id="annot"><div class="t"><span class="sev high">PY-SHELL &middot; high</span><span>net_tools.py:6</span></div><p><b>Shell command execution.</b> The host name goes straight into a shell.</p><p class="fx">Fix: pass an argument list with <code>shell=False</code> and validate inputs.</p></li>
+<li> </li>
+<li><span class="k">def</span> <span class="f">load_settings</span>(path: str) -&gt; dict:</li>
+<li>    <span class="k">with</span> open(path) <span class="k">as</span> f:</li>
+<li>        <span class="k">return</span> dict(line.strip().split(<span class="s">"="</span>, 1) <span class="k">for</span> line <span class="k">in</span> f <span class="k">if</span> <span class="s">"="</span> <span class="k">in</span> line)</li>
+        </ol>
+      </div>
+      <figcaption><b>Fig 2.</b> One finding, one line. Rule, location and fix come straight from the detector.</figcaption>
+    </figure>
+    </div>
+    <div>
+      <table class="runs">
+        <caption>Fig 3. Real runs on <span class="mono">sample_projects/vulnerable-python</span></caption>
+        <thead><tr><th>run</th><th>index</th><th>findings</th><th>raw units</th><th>decision</th></tr></thead>
+        <tbody>
+          <tr><td>before</td><td class="mono crit">79.6</td><td class="mono">12</td><td class="mono">31.75</td><td>would block*</td></tr>
+          <tr><td>after fix</td><td class="mono crit">76.2</td><td class="mono">11</td><td class="mono">28.75</td><td>would block*</td></tr>
+          <tr class="delta"><td>change</td><td class="mono up"><span class="circled">&minus;3.4</span></td><td class="mono up">&minus;1</td><td class="mono up">&minus;3.00</td><td></td></tr>
+        </tbody>
+      </table>
+      <div class="diff"><div class="dh">the one-line fix &middot; app.py:46</div><div class="del">- result = os.system(f"ping {host}")</div><div class="add">+ result = subprocess.run(["ping", "-c", "1", host]).returncode</div></div>
+      <p class="small">* report-only mode: the policy says what it <i>would</i> block, nothing is blocked. Weights are provisional and uncalibrated.</p>
+      <p class="note n-res">fixed 1 of 12 findings &rarr; debt went down. the other 11 are still there!</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ APP ============ -->
+<section class="blk app anchor wrapless" id="app">
+  <div class="wrap">
+    <div class="app-head">
+      <div><span class="scene">scene 5 &middot; your turn</span><h2><span class="num">03</span> Run it on your own code</h2></div>
+      <div class="head-side"><div class="sticky inline">first run? the login is printed in the server terminal</div><div id="status" role="status" aria-live="polite"></div></div>
+    </div>
+    <main>
+      <section class="card signin" aria-labelledby="h-in">
+        <div>
+          <h2 id="h-in">Sign in</h2>
+          <form id="keyform" aria-label="Sign in">
+            <div class="field"><label for="em">Email</label><input id="em" type="email" autocomplete="username" placeholder="admin@your-team.dev" required></div>
+            <div class="field"><label for="pw">Password</label><input id="pw" type="password" autocomplete="current-password" placeholder="printed in the server terminal" required></div>
+            <button class="btn solid" style="width:100%;justify-content:center">Sign in <span class="arr">&rarr;</span></button>
+          </form>
+          <p class="first"><b>First run?</b> There is no self sign-up. When the server starts for the first time, the terminal running <span class="mono">python -m avishkar serve</span> prints an admin email and password. Use those here.</p>
+        </div>
+        <div class="side">
+          <div class="label">After you sign in</div>
+          <ol class="next">
+            <li><b>Upload a zip</b> of a repository snapshot and give it a name.</li>
+            <li><b>Get a debt index and findings</b> in seconds, each tied to a file and line.</li>
+            <li><b>Fix, rescan, compare</b> runs in the history.</li>
+          </ol>
+          <div class="preview" aria-label="Example result">
+            <div class="pv-h"><span><span class="demo">Example</span> <b>sample_projects/vulnerable-python</b></span><span>real scan output</span></div>
+            <div class="pv-s"><span class="pv-n">79.6</span><span class="high">high &middot; 12 findings</span></div>
+            <div class="pv-r"><span class="sev critical">critical</span><span>GitHub token</span><span class="mono">config.py:21</span></div>
+            <div class="pv-r"><span class="sev high">high</span><span>Shell command execution</span><span class="mono">app.py:46</span></div>
+            <div class="pv-r"><span class="sev high">high</span><span>Dynamic code execution</span><span class="mono">app.py:70</span></div>
+          </div>
+        </div>
+      </section>
+      <section class="card needs-auth" aria-labelledby="h-up">
+        <div class="label">Scan</div><h2 id="h-up">Scan a repository snapshot</h2>
+        <form id="upform" class="scanform">
+          <div class="field"><label for="repo">Repository name</label><input id="repo" required pattern="[\w.\-\/]{1,100}" placeholder="org/name"></div>
+          <label class="drop" for="file"><input id="file" type="file" accept=".zip" required><span class="drop-t" id="drop-t">Drop a .zip here or <u>choose a file</u></span><span class="drop-s">Archives are unpacked in isolation; traversal, symlinks and zip bombs are rejected.</span></label>
+          <button class="btn solid">Analyze <span class="arr">&rarr;</span></button>
+        </form>
+        <p class="mut" style="margin:14px 0 0;font-size:15px">The index is a prioritization signal from uncalibrated provisional weights, not a breach probability or proof of safety.</p>
+      </section>
+      <section class="card needs-auth" aria-labelledby="h-repos"><div class="label">Highest debt first</div><h2 id="h-repos">Repositories</h2><div id="repos" class="mut">Loading&hellip;</div></section>
+      <section class="card" id="detail" hidden aria-labelledby="h-d"></section>
+      <section class="card" id="admin" hidden aria-labelledby="h-admin">
+        <div class="label">Admin only</div><h2 id="h-admin">Administration</h2>
+        <div class="row" role="tablist" aria-label="Admin sections">
+          <button role="tab" data-tab="users" aria-selected="true">Users</button>
+          <button role="tab" data-tab="keys" aria-selected="false">API keys</button>
+          <button role="tab" data-tab="gh" aria-selected="false">GitHub</button>
+          <button role="tab" data-tab="jobs" aria-selected="false">Jobs</button>
+          <button role="tab" data-tab="audit" aria-selected="false">Audit &amp; metrics</button>
+        </div>
+        <div id="admin-body" role="tabpanel" style="margin-top:16px"></div>
+      </section>
+    </main>
+  </div>
+</section>
+
+
+<!-- ============ LIMITS ============ -->
+<section class="wrap blk anchor" id="limits">
+  <span class="scene">scene 6 &middot; the honest bit</span>
+  <h2><span class="num">04</span> Limitations &amp; what we'd do next</h2>
+  <div class="two">
+    <div class="sheet">
+      <h3>What the score does <u>not</u> tell you</h3>
+      <ul class="ticks">
+        <li>Zero findings is not a pass: detectors only know the patterns they were written for.</li>
+        <li>Weights are provisional: the calibration corpus is 43 labeled cases (3 independent, 40 synthetic) with no second reviewer, so nothing is calibrated yet.</li>
+        <li>JS/TS use regex rules; only Python gets the AST detector.</li>
+        <li>AI explanations are optional and advisory. They can't change severity, state or score.</li>
+      </ul>
+    </div>
+    <div class="sheet">
+      <h3>Next steps <span class="note" style="display:inline-block;font-size:19px;margin-left:8px">(if we had another week&hellip;)</span></h3>
+      <ul class="ticks todo">
+        <li>Calibrate the weights on real, labelled repositories.</li>
+        <li>AST detectors for JavaScript and TypeScript.</li>
+        <li>Docker sandbox on by default (the only real isolation boundary).</li>
+        <li>Trend view across many runs per repo.</li>
+      </ul>
+      <p class="stack"><span>Python</span><span>FastAPI</span><span>SQLite / PostgreSQL</span><span>Semgrep + Gitleaks (optional)</span><span>Three.js</span><span>GSAP</span></p>
+    </div>
+  </div>
+</section>
+
+<footer><div class="wrap"><span>avishkar &middot; built for the Avishkar Industrial-Ready Hackathon</span><span>score-v1 &middot; provisional weights</span></div></footer>
+
 <script>
 const $=s=>document.querySelector(s);
-let KEY=null,CUR=null,CFG={};
+let KEY=null,CUR=null,CFG={},ME=null;
 try{KEY=sessionStorage.getItem('tk')}catch{}
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 async function api(path,opt={}){
@@ -76,15 +231,18 @@ async function api(path,opt={}){
 }
 const say=m=>$('#status').textContent=m;
 const tag=(v)=>`<span class="tag ${esc(v)}">${esc(String(v).replace(/_/g,' '))}</span>`;
+const band=v=>v==null?'':v>80?'critical':v>60?'high':v>40?'medium':v>20?'medium':'low';
+const idx=v=>v==null?'<span class="mut">n/a</span>':`<span class="idx ${band(v)}">${v}</span>`;
 async function loadRepos(){
   try{
     const {items}=await api('/v1/repositories');
-    $('#repos').innerHTML=items.length?`<table><caption class="sr">Repositories</caption><thead><tr><th>Name</th><th>Runs</th><th>Index (0–100)</th><th>Raw debt units</th><th></th></tr></thead><tbody>`+
-      items.map(r=>`<tr><td>${esc(r.name)}</td><td>${r.runs}</td><td>${r.latestIndex??'n/a'}</td><td>${r.latestRawUnits??'n/a'}</td><td><button data-id="${esc(r.id)}" data-n="${esc(r.name)}">Open</button></td></tr>`).join('')+`</tbody></table>`:'No repositories yet. Upload a zip above.';
+    items.sort((a,b)=>(b.latestIndex??-1)-(a.latestIndex??-1));   // worst first
+    $('#repos').innerHTML=items.length?`<table class="repos"><caption class="sr">Repositories, highest debt first</caption><thead><tr><th>Name</th><th>Index (0–100)</th><th>Runs</th><th>Raw debt units</th><th></th></tr></thead><tbody>`+
+      items.map(r=>`<tr data-open="${esc(r.id)}" data-n="${esc(r.name)}"><td><b>${esc(r.name)}</b></td><td>${idx(r.latestIndex)}</td><td class="mono">${r.runs}</td><td class="mono">${r.latestRawUnits??'n/a'}</td><td><button data-id="${esc(r.id)}" data-n="${esc(r.name)}">Open &rarr;</button></td></tr>`).join('')+`</tbody></table>`:'No repositories yet. Upload a zip above.';
     $('#repos').classList.remove('mut');
   }catch(e){say(e.message)}
 }
-$('#repos').addEventListener('click',e=>{const b=e.target.closest('button[data-id]');if(b)openRepo(b.dataset.id,b.dataset.n)});
+$('#repos').addEventListener('click',e=>{const b=e.target.closest('button[data-id]')||e.target.closest('tr[data-open]');if(b)openRepo(b.dataset.id||b.dataset.open,b.dataset.n)});
 async function openRepo(id,name,fstate='',fsev=''){
   CUR={id,name};
   const [runs,fnd]=await Promise.all([api(`/v1/repositories/${id}/analyses`),
@@ -92,22 +250,28 @@ async function openRepo(id,name,fstate='',fsev=''){
   const last=runs.items[0];
   const sd=last?last.securityDebt:null;
   const d=$('#detail');d.hidden=false;
-  d.innerHTML=`<h2 id="h-d">${esc(name)}</h2>
+  d.innerHTML=`<div class="label">Latest analysis</div><h2 id="h-d">${esc(name)}</h2>
   ${last?`<div class="stats">
     <div class="stat card"><span class="mut">Analysis</span><b>${tag(last.status)}</b><span class="mut">${last.completeness.completedDetectors}/${last.completeness.requiredDetectors} required detectors</span></div>
-    <div class="stat card"><span class="mut">Normalized index</span><b>${sd.normalizedIndex??'Not calculated'}</b><span class="mut">${esc(sd.scoreVersion)}, uncalibrated, K=${sd.k}</span></div>
+    <div class="stat card"><span class="mut">Normalized index</span><b>${sd.normalizedIndex==null?'Not calculated':idx(sd.normalizedIndex)}</b><span class="mut">${esc(sd.scoreVersion)}, uncalibrated, K=${sd.k}</span></div>
     <div class="stat card"><span class="mut">Raw debt units</span><b>${sd.rawUnits??'—'}</b><span class="mut">gross incl. accepted risk: ${sd.grossUnits??'—'}</span></div>
     <div class="stat card"><span class="mut">Policy decision</span><b>${tag(last.decision.outcome)}</b><span class="mut">${esc(last.decision.mode)} mode · ${last.decision.reasons.map(esc).join(', ')||'no predicates matched'}</span></div>
   </div>`:''}
   ${last&&last.status!=='complete'?`<p role="alert" class="incomplete"><b>Incomplete analysis.</b> Missing coverage: ${last.completeness.missing.map(esc).join(', ')}. This is not a pass.</p>`:''}
-  <h2 style="margin-top:16px">Findings</h2>
+  <div class="label" style="margin-top:32px">Evidence</div><h2>Findings</h2>
   <div class="row"><label for="fs">State</label><select id="fs"><option value="">all</option>${['open','fixed','accepted_risk','false_positive','duplicate','not_applicable'].map(s=>`<option ${s===fstate?'selected':''}>${s}</option>`).join('')}</select>
   <label for="fv">Severity</label><select id="fv"><option value="">all</option>${['critical','high','medium','low','informational'].map(s=>`<option ${s===fsev?'selected':''}>${s}</option>`).join('')}</select></div>
-  <table><caption class="sr">Findings</caption><thead><tr><th>Severity</th><th>Finding</th><th>Location</th><th>Confidence</th><th>State</th><th>Action</th></tr></thead><tbody>${
-   fnd.items.map(f=>`<tr><td>${tag(f.severity)}</td><td><b>${esc(f.title)}</b><br><span class="mut">${esc(f.rule_id)} · ${esc(f.category)}</span><br><code>${esc(f.evidence)}</code><br><span class="mut">Fix: ${esc(f.remediation)} (effort: ${esc(f.effort)})</span></td><td><code>${esc(f.location)}</code></td><td>${esc(f.confidence)}</td><td>${esc(f.state)}</td>
-   <td><select aria-label="Disposition for ${esc(f.title)}" data-f="${esc(f.id)}" data-v="${f.version}"><option value="">Set…</option><option value="false_positive">False positive</option><option value="not_applicable">Not applicable</option><option value="accepted_risk">Accept risk (30 d)</option><option value="open">Reopen</option></select>${CFG.ai&&CFG.ai.enabled?`<br><button data-x="${esc(f.id)}">Explain (AI)</button>`:''}</td></tr>${f.explanation&&f.explanation.content?`<tr><td></td><td colspan="5"><b>AI explanation (advisory, does not affect the score):</b> ${esc(f.explanation.content.summary)} <i>${esc(f.explanation.content.why_it_matters)}</i><ol>${f.explanation.content.remediation_steps.map(x=>'<li>'+esc(x)+'</li>').join('')}</ol></td></tr>`:''}`).join('')||'<tr><td colspan="6">No findings.</td></tr>'}</tbody></table>
-  <h2 style="margin-top:16px">Run history</h2>
-  <table><thead><tr><th>When</th><th>Status</th><th>Index</th><th>Raw</th><th>Decision</th><th>Export</th></tr></thead><tbody>${runs.items.map(r=>`<tr><td>${new Date(r.startedAt*1000).toLocaleString()}</td><td>${tag(r.status)}</td><td>${r.securityDebt.normalizedIndex??'n/a'}</td><td>${r.securityDebt.rawUnits??'n/a'}</td><td>${tag(r.decision.outcome)}</td><td><button data-sarif="${esc(r.id)}">SARIF</button></td></tr>`).join('')}</tbody></table>`;
+  <ul class="findings" aria-label="Findings">${
+   fnd.items.map(f=>`<li class="fcard s-${esc(f.severity)}">
+     <div class="f-top">${tag(f.severity)}<b class="f-ttl">${esc(f.title)}</b><code class="f-loc">${esc(f.location)}</code></div>
+     <pre class="f-ev"><code>${esc(f.evidence)}</code></pre>
+     <p class="f-fix"><span class="f-k">Fix</span>${esc(f.remediation)} <span class="mut">(effort: ${esc(f.effort)})</span></p>
+     <div class="f-bot"><span class="f-meta">${esc(f.rule_id)} · ${esc(f.category)} · confidence ${esc(f.confidence)} · state <b>${esc(String(f.state).replace(/_/g,' '))}</b></span>
+       <span class="f-act"><select aria-label="Triage ${esc(f.title)}" data-f="${esc(f.id)}" data-v="${f.version}"><option value="">Triage…</option><option value="false_positive">False positive</option><option value="not_applicable">Not applicable</option><option value="accepted_risk">Accept risk (30 d)</option><option value="open">Reopen</option></select>${CFG.ai&&CFG.ai.enabled?`<button data-x="${esc(f.id)}">Explain (AI)</button>`:''}</span></div>
+     ${f.explanation&&f.explanation.content?`<div class="f-ai"><b>AI explanation (advisory, does not affect the score):</b> ${esc(f.explanation.content.summary)} <i>${esc(f.explanation.content.why_it_matters)}</i><ol>${f.explanation.content.remediation_steps.map(x=>'<li>'+esc(x)+'</li>').join('')}</ol></div>`:''}
+   </li>`).join('')||'<li class="fcard">No findings.</li>'}</ul>
+  <div class="label" style="margin-top:32px">Did it improve?</div><h2>Run history</h2>
+  <table><thead><tr><th>When</th><th>Status</th><th>Index</th><th>Change</th><th>Decision</th><th>Export</th></tr></thead><tbody>${runs.items.map((r,i,a)=>{const v=r.securityDebt.normalizedIndex,p=a[i+1]&&a[i+1].securityDebt.normalizedIndex;const d=v!=null&&p!=null?Math.round((v-p)*10)/10:null;return `<tr><td class="mono">${new Date(r.startedAt*1000).toLocaleString()}</td><td>${tag(r.status)}</td><td>${idx(v)}</td><td class="mono ${d==null?'mut':d<0?'pass':'high'}">${d==null?'first run':(d>0?'+':'')+d}</td><td>${tag(r.decision.outcome)}</td><td><button data-sarif="${esc(r.id)}">SARIF</button></td></tr>`}).join('')}</tbody></table>`;
   d.querySelectorAll('button[data-sarif]').forEach(b=>b.onclick=async()=>{const j=await api('/v1/analyses/'+b.dataset.sarif+'/sarif');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(j,null,2)],{type:'application/json'}));a.download=b.dataset.sarif+'.sarif';a.click()});
   $('#fs').onchange=()=>openRepo(id,name,$('#fs').value,$('#fv').value);
   $('#fv').onchange=()=>openRepo(id,name,$('#fs').value,$('#fv').value);
@@ -137,14 +301,14 @@ const ts=t=>t?new Date(t*1000).toLocaleString():'';
 const ADMIN={
   async users(){
     const {items}=await api('/v1/users');
-    return `<form id="f-user" class="row"><label for="u-e">Email</label><input id="u-e" type="email" required>
+    return `<form id="f-user" class="aform"><label for="u-e">Email</label><input id="u-e" type="email" required>
       <label for="u-p">Password (10+)</label><input id="u-p" type="password" minlength="10" required autocomplete="new-password">
       <label for="u-r">Role</label><select id="u-r">${roleOpts}</select><button class="p">Add user</button></form>`+
-      tbl('Users',['Email','Role','Active',''],items.map(u=>`<tr><td>${esc(u.email)}</td><td>${esc(u.role)}</td><td>${u.active?'yes':'no'}</td><td><button data-deluser="${esc(u.id)}" aria-label="Deactivate ${esc(u.email)}">Deactivate</button></td></tr>`));
+      tbl('Users',['Email','Role','Active',''],items.map(u=>`<tr><td>${esc(u.email)}</td><td>${esc(u.role)}</td><td>${u.active?'yes':'no'}</td><td>${u.email===ME?'<span class="mut mono">you</span>':`<button data-deluser="${esc(u.id)}" aria-label="Deactivate ${esc(u.email)}">Deactivate</button>`}</td></tr>`));
   },
   async keys(){
     const {items}=await api('/v1/api-keys');
-    return `<form id="f-key" class="row"><label for="k-l">Label</label><input id="k-l" required maxlength="100">
+    return `<form id="f-key" class="aform"><label for="k-l">Label</label><input id="k-l" required maxlength="100">
       <label for="k-r">Role</label><select id="k-r"><option>analyst</option><option>viewer</option><option>admin</option></select><button class="p">Create key</button></form>
       <p id="k-new" class="mut" role="status"></p>`+
       tbl('API keys',['Label','Role','Active','Created',''],items.map(k=>`<tr><td>${esc(k.label)}</td><td>${esc(k.role)}</td><td>${k.active?'yes':'revoked'}</td><td>${ts(k.created_at)}</td><td>${k.active?`<button data-revoke="${esc(k.id)}">Revoke</button>`:''}</td></tr>`));
@@ -152,7 +316,7 @@ const ADMIN={
   async gh(){
     const [{items},cfg]=await Promise.all([api('/v1/github/installations'),api('/v1/config')]);
     return `<p class="mut">GitHub integration: ${cfg.github.configured?'configured (webhook secret + app credentials present)':'<b>not configured</b> - set GITHUB_WEBHOOK_SECRET, GITHUB_APP_ID and GITHUB_APP_PRIVATE_KEY'}. Webhook URL: <code>/v1/github/webhook</code></p>
-      <form id="f-gh" class="row"><label for="g-i">Installation ID</label><input id="g-i" pattern="\d{1,20}" required>
+      <form id="f-gh" class="aform"><label for="g-i">Installation ID</label><input id="g-i" pattern="\d{1,20}" required>
       <label for="g-a">Account</label><input id="g-a" required maxlength="100"><button class="p">Link installation</button></form>`+
       tbl('GitHub installations',['Installation','Account','Active'],items.map(i=>`<tr><td>${esc(i.installation_id)}</td><td>${esc(i.account)}</td><td>${i.active?'yes':'no'}</td></tr>`));
   },
@@ -193,10 +357,11 @@ $('#admin').addEventListener('submit',async e=>{
 });
 
 async function start(){
-  try{const me=await api('/v1/auth/me');$('#who').textContent=`${me.email||me.id} (${me.role})`;CFG=await api('/v1/config');
+  try{const me=await api('/v1/auth/me');ME=me.email;$('#who').textContent=`${me.email||me.id} (${me.role})`;CFG=await api('/v1/config');
+    document.body.classList.add('authed');
     if(CFG.sandbox&&!CFG.sandbox.isolationBoundary)say('Sandbox mode "'+CFG.sandbox.mode+'" is not an isolation boundary: scan only code you trust.');
     if(me.role==='admin'){$('#admin').hidden=false;showAdmin()}else{$('#admin').hidden=true}
-    loadRepos()}catch(e){KEY=null;say('Sign in required.')}
+    loadRepos()}catch(e){KEY=null;document.body.classList.remove('authed');say('Sign in required.')}
 }
 $('#keyform').onsubmit=async e=>{e.preventDefault();
   try{const r=await fetch('/v1/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:$('#em').value,password:$('#pw').value})});
@@ -205,7 +370,7 @@ $('#keyform').onsubmit=async e=>{e.preventDefault();
   catch(e){say('Login failed: '+e.message)}};
 $('#upform').onsubmit=async e=>{
   e.preventDefault();
-  if(!KEY){say('Enter your API key first.');return}
+  if(!KEY){say('Sign in first.');return}
   const fd=new FormData();fd.append('repository',$('#repo').value);fd.append('archive',$('#file').files[0]);
   say('Queued…');
   try{const q=await api('/v1/analyses',{method:'POST',body:fd});
@@ -216,5 +381,7 @@ $('#upform').onsubmit=async e=>{
 };
 if(KEY)start();
 </script>
+<script src="/static/vendor/gsap.min.js"></script>
+<script type="module" src="/static/landing.js"></script>
 </body>
 </html>
