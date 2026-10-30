@@ -76,6 +76,36 @@ class Store:
         r = self.d.query("SELECT * FROM app_user WHERE email=? AND active=1", (email.lower(),))
         return r[0] if r else None
 
+    # ---- email verification (users without an email_state row, such as admins and the demo viewer, count as verified)
+    def mark_unverified(self, uid):
+        self.d.execute("INSERT INTO email_state(user_id, verified_at) VALUES(?, NULL)", (uid,))
+
+    def is_unverified(self, uid):
+        r = self.d.query("SELECT verified_at FROM email_state WHERE user_id=?", (uid,))
+        return bool(r) and r[0]["verified_at"] is None
+
+    def self_registered(self, uid):
+        return bool(self.d.query("SELECT 1 AS x FROM email_state WHERE user_id=?", (uid,)))
+
+    def add_email_token(self, uid, purpose, token_hash, expires_at):
+        self.d.execute("DELETE FROM email_token WHERE user_id=? AND purpose=?", (uid, purpose))  # newest link only
+        self.d.execute("INSERT INTO email_token(token_hash,user_id,purpose,expires_at,used_at) VALUES(?,?,?,?,NULL)",
+                       (token_hash, uid, purpose, expires_at))
+
+    def consume_email_token(self, token_hash, purpose):
+        """Single use, atomic: only the request that flips used_at wins. Returns the user id or None."""
+        now = time.time()
+        if self.d.execute("UPDATE email_token SET used_at=? WHERE token_hash=? AND purpose=? AND used_at IS NULL AND expires_at>?",
+                          (now, token_hash, purpose, now)) != 1:
+            return None
+        return self.d.query("SELECT user_id FROM email_token WHERE token_hash=?", (token_hash,))[0]["user_id"]
+
+    def verify_user(self, uid):
+        self.d.execute("UPDATE email_state SET verified_at=? WHERE user_id=?", (time.time(), uid))
+
+    def set_password(self, uid, pw_hash):
+        self.d.execute("UPDATE app_user SET password_hash=? WHERE id=?", (pw_hash, uid))
+
     def user(self, uid):
         r = self.d.query("SELECT * FROM app_user WHERE id=? AND active=1", (uid,))
         return r[0] if r else None

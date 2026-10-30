@@ -20,6 +20,12 @@ services:
         value: "1"
       - key: AVISHKAR_UPLOADS           # only the admin may upload; nobody can scan strangers' code here
         value: admin
+      - key: RESEND_API_KEY             # set in the Render dashboard (never committed); sign-up stays hidden until all three are set
+        sync: false
+      - key: AVISHKAR_EMAIL_FROM        # a sender Resend has verified, e.g. "Avishkar <no-reply@yourdomain>"
+        sync: false
+      - key: AVISHKAR_PUBLIC_URL        # the site visitors use (the Vercel URL); verification links point here
+        sync: false
       - key: AVISHKAR_SIGNUP            # public self sign-up, always read-only viewers, email unverified
         value: "1"
       - key: AVISHKAR_PUBLISH_DEMO_LOGIN

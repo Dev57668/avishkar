@@ -109,6 +109,13 @@ Multi-statement writes use `Database.transaction()`; `SELECT`s end their transac
   advisory. It cannot change findings, severity, state or score. The key never reaches the browser.
 * **GitHub browse/scan** (`GET /v1/github/repositories|branches`, `POST /v1/github/scan`, analyst): the commit SHA is
   resolved by GitHub, never supplied by the client; returns 503 `not_configured` without app credentials.
+* **Public accounts**: `AVISHKAR_SIGNUP=1` (demo mode) plus `RESEND_API_KEY`, `AVISHKAR_EMAIL_FROM`, `AVISHKAR_PUBLIC_URL`
+  enable self sign-up with email verification (`/v1/auth/register|verify|resend|forgot|reset`). New accounts are read-only
+  viewers and cannot sign in until the emailed link is opened. Links carry a one-time random token in the URL fragment;
+  only its SHA-256 is stored; verify links last 24 h, reset links 1 h, a newer link replaces the older one, resend/forgot
+  are capped at 3 per hour per address and answer identically for unknown addresses. Reset applies only to self-registered
+  accounts. Without the mailer sign-up is hidden. `POST /v1/auth/guest` gives a one-click session as the shared demo viewer.
+  Tested against a mocked Resend API only; no live email was sent.
 * **HTTP headers**: API and HTML responses carry `nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: no-referrer`;
   HTML adds a CSP with no inline script; `/static` is `no-cache` (revalidated), everything else `no-store`.
 

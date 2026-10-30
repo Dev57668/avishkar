@@ -100,10 +100,16 @@ function renderLogin(msg) {
     try {
       const r = await fetch('/v1/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: em.value, password: pw.value }) });
       const j = await r.json().catch(() => ({}));
-      if (!r.ok) throw new Error((j.error && j.error.message) || 'Sign-in failed');
+      if (!r.ok) { const ex = new Error((j.error && j.error.message) || 'Sign-in failed'); ex.code = j.error && j.error.code; throw ex; }
       session.save(j.token); pw.value = '';
       await start();
-    } catch (x) { err.textContent = x.message; err.hidden = false; } finally { btn.disabled = false; }
+    } catch (x) {
+      err.replaceChildren(x.message, ' ');
+      if (x.code === 'email_not_verified') err.append(h('button', { class: 'btn sm', type: 'button', onclick: async () => {
+        try { await api('/v1/auth/resend', { method: 'POST', body: { email: em.value } }); toast('If that account is waiting for confirmation, a new link is on its way.', 'ok'); } catch (e2) { toast(e2.message, 'bad'); }
+      } }, 'Resend the email'));
+      err.hidden = false;
+    } finally { btn.disabled = false; }
   } }, h('label', { class: 'field' }, h('span', {}, 'Email'), em), h('label', { class: 'field' }, h('span', {}, 'Password'), pw), err, btn);
   clear(mount).append(h('div', { class: 'logincard' },
     h('h2', {}, 'Sign in to the console'), msg ? h('p', { class: 'mut' }, msg) : null,
@@ -113,6 +119,7 @@ function renderLogin(msg) {
     pub.guest ? h('button', { class: 'btn wide', type: 'button', onclick: async () => {
       try { const j = await api('/v1/auth/guest', { method: 'POST' }); session.save(j.token); await start(); } catch (x) { err.textContent = x.message; err.hidden = false; }
     } }, 'Continue as guest (read-only)') : null,
+    pub.signup ? h('button', { class: 'btn wide ghost', type: 'button', onclick: () => renderForgot() }, 'Forgot password?') : null,
     pub.signup ? h('button', { class: 'btn wide', type: 'button', onclick: () => renderSignup() }, 'Create an account') : null,
     h('p', { class: 'mut sm' }, h('b', {}, 'First run? '), 'There is no self sign-up. The first time the server starts it prints an admin email and password in its terminal.')));
 }
@@ -123,13 +130,47 @@ function renderSignup() {
   const err = h('div', { class: 'errstate', role: 'alert', hidden: true });
   const btn = h('button', { class: 'btn primary wide' }, 'Create account');
   clear(mount).append(h('div', { class: 'logincard' }, h('h2', {}, 'Create an account'),
-    h('p', { class: 'mut sm' }, 'Accounts here are read-only (browse and run the demo lab). Your email is not verified and is only used as your login name. Use a password you do not use elsewhere.'),
+    h('p', { class: 'mut sm' }, 'Accounts here are read-only (browse and run the demo lab). We email you a link to confirm the address; the email is used only for that, and for password resets. Use a password you do not use elsewhere.'),
     h('form', { class: 'loginform', onsubmit: async (e) => {
       e.preventDefault(); btn.disabled = true; err.hidden = true;
-      try { const j = await api('/v1/auth/register', { method: 'POST', body: { email: em.value, password: pw.value } }); session.save(j.token); await start(); }
-      catch (x) { err.textContent = x.message; err.hidden = false; } finally { btn.disabled = false; }
+      try {
+        await api('/v1/auth/register', { method: 'POST', body: { email: em.value, password: pw.value } });
+        clear(mount).append(h('div', { class: 'logincard' }, h('h2', {}, 'Check your email'),
+          h('p', {}, `We sent a confirmation link to ${em.value}. Open it to activate your account, then sign in. It expires in 24 hours.`),
+          h('button', { class: 'btn wide', type: 'button', onclick: () => renderLogin() }, 'Back to sign in')));
+      } catch (x) { err.textContent = x.message; err.hidden = false; } finally { btn.disabled = false; }
     } }, h('label', { class: 'field' }, h('span', {}, 'Email'), em), h('label', { class: 'field' }, h('span', {}, 'Password (10+ characters)'), pw), err, btn),
     h('button', { class: 'btn wide', type: 'button', onclick: () => renderLogin() }, 'Back to sign in')));
+}
+
+function renderForgot() {
+  const em = h('input', { type: 'email', required: true, autocomplete: 'username' });
+  clear(mount).append(h('div', { class: 'logincard' }, h('h2', {}, 'Reset your password'),
+    h('p', { class: 'mut sm' }, 'Enter the email you signed up with. If it belongs to a confirmed account we will send a reset link (valid 1 hour). Operator/admin accounts cannot be reset this way.'),
+    h('form', { class: 'loginform', onsubmit: async (e) => {
+      e.preventDefault();
+      try { await api('/v1/auth/forgot', { method: 'POST', body: { email: em.value } }); toast('If that account exists, a reset link is on its way.', 'ok', 6000); renderLogin(); } catch (x) { toast(x.message, 'bad'); }
+    } }, h('label', { class: 'field' }, h('span', {}, 'Email'), em), h('button', { class: 'btn primary wide' }, 'Send reset link')),
+    h('button', { class: 'btn wide', type: 'button', onclick: () => renderLogin() }, 'Back to sign in')));
+}
+
+/* One-time links from emails: #/verify?token=... and #/reset?token=... (the token is in the fragment, so it is never sent to a server). */
+function renderToken(kind, token) {
+  history.replaceState(null, '', location.pathname + '#/'); // drop the token from the address bar and history
+  if (kind === 'verify') {
+    clear(mount).append(h('div', { class: 'logincard' }, h('h2', {}, 'Confirming your email…'), skeleton(2)));
+    api('/v1/auth/verify', { method: 'POST', body: { token } })
+      .then(() => clear(mount).append(h('div', { class: 'logincard' }, h('h2', {}, 'Email confirmed'), h('p', {}, 'Your account is active. You can sign in now.'), h('button', { class: 'btn primary wide', type: 'button', onclick: () => renderLogin() }, 'Sign in'))))
+      .catch((e) => clear(mount).append(h('div', { class: 'logincard' }, h('h2', {}, 'Could not confirm'), h('div', { class: 'errstate', role: 'alert' }, e.message), h('button', { class: 'btn wide', type: 'button', onclick: () => renderLogin() }, 'Back to sign in'))));
+    return;
+  }
+  const pw = h('input', { type: 'password', required: true, minlength: '10', autocomplete: 'new-password' });
+  const err = h('div', { class: 'errstate', role: 'alert', hidden: true });
+  clear(mount).append(h('div', { class: 'logincard' }, h('h2', {}, 'Choose a new password'),
+    h('form', { class: 'loginform', onsubmit: async (e) => {
+      e.preventDefault(); err.hidden = true;
+      try { await api('/v1/auth/reset', { method: 'POST', body: { token, password: pw.value } }); toast('Password changed. Please sign in.', 'ok'); renderLogin(); } catch (x) { err.textContent = x.message; err.hidden = false; }
+    } }, h('label', { class: 'field' }, h('span', {}, 'New password (10+ characters)'), pw), err, h('button', { class: 'btn primary wide' }, 'Change password'))));
 }
 
 /* ---------------- static mode: recorded results, clearly labelled ---------------- */
@@ -167,6 +208,8 @@ async function boot() {
   clear(mount).append(h('div', { class: 'note-bar' }, 'Connecting to the scanner… a free-tier backend can take up to a minute to wake up.'), skeleton(3));
   session.pub = await probe();
   if (!session.pub) { mode = 'static'; return renderStatic('Backend unreachable right now: it may be asleep or down. Showing recorded results. '); }
+  const link = /^#\/(verify|reset)\?token=([\w-]{20,100})$/.exec(location.hash);
+  if (link) { mode = 'login'; return renderToken(link[1], link[2]); }
   session.load();
   if (session.token) return start();
   mode = 'login'; renderLogin();

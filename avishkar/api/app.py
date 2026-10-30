@@ -18,6 +18,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from ..adapters import github as gh
 from ..adapters.ai import ExplanationService
+from ..adapters.mailer import MailError, Mailer
 from ..adapters.store import Store
 from ..demo import DemoSettings
 from .. import analysis, assistant as assistant_mod, knowledge, report as report_mod, samples as samples_mod, telemetry
@@ -50,6 +51,20 @@ class LoginIn(BaseModel):
 class SignupIn(BaseModel):
     model_config = ConfigDict(extra="forbid")
     email: str = Field(pattern=r"^[^@\s]+@[^@\s]+\.[^@\s]+$", max_length=200)
+    password: str = Field(min_length=10, max_length=200)
+
+
+class EmailIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    email: str = Field(pattern=r"^[^@\s]+@[^@\s]+\.[^@\s]+$", max_length=200)
+
+
+class TokenIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    token: str = Field(min_length=20, max_length=100, pattern=r"^[\w\-]+$")
+
+
+class ResetIn(TokenIn):
     password: str = Field(min_length=10, max_length=200)
 
 
@@ -131,7 +146,7 @@ def create_app(db_url: str | None = None, *, secret_key: str | None = None, scor
                policy: Policy | None = None, sandbox: Sandbox | None = None, github: gh.GitHubClient | None = None,
                ai: ExplanationService | None = None, start_worker: bool | None = None,
                webhook_secret: str | None = None, max_active_jobs: int | None = None,
-               demo: DemoSettings | None = None) -> FastAPI:
+               demo: DemoSettings | None = None, mailer: Mailer | None = None) -> FastAPI:
     telemetry.configure_logging()
     telemetry.configure_tracing()
     cfg = score_cfg or ScoreConfig.load()
@@ -142,6 +157,7 @@ def create_app(db_url: str | None = None, *, secret_key: str | None = None, scor
     sbx = sandbox or Sandbox()
     github = github if github is not None else gh.GitHubClient.from_env()
     ai = ai or ExplanationService()
+    mail = mailer if mailer is not None else Mailer.from_env()
     wh_secret = webhook_secret if webhook_secret is not None else os.environ.get("GITHUB_WEBHOOK_SECRET", "")
     quota = max_active_jobs or int(os.environ.get("AVISHKAR_MAX_ACTIVE_JOBS", "20"))
     throttle = LoginThrottle(store)
@@ -239,6 +255,8 @@ def create_app(db_url: str | None = None, *, secret_key: str | None = None, scor
             throttle.fail(key)
             store.audit(key, "login", "user", key, "denied", request.state.cid)
             raise ApiError(401, "unauthorized", "Invalid email or password")
+        if store.is_unverified(u["id"]):
+            raise ApiError(403, "email_not_verified", "Confirm your email first: open the link we sent you")
         throttle.ok(key)
         tok, exp = tokens.issue(u)
         store.audit(u["email"], "login", "user", u["id"], "ok", request.state.cid, org=u["organization_id"])
@@ -248,22 +266,78 @@ def create_app(db_url: str | None = None, *, secret_key: str | None = None, scor
         org = store.d.query("SELECT id FROM organization ORDER BY created_at LIMIT 1")
         return org[0]["id"]
 
-    @app.post("/v1/auth/register", status_code=201)
+    def _send_link(u: dict, purpose: str, ttl: float) -> None:
+        tok = secrets.token_urlsafe(32)
+        store.add_email_token(u["id"], purpose, hashlib.sha256(tok.encode()).hexdigest(), time.time() + ttl)
+        (mail.send_verification if purpose == "verify" else mail.send_reset)(u["email"], tok)
+
+    def _mail_budget(org: str, action: str, key: str, per_hour: int) -> bool:
+        return store.recent_audit_count(org, key, action, time.time() - 3600) < per_hour
+
+    @app.post("/v1/auth/register", status_code=202)
     def register(body: SignupIn, request: Request):
-        """Self sign-up for the public demo. Always a read-only VIEWER; the email is NOT verified (no mail service is
-        configured), so it proves nothing about who the person is. Off unless AVISHKAR_SIGNUP=1 in demo mode."""
-        if not (demo.enabled and demo.signup):
+        """Self sign-up for the public demo. Always a read-only VIEWER, and the account cannot sign in until the emailed
+        link is opened. Needs the mailer (Resend) and AVISHKAR_SIGNUP=1 in demo mode; otherwise it is refused."""
+        if not (demo.enabled and demo.signup and mail):
             raise ApiError(403, "signup_disabled", "Sign-up is not enabled on this instance")
         org = _public_org()
-        if store.recent_audit_count(org, "signup", "signup", time.time() - 3600) >= 30:
+        if not _mail_budget(org, "signup", "signup", 30):
             raise ApiError(429, "rate_limited", "Too many sign-ups right now; try again later")
         email = body.email.lower()
         if store.user_by_email(email):
             raise ApiError(409, "conflict", "That email cannot be registered")
         u = store.create_user(org, email, hash_password(body.password), "viewer")
+        store.mark_unverified(u["id"])
         store.audit("signup", "signup", "user", u["id"], "ok", request.state.cid, org=org)
-        tok, exp = tokens.issue(store.user_by_email(email))
-        return {"token": tok, "expiresAt": exp, "user": {"id": u["id"], "email": u["email"], "role": "viewer"}}
+        try:
+            _send_link(u, "verify", 86400)
+        except MailError:
+            raise ApiError(502, "email_failed", "Account created but the verification email could not be sent; use resend")
+        return {"status": "verification_sent"}
+
+    @app.post("/v1/auth/resend", status_code=202)
+    def resend(body: EmailIn, request: Request):
+        """Same response whether or not the address exists, so this cannot be used to probe for accounts."""
+        u = store.user_by_email(body.email) if mail else None
+        org = _public_org()
+        if u and store.is_unverified(u["id"]) and _mail_budget(org, "resend", body.email.lower(), 3):
+            store.audit(body.email.lower(), "resend", "user", u["id"], "ok", request.state.cid, org=org)
+            try:
+                _send_link(u, "verify", 86400)
+            except MailError:
+                pass
+        return {"status": "ok"}
+
+    @app.post("/v1/auth/forgot", status_code=202)
+    def forgot(body: EmailIn, request: Request):
+        """Password reset by email, only for self-registered accounts (admins/operators use the CLI). Uniform response."""
+        u = store.user_by_email(body.email) if mail else None
+        org = _public_org()
+        if u and store.self_registered(u["id"]) and not store.is_unverified(u["id"]) and _mail_budget(org, "forgot", body.email.lower(), 3):
+            store.audit(body.email.lower(), "forgot", "user", u["id"], "ok", request.state.cid, org=org)
+            try:
+                _send_link(u, "reset", 3600)
+            except MailError:
+                pass
+        return {"status": "ok"}
+
+    @app.post("/v1/auth/verify")
+    def verify_email(body: TokenIn, request: Request):
+        uid = store.consume_email_token(hashlib.sha256(body.token.encode()).hexdigest(), "verify")
+        if not uid:
+            raise ApiError(400, "invalid_token", "This link is invalid, expired or already used")
+        store.verify_user(uid)
+        store.audit("email", "email_verified", "user", uid, "ok", request.state.cid)
+        return {"status": "verified"}
+
+    @app.post("/v1/auth/reset")
+    def reset_password(body: ResetIn, request: Request):
+        uid = store.consume_email_token(hashlib.sha256(body.token.encode()).hexdigest(), "reset")
+        if not uid:
+            raise ApiError(400, "invalid_token", "This link is invalid, expired or already used")
+        store.set_password(uid, hash_password(body.password))
+        store.audit("email", "password_reset", "user", uid, "ok", request.state.cid)
+        return {"status": "password_changed"}
 
     @app.post("/v1/auth/guest")
     def guest(request: Request):
@@ -331,7 +405,9 @@ def create_app(db_url: str | None = None, *, secret_key: str | None = None, scor
     def public_status():
         """Unauthenticated, tiny and secret-free: lets the web page pick live / demo / static mode. The demo login is
         included only when the operator opted in AND it is a viewer (read-only) account."""
-        return demo.public_status(sbx.describe(), cfg.version)
+        st = demo.public_status(sbx.describe(), cfg.version)
+        st["signup"] = bool(st["signup"] and mail)  # never advertise sign-up without a working mailer
+        return st
 
     @app.get("/v1/config")
     def config(p: Principal = Depends(viewer)):
