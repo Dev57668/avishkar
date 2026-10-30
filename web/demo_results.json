@@ -1,0 +1,431 @@
+{
+ "scoreVersion": "score-v1",
+ "k": 20.0,
+ "calibrated": false,
+ "samples": {
+  "vulnerable-python": {
+   "name": "Vulnerable Python app",
+   "kind": "vulnerable",
+   "language": "Python",
+   "fixCount": 18,
+   "before": {
+    "status": "complete",
+    "decision": "would_block",
+    "fixesApplied": 0,
+    "normalizedIndex": 93.8,
+    "grossUnits": 55.75,
+    "rawUnits": 55.75,
+    "findings": 24,
+    "severity": {
+     "critical": 1,
+     "high": 12,
+     "medium": 9,
+     "low": 2,
+     "informational": 0
+    },
+    "filesScanned": 3,
+    "coverage": {
+     "analyzedSourceFiles": 3,
+     "notEvaluated": {}
+    },
+    "items": [
+     {
+      "rule": "PY-SECRET-ASSIGN",
+      "title": "Hard-coded credential in an assignment",
+      "severity": "high",
+      "confidence": "medium",
+      "path": "app.py",
+      "line": 20
+     },
+     {
+      "rule": "PY-SECRET-ASSIGN",
+      "title": "Hard-coded credential in an assignment",
+      "severity": "high",
+      "confidence": "medium",
+      "path": "app.py",
+      "line": 21
+     },
+     {
+      "rule": "PY-SECRET-ASSIGN",
+      "title": "Hard-coded credential in an assignment",
+      "severity": "high",
+      "confidence": "medium",
+      "path": "app.py",
+      "line": 22
+     },
+     {
+      "rule": "PY-SQLI-FLOW",
+      "title": "SQL string built in a variable, then executed",
+      "severity": "high",
+      "confidence": "low",
+      "path": "app.py",
+      "line": 35
+     },
+     {
+      "rule": "PY-SHELL",
+      "title": "Shell command execution",
+      "severity": "high",
+      "confidence": "medium",
+      "path": "app.py",
+      "line": 46
+     },
+     {
+      "rule": "PY-WEAKHASH",
+      "title": "Weak hash algorithm",
+      "severity": "low",
+      "confidence": "medium",
+      "path": "app.py",
+      "line": 54
+     },
+     {
+      "rule": "PY-PATH",
+      "title": "File path built from a function argument",
+      "severity": "medium",
+      "confidence": "low",
+      "path": "app.py",
+      "line": 62
+     },
+     {
+      "rule": "PY-EVAL",
+      "title": "Dynamic code execution (eval/exec)",
+      "severity": "high",
+      "confidence": "medium",
+      "path": "app.py",
+      "line": 70
+     },
+     {
+      "rule": "PY-PICKLE",
+      "title": "Unsafe deserialization (pickle)",
+      "severity": "medium",
+      "confidence": "medium",
+      "path": "app.py",
+      "line": 79
+     },
+     {
+      "rule": "PY-DEBUG",
+      "title": "Debug mode enabled",
+      "severity": "medium",
+      "confidence": "low",
+      "path": "app.py",
+      "line": 116
+     },
+     {
+      "rule": "PY-SECRET-ASSIGN",
+      "title": "Hard-coded credential in an assignment",
+      "severity": "high",
+      "confidence": "medium",
+      "path": "config.py",
+      "line": 12
+     },
+     {
+      "rule": "PY-SECRET-ASSIGN",
+      "title": "Hard-coded credential in an assignment",
+      "severity": "high",
+      "confidence": "low",
+      "path": "config.py",
+      "line": 17
+     },
+     {
+      "rule": "PY-SECRET-ASSIGN",
+      "title": "Hard-coded credential in an assignment",
+      "severity": "high",
+      "confidence": "low",
+      "path": "config.py",
+      "line": 18
+     },
+     {
+      "rule": "SEC-GH-TOKEN",
+      "title": "GitHub token",
+      "severity": "critical",
+      "confidence": "high",
+      "path": "config.py",
+      "line": 21
+     },
+     {
+      "rule": "PY-WEAKHASH",
+      "title": "Weak hash algorithm",
+      "severity": "low",
+      "confidence": "medium",
+      "path": "config.py",
+      "line": 31
+     },
+     {
+      "rule": "PY-RANDOM",
+      "title": "Non-cryptographic random used for a security value",
+      "severity": "medium",
+      "confidence": "low",
+      "path": "config.py",
+      "line": 39
+     },
+     {
+      "rule": "PY-NOVERIFY",
+      "title": "TLS certificate verification disabled",
+      "severity": "medium",
+      "confidence": "high",
+      "path": "config.py",
+      "line": 47
+     },
+     {
+      "rule": "PY-DEBUG",
+      "title": "Debug mode enabled",
+      "severity": "medium",
+      "confidence": "low",
+      "path": "config.py",
+      "line": 52
+     },
+     {
+      "rule": "PY-SECRET-ASSIGN",
+      "title": "Hard-coded credential in an assignment",
+      "severity": "high",
+      "confidence": "medium",
+      "path": "config.py",
+      "line": 53
+     },
+     {
+      "rule": "PY-PATH",
+      "title": "File path built from a function argument",
+      "severity": "medium",
+      "confidence": "low",
+      "path": "utils.py",
+      "line": 14
+     },
+     {
+      "rule": "PY-SHELL",
+      "title": "Shell command execution",
+      "severity": "high",
+      "confidence": "medium",
+      "path": "utils.py",
+      "line": 22
+     },
+     {
+      "rule": "PY-XML-PARSE",
+      "title": "XML parsed with a standard-library parser",
+      "severity": "medium",
+      "confidence": "low",
+      "path": "utils.py",
+      "line": 29
+     },
+     {
+      "rule": "PY-SQLI-FLOW",
+      "title": "SQL string built in a variable, then executed",
+      "severity": "high",
+      "confidence": "low",
+      "path": "utils.py",
+      "line": 41
+     },
+     {
+      "rule": "PY-PATH",
+      "title": "File path built from a function argument",
+      "severity": "medium",
+      "confidence": "low",
+      "path": "utils.py",
+      "line": 50
+     }
+    ]
+   },
+   "after": {
+    "status": "complete",
+    "decision": "pass",
+    "fixesApplied": 18,
+    "normalizedIndex": 0.0,
+    "grossUnits": 0.0,
+    "rawUnits": 0.0,
+    "findings": 0,
+    "severity": {
+     "critical": 0,
+     "high": 0,
+     "medium": 0,
+     "low": 0,
+     "informational": 0
+    },
+    "filesScanned": 3,
+    "coverage": {
+     "analyzedSourceFiles": 3,
+     "notEvaluated": {}
+    },
+    "items": []
+   }
+  },
+  "vulnerable-javascript": {
+   "name": "Vulnerable Node.js app",
+   "kind": "vulnerable",
+   "language": "JavaScript",
+   "fixCount": 7,
+   "before": {
+    "status": "complete",
+    "decision": "pass",
+    "fixesApplied": 0,
+    "normalizedIndex": 64.1,
+    "grossUnits": 20.5,
+    "rawUnits": 20.5,
+    "findings": 9,
+    "severity": {
+     "critical": 0,
+     "high": 6,
+     "medium": 2,
+     "low": 1,
+     "informational": 0
+    },
+    "filesScanned": 1,
+    "coverage": {
+     "analyzedSourceFiles": 1,
+     "notEvaluated": {}
+    },
+    "items": [
+     {
+      "rule": "JS-SECRET-ASSIGN",
+      "title": "Hard-coded credential in an assignment",
+      "severity": "high",
+      "confidence": "low",
+      "path": "app.js",
+      "line": 10
+     },
+     {
+      "rule": "JS-SECRET-ASSIGN",
+      "title": "Hard-coded credential in an assignment",
+      "severity": "high",
+      "confidence": "medium",
+      "path": "app.js",
+      "line": 11
+     },
+     {
+      "rule": "JS-SQLI",
+      "title": "SQL built from a template literal or concatenation",
+      "severity": "high",
+      "confidence": "low",
+      "path": "app.js",
+      "line": 21
+     },
+     {
+      "rule": "JS-CMDI",
+      "title": "Shell command built from a non-literal",
+      "severity": "high",
+      "confidence": "medium",
+      "path": "app.js",
+      "line": 33
+     },
+     {
+      "rule": "JS-EVAL",
+      "title": "Dynamic code execution (eval / new Function)",
+      "severity": "high",
+      "confidence": "medium",
+      "path": "app.js",
+      "line": 41
+     },
+     {
+      "rule": "JS-WEAKHASH",
+      "title": "Weak hash algorithm",
+      "severity": "low",
+      "confidence": "medium",
+      "path": "app.js",
+      "line": 49
+     },
+     {
+      "rule": "JS-PATH",
+      "title": "File path built from a template literal",
+      "severity": "medium",
+      "confidence": "low",
+      "path": "app.js",
+      "line": 58
+     },
+     {
+      "rule": "JS-XSS-REFLECT",
+      "title": "HTML response built from a template literal",
+      "severity": "medium",
+      "confidence": "low",
+      "path": "app.js",
+      "line": 65
+     },
+     {
+      "rule": "JS-SECRET-ASSIGN",
+      "title": "Hard-coded credential in an assignment",
+      "severity": "high",
+      "confidence": "medium",
+      "path": "app.js",
+      "line": 70
+     }
+    ]
+   },
+   "after": {
+    "status": "complete",
+    "decision": "pass",
+    "fixesApplied": 7,
+    "normalizedIndex": 0.0,
+    "grossUnits": 0.0,
+    "rawUnits": 0.0,
+    "findings": 0,
+    "severity": {
+     "critical": 0,
+     "high": 0,
+     "medium": 0,
+     "low": 0,
+     "informational": 0
+    },
+    "filesScanned": 1,
+    "coverage": {
+     "analyzedSourceFiles": 1,
+     "notEvaluated": {}
+    },
+    "items": []
+   }
+  },
+  "secure-python": {
+   "name": "Secure Python app",
+   "kind": "secure",
+   "language": "Python",
+   "fixCount": 0,
+   "before": {
+    "status": "complete",
+    "decision": "pass",
+    "fixesApplied": 0,
+    "normalizedIndex": 0.0,
+    "grossUnits": 0.0,
+    "rawUnits": 0.0,
+    "findings": 0,
+    "severity": {
+     "critical": 0,
+     "high": 0,
+     "medium": 0,
+     "low": 0,
+     "informational": 0
+    },
+    "filesScanned": 3,
+    "coverage": {
+     "analyzedSourceFiles": 3,
+     "notEvaluated": {}
+    },
+    "items": []
+   }
+  },
+  "vulnerable-java": {
+   "name": "Java app (unsupported language)",
+   "kind": "unsupported",
+   "language": "Java",
+   "fixCount": 0,
+   "before": {
+    "status": "incomplete",
+    "decision": "not_evaluated",
+    "fixesApplied": 0,
+    "normalizedIndex": null,
+    "grossUnits": null,
+    "rawUnits": null,
+    "findings": 0,
+    "severity": {
+     "critical": 0,
+     "high": 0,
+     "medium": 0,
+     "low": 0,
+     "informational": 0
+    },
+    "filesScanned": 1,
+    "coverage": {
+     "analyzedSourceFiles": 0,
+     "notEvaluated": {
+      ".java": 1
+     }
+    },
+    "items": []
+   }
+  }
+ }
+}

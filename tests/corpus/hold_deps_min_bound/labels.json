@@ -1,0 +1,9 @@
+{
+ "source": "synthetic",
+ "cohort": "holdout",
+ "fully_labeled": true,
+ "vulns": [],
+ "adjudicated": false,
+ "reviewers": 0,
+ "note": "django>=3.1 is a minimum bound that permits current releases; flagging it is an expected false positive | written after the detectors were frozen; labels by the implementer, not adjudicated"
+}

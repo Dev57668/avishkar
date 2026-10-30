@@ -1,0 +1,20 @@
+{
+ "source": "synthetic",
+ "cohort": "holdout",
+ "fully_labeled": true,
+ "vulns": [
+  {
+   "path": "package.json",
+   "line": null,
+   "kind": "dependency"
+  },
+  {
+   "path": "package.json",
+   "line": null,
+   "kind": "dependency"
+  }
+ ],
+ "adjudicated": false,
+ "reviewers": 0,
+ "note": "old minimist + missing lockfile | written after the detectors were frozen; labels by the implementer, not adjudicated"
+}

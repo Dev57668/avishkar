@@ -25,7 +25,7 @@
     "max_days": 90,
     "max_extra": 0.5
   },
-  "normalization_k": 13.048,
+  "normalization_k": 30.756,
   "required_detectors": [
     "secrets",
     "code-patterns",
@@ -35,42 +35,54 @@
   "rule_confidence": {
     "DEP-DJANGO-OLD@high": "low",
     "DEP-LODASH@high": "low",
+    "DEP-MINIMIST@high": "low",
     "DEP-NOLOCK@medium": "low",
     "DEP-PYYAML@high": "low",
     "DEP-UNPINNED@high": "low",
     "JS-CMDI@medium": "low",
     "JS-EVAL@medium": "low",
     "JS-INNERHTML@medium": "low",
+    "JS-PATH@low": "low",
+    "JS-RANDOM@low": "low",
+    "JS-SECRET-ASSIGN@low": "low",
+    "JS-SECRET-ASSIGN@medium": "low",
+    "JS-SQLI@low": "low",
+    "JS-SQLI@medium": "low",
     "JS-TLS@high": "low",
+    "JS-WEAKHASH@medium": "low",
+    "JS-XSS-REFLECT@low": "low",
     "PY-DEBUG@low": "low",
     "PY-EVAL@medium": "low",
     "PY-NOVERIFY@high": "low",
+    "PY-PATH@low": "low",
     "PY-PICKLE@medium": "low",
-    "PY-SHELL@medium": "low",
+    "PY-RANDOM@low": "low",
+    "PY-SECRET-ASSIGN@low": "low",
+    "PY-SECRET-ASSIGN@medium": "medium",
+    "PY-SHELL@medium": "medium",
+    "PY-SQLI-FLOW@low": "low",
     "PY-SQLI@medium": "low",
     "PY-WEAKHASH@medium": "low",
+    "PY-XML-PARSE@low": "low",
     "PY-YAML@medium": "low",
     "SEC-AWS-KEY@high": "low",
-    "SEC-AWS-KEY@low": "low",
-    "SEC-GENERIC@low": "low",
-    "SEC-GENERIC@medium": "low",
     "SEC-GH-TOKEN@high": "low",
     "SEC-PRIVKEY@high": "low",
     "SEC-SLACK@high": "low"
   },
   "calibration": {
-    "anchor": "reference case 'ind_python_app' (21.0 raw units under the capped confidences; 31.75 under the current version) reads as index 80.0",
+    "anchor": "reference case 'ind_python_app' (49.5 raw units under the capped confidences; 55.75 under the current version) reads as index 80.0",
     "anchorIsAHumanDecision": true,
-    "corpusCases": 43,
+    "corpusCases": 81,
     "independentCases": 3,
     "adjudicatedCases": 0,
     "capSemantics": "tier can only LOWER a finding's confidence, never raise it above the detector's own; rules with < 8 labeled findings are capped at 'low' (spec P.3)",
     "ruleEvidence": {
       "DEP-DJANGO-OLD@high": {
         "tier": "low",
-        "evidence": "insufficient evidence (n=1 < 8)",
-        "precision": 1.0,
-        "n": 1
+        "evidence": "insufficient evidence (n=3 < 8)",
+        "precision": 0.667,
+        "n": 3
       },
       "DEP-LODASH@high": {
         "tier": "low",
@@ -78,53 +90,107 @@
         "precision": 1.0,
         "n": 1
       },
+      "DEP-MINIMIST@high": {
+        "tier": "low",
+        "evidence": "insufficient evidence (n=1 < 8)",
+        "precision": 1.0,
+        "n": 1
+      },
       "DEP-NOLOCK@medium": {
-        "tier": "low",
-        "evidence": "insufficient evidence (n=1 < 8)",
-        "precision": 1.0,
-        "n": 1
-      },
-      "DEP-PYYAML@high": {
-        "tier": "low",
-        "evidence": "insufficient evidence (n=1 < 8)",
-        "precision": 1.0,
-        "n": 1
-      },
-      "DEP-UNPINNED@high": {
-        "tier": "low",
-        "evidence": "insufficient evidence (n=1 < 8)",
-        "precision": 1.0,
-        "n": 1
-      },
-      "JS-CMDI@medium": {
         "tier": "low",
         "evidence": "insufficient evidence (n=2 < 8)",
         "precision": 1.0,
         "n": 2
       },
-      "JS-EVAL@medium": {
+      "DEP-PYYAML@high": {
+        "tier": "low",
+        "evidence": "insufficient evidence (n=2 < 8)",
+        "precision": 1.0,
+        "n": 2
+      },
+      "DEP-UNPINNED@high": {
         "tier": "low",
         "evidence": "insufficient evidence (n=3 < 8)",
         "precision": 0.667,
         "n": 3
       },
+      "JS-CMDI@medium": {
+        "tier": "low",
+        "evidence": "insufficient evidence (n=4 < 8)",
+        "precision": 1.0,
+        "n": 4
+      },
+      "JS-EVAL@medium": {
+        "tier": "low",
+        "evidence": "insufficient evidence (n=4 < 8)",
+        "precision": 1.0,
+        "n": 4
+      },
       "JS-INNERHTML@medium": {
-        "tier": "low",
-        "evidence": "insufficient evidence (n=1 < 8)",
-        "precision": 1.0,
-        "n": 1
-      },
-      "JS-TLS@high": {
-        "tier": "low",
-        "evidence": "insufficient evidence (n=1 < 8)",
-        "precision": 1.0,
-        "n": 1
-      },
-      "PY-DEBUG@low": {
         "tier": "low",
         "evidence": "insufficient evidence (n=2 < 8)",
         "precision": 1.0,
         "n": 2
+      },
+      "JS-PATH@low": {
+        "tier": "low",
+        "evidence": "insufficient evidence (n=1 < 8)",
+        "precision": 1.0,
+        "n": 1
+      },
+      "JS-RANDOM@low": {
+        "tier": "low",
+        "evidence": "insufficient evidence (n=1 < 8)",
+        "precision": 1.0,
+        "n": 1
+      },
+      "JS-SECRET-ASSIGN@low": {
+        "tier": "low",
+        "evidence": "insufficient evidence (n=1 < 8)",
+        "precision": 1.0,
+        "n": 1
+      },
+      "JS-SECRET-ASSIGN@medium": {
+        "tier": "low",
+        "evidence": "insufficient evidence (n=3 < 8)",
+        "precision": 1.0,
+        "n": 3
+      },
+      "JS-SQLI@low": {
+        "tier": "low",
+        "evidence": "insufficient evidence (n=1 < 8)",
+        "precision": 1.0,
+        "n": 1
+      },
+      "JS-SQLI@medium": {
+        "tier": "low",
+        "evidence": "insufficient evidence (n=4 < 8)",
+        "precision": 1.0,
+        "n": 4
+      },
+      "JS-TLS@high": {
+        "tier": "low",
+        "evidence": "insufficient evidence (n=2 < 8)",
+        "precision": 1.0,
+        "n": 2
+      },
+      "JS-WEAKHASH@medium": {
+        "tier": "low",
+        "evidence": "insufficient evidence (n=2 < 8)",
+        "precision": 1.0,
+        "n": 2
+      },
+      "JS-XSS-REFLECT@low": {
+        "tier": "low",
+        "evidence": "insufficient evidence (n=2 < 8)",
+        "precision": 1.0,
+        "n": 2
+      },
+      "PY-DEBUG@low": {
+        "tier": "low",
+        "evidence": "insufficient evidence (n=5 < 8)",
+        "precision": 1.0,
+        "n": 5
       },
       "PY-EVAL@medium": {
         "tier": "low",
@@ -134,63 +200,81 @@
       },
       "PY-NOVERIFY@high": {
         "tier": "low",
-        "evidence": "insufficient evidence (n=2 < 8)",
+        "evidence": "insufficient evidence (n=4 < 8)",
         "precision": 1.0,
-        "n": 2
+        "n": 4
       },
-      "PY-PICKLE@medium": {
-        "tier": "low",
-        "evidence": "insufficient evidence (n=2 < 8)",
-        "precision": 1.0,
-        "n": 2
-      },
-      "PY-SHELL@medium": {
+      "PY-PATH@low": {
         "tier": "low",
         "evidence": "insufficient evidence (n=5 < 8)",
         "precision": 1.0,
         "n": 5
       },
-      "PY-SQLI@medium": {
+      "PY-PICKLE@medium": {
         "tier": "low",
         "evidence": "insufficient evidence (n=4 < 8)",
         "precision": 1.0,
         "n": 4
+      },
+      "PY-RANDOM@low": {
+        "tier": "low",
+        "evidence": "insufficient evidence (n=2 < 8)",
+        "precision": 1.0,
+        "n": 2
+      },
+      "PY-SECRET-ASSIGN@low": {
+        "tier": "low",
+        "evidence": "insufficient evidence (n=6 < 8)",
+        "precision": 0.333,
+        "n": 6
+      },
+      "PY-SECRET-ASSIGN@medium": {
+        "tier": "medium",
+        "evidence": "Wilson lower bound 0.701 >= 0.5 at n=9",
+        "precision": 1.0,
+        "n": 9
+      },
+      "PY-SHELL@medium": {
+        "tier": "medium",
+        "evidence": "Wilson lower bound 0.565 >= 0.5 at n=9",
+        "precision": 0.889,
+        "n": 9
+      },
+      "PY-SQLI-FLOW@low": {
+        "tier": "low",
+        "evidence": "insufficient evidence (n=4 < 8)",
+        "precision": 1.0,
+        "n": 4
+      },
+      "PY-SQLI@medium": {
+        "tier": "low",
+        "evidence": "insufficient evidence (n=6 < 8)",
+        "precision": 1.0,
+        "n": 6
       },
       "PY-WEAKHASH@medium": {
         "tier": "low",
-        "evidence": "insufficient evidence (n=4 < 8)",
-        "precision": 1.0,
-        "n": 4
+        "evidence": "insufficient evidence (n=6 < 8)",
+        "precision": 0.833,
+        "n": 6
       },
-      "PY-YAML@medium": {
+      "PY-XML-PARSE@low": {
         "tier": "low",
         "evidence": "insufficient evidence (n=1 < 8)",
         "precision": 1.0,
         "n": 1
+      },
+      "PY-YAML@medium": {
+        "tier": "low",
+        "evidence": "insufficient evidence (n=2 < 8)",
+        "precision": 1.0,
+        "n": 2
       },
       "SEC-AWS-KEY@high": {
         "tier": "low",
         "evidence": "insufficient evidence (n=1 < 8)",
         "precision": 1.0,
         "n": 1
-      },
-      "SEC-AWS-KEY@low": {
-        "tier": "low",
-        "evidence": "insufficient evidence (n=1 < 8)",
-        "precision": 1.0,
-        "n": 1
-      },
-      "SEC-GENERIC@low": {
-        "tier": "low",
-        "evidence": "insufficient evidence (n=3 < 8)",
-        "precision": 0.333,
-        "n": 3
-      },
-      "SEC-GENERIC@medium": {
-        "tier": "low",
-        "evidence": "insufficient evidence (n=3 < 8)",
-        "precision": 1.0,
-        "n": 3
       },
       "SEC-GH-TOKEN@high": {
         "tier": "low",
@@ -214,7 +298,7 @@
     "approvalBlockers": [
       "labels are not adjudicated by >=2 reviewers (App. P.2)",
       "only 3 independent (not written by the detector author) cases; synthetic cases measure self-consistency, not real-world precision",
-      "22 rule(s) have fewer than 8 labeled findings: confidence stays low"
+      "31 rule(s) have fewer than 8 labeled findings: confidence stays low"
     ],
     "notes": "Generated by `avishkar calibrate --fit`. Do NOT enable policy blocking on this version."
   }

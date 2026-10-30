@@ -1,0 +1,25 @@
+{
+ "source": "synthetic",
+ "cohort": "holdout",
+ "fully_labeled": true,
+ "vulns": [
+  {
+   "path": "server.js",
+   "line": 6,
+   "kind": "xss"
+  },
+  {
+   "path": "server.js",
+   "line": 10,
+   "kind": "sqli"
+  },
+  {
+   "path": "server.js",
+   "line": 14,
+   "kind": "cmdi"
+  }
+ ],
+ "adjudicated": false,
+ "reviewers": 0,
+ "note": "written after the detectors were frozen; labels by the implementer, not adjudicated"
+}

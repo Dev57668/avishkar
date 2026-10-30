@@ -22,9 +22,9 @@ from pathlib import Path
 from .api.security import hash_password
 from .domain.policy import Policy
 from .domain.scoring import ScoreConfig
+from . import samples
 from .workers import pipeline
 
-SAMPLES = Path(__file__).resolve().parents[1] / "sample_projects"
 UPLOAD_MODES = ("all", "admin", "off")
 
 
@@ -55,16 +55,27 @@ class DemoSettings:
                 "sandbox": {"mode": sandbox_info["mode"], "isolationBoundary": sandbox_info["isolationBoundary"]}}
 
 
-def _scan_into(store, cfg: ScoreConfig, pol: Policy, sandbox, repo: dict, src: Path, sha: str):
-    run_id = store.create_run(repo["id"], sha, "demo-seed")
-    collected = sandbox.collect(cfg.required_detectors, source_dir=src)
-    res = pipeline.assemble(cfg, pol, collected, store.baseline(repo["id"]))
-    store.save_run(repo["id"], run_id, res)
-    return res
+def variant_label(fixes) -> str:
+    n = len(list(fixes))
+    return "sample" if not n else f"sample + {n} fix{'es' if n != 1 else ''}"
 
 
-def seed_demo(store, cfg: ScoreConfig, pol: Policy, sandbox, settings: DemoSettings, samples: Path = SAMPLES) -> dict:
-    """Idempotent. Creates the read-only viewer in the first organization and scans the bundled samples."""
+def _scan_variant(store, cfg: ScoreConfig, pol: Policy, sandbox, repo: dict, sample_id: str, fixes) -> dict:
+    tmp = Path(tempfile.mkdtemp(prefix="avishkar-demo-"))
+    try:
+        samples.write_variant(sample_id, fixes, tmp)
+        run_id = store.create_run(repo["id"], variant_label(fixes), "demo-seed")
+        collected = sandbox.collect(cfg.required_detectors, source_dir=tmp)
+        res = pipeline.assemble(cfg, pol, collected, store.baseline(repo["id"]))
+        store.save_run(repo["id"], run_id, res)
+        return res
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
+
+
+def seed_demo(store, cfg: ScoreConfig, pol: Policy, sandbox, settings: DemoSettings, samples_dir: Path | None = None) -> dict:
+    """Idempotent. Creates the read-only viewer in the first organization and scans the bundled samples with the real
+    pipeline: each vulnerable sample is scanned as shipped and again with every fix applied (a real before/after)."""
     org = store.d.query("SELECT id FROM organization ORDER BY created_at LIMIT 1")
     if not org:
         raise RuntimeError("create the admin/organization before seeding the demo")
@@ -73,32 +84,52 @@ def seed_demo(store, cfg: ScoreConfig, pol: Policy, sandbox, settings: DemoSetti
     if settings.password and not store.user_by_email(settings.email):
         store.create_user(org_id, settings.email, hash_password(settings.password), "viewer")
         out["viewer"] = True
+    for sample in samples.SAMPLES.values():
+        name = f"demo/{sample.id}"
+        if store.d.query("SELECT 1 AS x FROM repository WHERE organization_id=? AND name=?", (org_id, name)):
+            continue
+        if not (samples.SAMPLES_DIR / sample.folder).is_dir():
+            continue
+        repo = store.get_or_create_repo(org_id, name)
+        _scan_variant(store, cfg, pol, sandbox, repo, sample.id, [])
+        if sample.fixes:
+            time.sleep(0.01)
+            _scan_variant(store, cfg, pol, sandbox, repo, sample.id, [f.id for f in sample.fixes])
+        out["repos"].append(name)
+    return out
 
-    py = samples / "vulnerable-python"
-    if py.is_dir() and not store.d.query("SELECT 1 AS x FROM repository WHERE organization_id=? AND name=?",
-                                         (org_id, "demo/vulnerable-python")):
-        repo = store.get_or_create_repo(org_id, "demo/vulnerable-python")
-        _scan_into(store, cfg, pol, sandbox, repo, py, "sample-before")
-        time.sleep(0.01)
-        tmp = Path(tempfile.mkdtemp(prefix="avishkar-demo-"))
-        try:  # the one-line fix described on the landing page, applied to a copy
-            shutil.copytree(py, tmp / "app", ignore=shutil.ignore_patterns("README.md"))
-            f = tmp / "app" / "app.py"
-            text = f.read_text(encoding="utf8")
-            fixed = text.replace('result = os.system(f"ping {host}")',
-                                 'result = subprocess.run(["ping", "-c", "1", host]).returncode')
-            if fixed != text:
-                f.write_text(fixed.replace("import os\n", "import os\nimport subprocess\n", 1), encoding="utf8")
-            _scan_into(store, cfg, pol, sandbox, repo, tmp / "app", "sample-after")
-        finally:
-            shutil.rmtree(tmp, ignore_errors=True)
-        out["repos"].append(repo["name"])
 
-    for name, folder in (("demo/vulnerable-javascript", "vulnerable-javascript"), ("demo/vulnerable-java", "vulnerable-java")):
-        src = samples / folder
-        if src.is_dir() and not store.d.query("SELECT 1 AS x FROM repository WHERE organization_id=? AND name=?",
-                                              (org_id, name)):
-            repo = store.get_or_create_repo(org_id, name)
-            _scan_into(store, cfg, pol, sandbox, repo, src, "sample")
-            out["repos"].append(name)
+def _summary(res: dict, fixes: int) -> dict:
+    sd = res["securityDebt"]
+    sev = {s: 0 for s in ("critical", "high", "medium", "low", "informational")}
+    for f in res["findings"]:
+        sev[f.raw.severity.value] += 1
+    return {"status": res["status"], "decision": res["decision"]["outcome"], "fixesApplied": fixes,
+            "normalizedIndex": sd["normalizedIndex"], "grossUnits": sd["grossUnits"], "rawUnits": sd["rawUnits"],
+            "findings": len(res["findings"]), "severity": sev, "filesScanned": res["filesScanned"],
+            "coverage": sd.get("coverage"),
+            "items": [{"rule": f.raw.rule_id, "title": f.raw.title, "severity": f.raw.severity.value,
+                       "confidence": f.raw.confidence.value, "path": f.raw.path, "line": f.raw.line}
+                      for f in sorted(res["findings"], key=lambda f: (f.raw.path, f.raw.line, f.raw.rule_id))]}
+
+
+def demo_results(cfg: ScoreConfig | None = None, pol: Policy | None = None) -> dict:
+    """Real scan results of every bundled sample as shipped and with all fixes applied. Used to publish
+    web/demo_results.json (the landing page's numbers) and by a test that fails when the file goes stale."""
+    cfg, pol = cfg or ScoreConfig.load(), pol or Policy.load()
+    out = {"scoreVersion": cfg.version, "k": cfg.k, "calibrated": False, "samples": {}}
+    for sample in samples.SAMPLES.values():
+        if not (samples.SAMPLES_DIR / sample.folder).is_dir():
+            continue
+        entry = {"name": sample.name, "kind": sample.kind, "language": sample.language, "fixCount": len(sample.fixes)}
+        for label, fixes in (("before", []), ("after", [f.id for f in sample.fixes])):
+            if label == "after" and not fixes:
+                continue
+            tmp = Path(tempfile.mkdtemp(prefix="avishkar-results-"))
+            try:
+                samples.write_variant(sample.id, fixes, tmp)
+                entry[label] = _summary(pipeline.run_scan(tmp, cfg, pol), len(fixes))
+            finally:
+                shutil.rmtree(tmp, ignore_errors=True)
+        out["samples"][sample.id] = entry
     return out

@@ -1,0 +1,15 @@
+{
+ "source": "synthetic",
+ "cohort": "tuning",
+ "fully_labeled": true,
+ "vulns": [
+  {
+   "path": "repo.py",
+   "line": 5,
+   "kind": "sqli"
+  }
+ ],
+ "adjudicated": false,
+ "reviewers": 0,
+ "note": "was a known gap (rule added after this case): the formatted string is wrapped in text() | written after the detectors were frozen; labels by the implementer, not adjudicated"
+}

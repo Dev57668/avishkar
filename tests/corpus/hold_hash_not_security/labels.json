@@ -1,0 +1,9 @@
+{
+ "source": "synthetic",
+ "cohort": "holdout",
+ "fully_labeled": true,
+ "vulns": [],
+ "adjudicated": false,
+ "reviewers": 0,
+ "note": "md5 for a cache key with usedforsecurity=False: an expected false positive | written after the detectors were frozen; labels by the implementer, not adjudicated"
+}

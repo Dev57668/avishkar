@@ -1,0 +1,15 @@
+{
+ "source": "synthetic",
+ "cohort": "holdout-2",
+ "fully_labeled": true,
+ "vulns": [
+  {
+   "path": "config.py",
+   "line": 2,
+   "kind": "secret"
+  }
+ ],
+ "adjudicated": false,
+ "reviewers": 0,
+ "note": "AWS documentation example key is not a credential (expected low-confidence FP); a password embedded in a URL is a real secret the detectors do not parse (known gap) | written after the detectors were frozen; labels by the implementer, not adjudicated"
+}

@@ -1,6 +1,7 @@
 """Report renderers: SARIF 2.1.0 (code-scanning interop) and a Markdown PR summary. Pure functions."""
 from __future__ import annotations
 
+from .. import knowledge
 from .redaction import redact_text
 
 SARIF_SCHEMA = "https://json.schemastore.org/sarif-2.1.0.json"
@@ -17,9 +18,18 @@ def to_sarif(run: dict, findings: list[dict], tool_version: str = "2.0.0") -> di
         rid = f["rule_id"]
         if rid not in seen:
             seen[rid] = len(rules)
-            rules.append({"id": rid, "name": rid, "shortDescription": {"text": f["title"]},
-                          "help": {"text": f.get("remediation") or f["title"]},
-                          "properties": {"category": f["category"], "security-severity": SECURITY_SEVERITY[f["severity"]]}})
+            kb = knowledge.RULES.get(rid)
+            cwes = kb["cwe"] if kb else []
+            rule = {"id": rid, "name": rid, "shortDescription": {"text": f["title"]},
+                    "fullDescription": {"text": kb["why"] if kb else f["title"]},
+                    "help": {"text": (kb["remediation"] if kb else f.get("remediation")) or f["title"]},
+                    "properties": {"category": f["category"], "security-severity": SECURITY_SEVERITY[f["severity"]],
+                                   "tags": ["security"] + [f"external/cwe/cwe-{n}" for n in cwes],
+                                   "precision": {"structural": "high", "database": "high", "heuristic": "low"}.get(
+                                       kb["detection"]["assurance"] if kb else "heuristic", "low")}}
+            if cwes:
+                rule["helpUri"] = f"https://cwe.mitre.org/data/definitions/{cwes[0]}.html"
+            rules.append(rule)
         results.append({
             "ruleId": rid, "ruleIndex": seen[rid], "level": LEVEL[f["severity"]],
             "message": {"text": redact_text(f["title"])},

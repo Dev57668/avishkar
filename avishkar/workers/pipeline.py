@@ -211,7 +211,7 @@ def assemble(cfg: ScoreConfig, pol: policy_mod.Policy, collected: dict, baseline
         "status": "complete" if completeness.state == "complete" else "incomplete",
         "completedAt": time.time(),
         "completeness": {"state": completeness.state, "requiredDetectors": len(completeness.required),
-                         "completedDetectors": len(completeness.completed),
+                         "completedDetectors": len(completeness.completed), "filesScanned": collected["files"],
                          "missing": completeness.missing, "failures": failed},
         "securityDebt": score, "decision": decision, "stages": stages,
         "findings": findings, "fixed": fixed, "filesScanned": collected["files"], "notes": notes,

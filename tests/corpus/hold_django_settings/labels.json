@@ -1,0 +1,25 @@
+{
+ "source": "synthetic",
+ "cohort": "holdout",
+ "fully_labeled": true,
+ "vulns": [
+  {
+   "path": "settings.py",
+   "line": 3,
+   "kind": "secret"
+  },
+  {
+   "path": "settings.py",
+   "line": 4,
+   "kind": "debug"
+  },
+  {
+   "path": "settings.py",
+   "line": 12,
+   "kind": "secret"
+  }
+ ],
+ "adjudicated": false,
+ "reviewers": 0,
+ "note": "written after the detectors were frozen; labels by the implementer, not adjudicated"
+}

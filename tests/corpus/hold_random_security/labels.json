@@ -1,0 +1,15 @@
+{
+ "source": "synthetic",
+ "cohort": "holdout",
+ "fully_labeled": true,
+ "vulns": [
+  {
+   "path": "auth.py",
+   "line": 6,
+   "kind": "weak-random"
+  }
+ ],
+ "adjudicated": false,
+ "reviewers": 0,
+ "note": "written after the detectors were frozen; labels by the implementer, not adjudicated"
+}

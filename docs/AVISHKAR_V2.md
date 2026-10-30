@@ -66,7 +66,8 @@ translation (`adapters/db.py`).
 (`infra/semgrep-rules.yml`, never `--config auto`), Gitleaks with `--redact`. Missing binary, crash, timeout or bad output
 => the run is incomplete. A secret flagged by two detectors on one line counts once. `infra/Dockerfile.worker` installs
 both (pin the base digest and Gitleaks checksum placeholders before use). Python rules now use an AST detector
-(`workers/pyast.py`) that resolves aliases and ignores comments/strings; JS/TS still use regex rules.
+(`workers/pyast.py`) that resolves aliases, tracks same-function flows and ignores comments/strings; JS/TS use a heuristic
+token-stream scanner (`workers/jsscan.py`: no full parser, no cross-file flow). Other languages are reported as *not evaluated*.
 
 ## 8. Shared state for multiple API replicas
 Login lockout and counters are in the database (`login_failure`, `metric_counter`); job quotas and the queue already were.
@@ -81,11 +82,35 @@ Multi-statement writes use `Database.transaction()`; `SELECT`s end their transac
   no source, paths, secrets or prompts.
 * Calibration: `python -m avishkar calibrate tests/corpus` -> precision/recall per rule, one-factor-at-a-time monotonicity,
   replay/gaming checks, candidate-K table, and the list of blockers. It never marks the score calibrated; the shipped
-  corpus is 6 synthetic, **un-adjudicated** cases.
+  corpus is 81 small, **un-adjudicated** cases (see `docs/CALIBRATION.md`).
 * Dashboard: admin tabs for users, API keys, GitHub installations, jobs (requeue dead), audit and counters; SARIF export.
 * CI (`.github/workflows/ci.yml`): unit+integration, self-scan, calibration report, the whole integration suite on
   PostgreSQL, and a Docker job that runs the real sandbox/Semgrep/Gitleaks tests. `live-smoke.yml` (manual) checks the
   real Claude API and a real GitHub App. See `docs/MERGE_PLAN.md` for how this package relates to `backend/`.
+
+## 10. Console, explorer, reports and demo lab (web UI in `web/app/`)
+* **Console** (`#/` routes under the landing page's `#app` section; vanilla ES modules, no build step): overview of all
+  repositories, a per-repository command center (index gauge, severity bar, trend, most vulnerable files, activity), a
+  per-finding score contribution table, a before/after comparison, and an admin area. Every number is read from the API;
+  incomplete scans are drawn as gaps, never as zero. `GET /v1/repositories/{id}/dashboard`, `/v1/overview`,
+  `/v1/analyses/{id}/explain`, `/v1/repositories/{id}/compare`.
+* **Vulnerability explorer**: search, severity/state/category/CWE/file filters, sorting, expandable detail with CWE, why it
+  matters, impact, remediation and a secure example from a static knowledge base (`avishkar/knowledge.py`, version
+  `kb-1`, not model-generated). Detail pages state whether a rule is *structural* (AST/token) or *heuristic*.
+* **Reports**: `GET /v1/analyses/{id}/report?format=json|html` (print the HTML to PDF; no PDF dependency) and SARIF with
+  CWE tags and help text. State (complete/partial/incomplete) comes from the run itself.
+* **Demo lab**: `POST /v1/demo/scan` runs the real pipeline on bundled sample projects, optionally with fix-pack edits
+  applied to a copy; stages shown in the UI are the recorded stage timeline of the run. Samples: vulnerable Python,
+  vulnerable Node.js, secure Python (scans clean, which still does not prove it is secure) and an unsupported-language
+  Java app (reported incomplete). `web/demo_results.json` records real scan results for the landing page; a test fails
+  when it goes stale (`python scripts/gen_demo_results.py` regenerates it).
+* **AI assistant** (`/v1/assistant/*`, off unless `AVISHKAR_AI_ENABLED=1`): consent-gated, preview of the exact payload,
+  secrets redacted, strict output schema with citation checks, suggested code re-scanned by our own scanner, labeled as
+  advisory. It cannot change findings, severity, state or score. The key never reaches the browser.
+* **GitHub browse/scan** (`GET /v1/github/repositories|branches`, `POST /v1/github/scan`, analyst): the commit SHA is
+  resolved by GitHub, never supplied by the client; returns 503 `not_configured` without app credentials.
+* **HTTP headers**: API and HTML responses carry `nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: no-referrer`;
+  HTML adds a CSP with no inline script; `/static` is `no-cache` (revalidated), everything else `no-store`.
 
 ## Not verified here / limitations (be honest before relying on it)
 * **Verified in CI on Linux (GitHub Actions, all three jobs green):** the full integration suite
@@ -94,7 +119,8 @@ Multi-statement writes use `Database.transaction()`; `SELECT`s end their transac
   three real bugs (`python -I` ignoring PYTHONPATH in the image, unwritable result dir for uid 65534, a `preexec_fn`
   deadlock). Not verified locally on this Windows machine (no Docker/Postgres; Semgrep's engine does not run here).
   The Dockerfile base image is not yet pinned by digest (TODO in the file).
-* The GitHub client was tested against a mocked GitHub API, not live GitHub.
+* The GitHub client (webhooks, repository/branch browsing, manual branch scans) was tested against a mocked GitHub API, not live GitHub.
 * The Anthropic provider was tested via a fake provider; no live API call was made.
-* Detectors are regex heuristics + a tiny advisory sample; score weights/K are uncalibrated (spec App. P).
+* Detectors are heuristics (AST for Python, token scanner for JS/TS, regex for secrets/dependencies) + a tiny advisory
+  sample; score weights/K are uncalibrated (spec App. P). Held-out recall was about 0.8: real vulnerabilities are missed.
 * No MFA/SSO and no TLS termination (put it behind a proxy). OpenTelemetry export was tested with an in-memory exporter only.

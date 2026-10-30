@@ -1,0 +1,9 @@
+{
+ "source": "synthetic",
+ "cohort": "holdout",
+ "fully_labeled": true,
+ "vulns": [],
+ "adjudicated": false,
+ "reviewers": 0,
+ "note": "test credential: reported at low confidence, not a real secret | written after the detectors were frozen; labels by the implementer, not adjudicated"
+}

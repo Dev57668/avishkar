@@ -11,16 +11,16 @@ import uuid
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import Depends, FastAPI, File, Form, Header, Request, UploadFile
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi import Depends, FastAPI, File, Form, Header, Query, Request, UploadFile
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from ..adapters import github as gh
 from ..adapters.ai import ExplanationService
 from ..adapters.store import Store
 from ..demo import DemoSettings
-from .. import telemetry
+from .. import analysis, assistant as assistant_mod, knowledge, report as report_mod, samples as samples_mod, telemetry
 from ..domain import reporting
 from ..domain.policy import Policy
 from ..domain.scoring import ScoreConfig
@@ -60,10 +60,42 @@ class ApiKeyIn(BaseModel):
     role: str = Field(default="analyst", pattern="^(viewer|analyst|admin)$")
 
 
+class GitHubScanIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    installation: str = Field(pattern=r"^\d{1,20}$")
+    repo: str = Field(pattern=r"^[A-Za-z0-9_.\-]{1,100}/[A-Za-z0-9_.\-]{1,100}$")
+    branch: str = Field(min_length=1, max_length=200, pattern=r"^[\w.\-/]+$")
+
+    @field_validator("repo")
+    @classmethod
+    def _repo(cls, v: str) -> str:
+        if not gh.REPO_RE.match(v):
+            raise ValueError("invalid repository name")
+        return v
+
+
 class InstallationIn(BaseModel):
     model_config = ConfigDict(extra="forbid")
     installation_id: str = Field(pattern=r"^\d{1,20}$")
     account: str = Field(min_length=1, max_length=100)
+
+
+class AssistantIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    repositoryId: str = Field(pattern=r"^repo_\w{1,40}$")
+    runId: str | None = Field(default=None, pattern=r"^run_\w{1,40}$")
+    findingId: str | None = Field(default=None, pattern=r"^fnd_\w{1,40}$")
+    mode: str = Field(pattern="^(ask|explain_cwe|prioritize|secure_alternative|review_fix)$")
+    question: str = Field(min_length=1, max_length=600)
+    proposedFix: str | None = Field(default=None, max_length=4000)
+    includeSnippets: bool = False
+    consent: bool = False
+
+
+class DemoScanIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    sample: str = Field(pattern=r"^[a-z0-9\-]{1,40}$")
+    fixes: list[str] = Field(default_factory=list, max_length=60)
 
 
 class DispositionIn(BaseModel):
@@ -135,7 +167,18 @@ def create_app(db_url: str | None = None, *, secret_key: str | None = None, scor
         resp = await call_next(request)
         resp.headers["X-Correlation-Id"] = request.state.cid
         resp.headers["X-Content-Type-Options"] = "nosniff"
-        resp.headers["Cache-Control"] = "no-store"
+        resp.headers["Referrer-Policy"] = "no-referrer"
+        resp.headers["X-Frame-Options"] = "DENY"
+        resp.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=(), payment=()"
+        path = request.url.path
+        if path.startswith("/static/"):
+            resp.headers["Cache-Control"] = "no-cache"  # public assets: revalidate (ETag) instead of re-downloading or serving stale code
+        else:
+            resp.headers["Cache-Control"] = "no-store"  # API responses and authenticated reports are never cached
+        if resp.headers.get("content-type", "").startswith("text/html"):
+            resp.headers["Content-Security-Policy"] = (  # the page uses only same-origin scripts; no inline script is allowed
+                "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; "
+                "connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'")
         return resp
 
     @app.exception_handler(ApiError)
@@ -324,47 +367,244 @@ def create_app(db_url: str | None = None, *, secret_key: str | None = None, scor
                 "deduplicated": not created, "statusUrl": f"/v1/repositories/{repo['id']}/analyses/{run_id}"}
 
     @app.get("/v1/repositories/{repo_id}/analyses")
-    def analyses(repo_id: str, p: Principal = Depends(viewer)):
+    def analyses(repo_id: str, limit: int = Query(50, ge=1, le=200), p: Principal = Depends(viewer)):
         repo_or_404(repo_id, p)
-        return {"items": [_run_out(r, repo_id) for r in store.runs(repo_id)]}
+        return {"items": [_run_out(r, repo_id) for r in store.runs(repo_id, limit)]}
 
     @app.get("/v1/repositories/{repo_id}/analyses/{run_id}")
-    def analysis(repo_id: str, run_id: str, p: Principal = Depends(viewer)):
+    def analysis_run(repo_id: str, run_id: str, p: Principal = Depends(viewer)):
         repo_or_404(repo_id, p)
         r = store.run(run_id)
         if not r or r["repository_id"] != repo_id:
             raise ApiError(404, "not_found", "Not found")
         return _run_out(r, repo_id)
 
-    @app.get("/v1/analyses/{run_id}/score")
-    def score(run_id: str, p: Principal = Depends(viewer)):
+    def run_or_404(run_id: str, p: Principal) -> dict:
         r = store.run(run_id)
         if not r or not store.repo(r["repository_id"], p.org_id):
             raise ApiError(404, "not_found", "Not found")
-        return r["score"] or {"status": "pending"}
+        return r
+
+    @app.get("/v1/analyses/{run_id}/score")
+    def score(run_id: str, p: Principal = Depends(viewer)):
+        return run_or_404(run_id, p)["score"] or {"status": "pending"}
+
+    # ------------------------------------------------------------ one-click demo (real scans of bundled samples)
+    def demo_allowed(p: Principal) -> bool:
+        return demo.enabled or p.has("analyst")
+
+    @app.get("/v1/demo/samples")
+    def demo_samples(p: Principal = Depends(viewer)):
+        return {"scanAllowed": demo_allowed(p),
+                "items": [samples_mod.describe(s) for s in samples_mod.SAMPLES.values()],
+                "note": "Scans run the real pipeline on the bundled, trusted sample files. Nothing is simulated."}
+
+    @app.get("/v1/demo/samples/{sample_id}")
+    def demo_sample(sample_id: str, fixes: str | None = Query(None, max_length=1500, pattern=r"^[a-z0-9\-,]*$"),
+                    p: Principal = Depends(viewer)):
+        applied = [x for x in (fixes or "").split(",") if x]
+        try:
+            files = samples_mod.variant_files(sample_id, applied)
+            diffs = {f: samples_mod.fix_diff(sample_id, f) for f in dict.fromkeys(applied)}
+        except samples_mod.SampleError:
+            raise ApiError(404, "not_found", "Unknown sample or fix")
+        return {"sample": samples_mod.describe(samples_mod.SAMPLES[sample_id]), "applied": applied,
+                "files": {k: v for k, v in files.items() if not k.endswith(".md")}, "diffs": diffs}
+
+    @app.post("/v1/demo/scan", status_code=202)
+    def demo_scan(body: DemoScanIn, request: Request, p: Principal = Depends(viewer)):
+        """Queue a real scan of a bundled sample, optionally with fix-pack edits applied to a copy of it."""
+        if not demo_allowed(p):
+            raise ApiError(403, "forbidden", "Demo scans need the analyst role on this instance")
+        sample = samples_mod.SAMPLES.get(body.sample)
+        if not sample:
+            raise ApiError(404, "not_found", "Unknown sample")
+        try:
+            samples_mod.variant_files(body.sample, body.fixes)  # validate ids and that every edit still applies
+        except samples_mod.SampleError:
+            raise ApiError(422, "invalid_input", "Unknown fix for this sample")
+        if store.recent_job_count(p.org_id, "sample", time.time() - 60) >= 12:
+            count("demo_rate_limited")
+            raise ApiError(429, "rate_limited", "Too many demo scans; wait a minute")
+        repo = store.get_or_create_repo(p.org_id, f"demo/{sample.id}")
+        label = ("sample" if not body.fixes else f"sample + {len(set(body.fixes))} fix{'es' if len(set(body.fixes)) != 1 else ''}")
+        run_id, job, _ = _enqueue(p, repo, "sample", {"sample": sample.id, "fixes": list(dict.fromkeys(body.fixes))}, label,
+                                  request.state.cid)
+        store.audit(p.email or p.id, "demo_scan_queued", "analysis_run", run_id, "ok", request.state.cid,
+                    {"sample": sample.id, "fixes": len(body.fixes)}, p.org_id)
+        return {"jobId": job["id"], "runId": run_id, "repositoryId": repo["id"], "label": label, "status": "queued",
+                "statusUrl": f"/v1/repositories/{repo['id']}/analyses/{run_id}"}
+
+    @app.get("/v1/analyses/{run_id}/explain")
+    def explain_score(run_id: str, p: Principal = Depends(viewer)):
+        """Why this score: the method, every finding's factors and its share of the total."""
+        r = run_or_404(run_id, p)
+        return analysis.explain_score(cfg, r, store.run_findings(run_id))
 
     @app.get("/v1/analyses/{run_id}/sarif")
     def sarif(run_id: str, p: Principal = Depends(viewer)):
-        r = store.run(run_id)
-        if not r or not store.repo(r["repository_id"], p.org_id):
+        r = run_or_404(run_id, p)
+        return JSONResponse(reporting.to_sarif(r, store.run_findings(run_id)), media_type="application/sarif+json")
+
+    def _complete_runs(repo_id: str, limit: int = 30) -> list[dict]:
+        return [r for r in store.runs(repo_id, limit)
+                if r["status"] == "complete" and (r["score"] or {}).get("status") == "calculated"]
+
+    def _compare(repo_id: str, base: str | None, head: str | None) -> dict:
+        done = _complete_runs(repo_id)
+        by_id = {r["id"]: r for r in store.runs(repo_id, 200)}
+        h = by_id.get(head) if head else (done[0] if done else None)
+        b = by_id.get(base) if base else (next((r for r in done if h and r["id"] != h["id"] and r["started_at"] <= h["started_at"]), None))
+        if head and not h or base and not b:
+            raise ApiError(404, "not_found", "Run not found in this repository")
+        if not h or not b:
+            raise ApiError(422, "invalid_input", "At least two analyses are needed to compare")
+        return analysis.compare_runs(b, h, store.run_findings(b["id"]), store.run_findings(h["id"]))
+
+    @app.get("/v1/repositories/{repo_id}/compare")
+    def compare(repo_id: str, base: str | None = Query(None, pattern=r"^run_\w{1,40}$"),
+                head: str | None = Query(None, pattern=r"^run_\w{1,40}$"), p: Principal = Depends(viewer)):
+        """Before/after: defaults to the latest complete run against the previous complete one."""
+        repo_or_404(repo_id, p)
+        return _compare(repo_id, base, head)
+
+    @app.get("/v1/repositories/{repo_id}/dashboard")
+    def repo_dashboard(repo_id: str, p: Principal = Depends(viewer)):
+        repo = repo_or_404(repo_id, p)
+        runs = store.runs(repo_id, 60)
+        done = [r for r in runs if r["status"] == "complete" and (r["score"] or {}).get("status") == "calculated"]
+        rows = store.run_findings(done[0]["id"]) if done else []
+        return analysis.repo_dashboard(repo, runs, store.all_findings(repo_id), rows, store.repo_activity(repo_id))
+
+    @app.get("/v1/overview")
+    def overview(p: Principal = Depends(viewer)):
+        counts = store.open_counts(p.org_id)
+        repos_ = [{"id": r["id"], "name": r["name"], "runs": r["runs"], "latest_run": store.latest_run(r["id"]),
+                   "open_by_sev": __import__("collections").Counter(counts.get(r["id"], {}))} for r in store.repos(p.org_id)]
+        return analysis.org_overview(repos_)
+
+    @app.get("/v1/analyses/{run_id}/report")
+    def report(run_id: str, format: str = Query("json", pattern="^(json|html)$"), p: Principal = Depends(viewer)):
+        """Executive summary, metadata, findings with CWE/remediation, before/after and limitations, from real scan data."""
+        r = run_or_404(run_id, p)
+        repo = store.repo(r["repository_id"], p.org_id)
+        rows = store.run_findings(run_id)
+        try:
+            cmp = _compare(r["repository_id"], None, run_id) if r["status"] == "complete" else None
+        except ApiError:
+            cmp = None  # first analysis: nothing to compare against
+        rep = report_mod.build_report(repo=repo, run=r, rows=rows, explain=analysis.explain_score(cfg, r, rows), compare=cmp,
+                                      cfg=cfg, service_version=app.version, generated_at=time.time())
+        if format == "html":
+            return HTMLResponse(report_mod.render_html(rep))
+        return JSONResponse(rep)
+
+    # ------------------------------------------------------------ optional AI assistant (advisory, consent-gated)
+    def _assistant_package(body: AssistantIn, p: Principal) -> tuple[dict, dict]:
+        repo = repo_or_404(body.repositoryId, p)
+        done = _complete_runs(repo["id"], 30)
+        run = store.run(body.runId) if body.runId else (done[0] if done else None)
+        if not run or run["repository_id"] != repo["id"]:
+            raise ApiError(404, "not_found", "No completed analysis for this repository")
+        if body.mode in ("secure_alternative",) and not body.findingId:
+            raise ApiError(422, "invalid_input", "This mode needs a finding")
+        if body.mode == "review_fix" and not body.proposedFix:
+            raise ApiError(422, "invalid_input", "Paste the proposed fix to review")
+        comps = {c["fingerprint"]: c for c in ((run["score"] or {}).get("components") or []) if c["counted"]}
+        rows = [r for r in store.run_findings(run["id"]) if r["fingerprint"] in comps]
+        focus = None
+        if body.findingId:
+            focus = next((r for r in rows if r["id"] == body.findingId), None)
+            if focus is None:
+                raise ApiError(404, "not_found", "Finding is not part of this analysis")
+        return assistant_mod.build_package(repo=repo, run=run, rows=rows, components=comps, focus=focus, mode=body.mode,
+                                           question=body.question, include_snippets=body.includeSnippets,
+                                           proposed_fix=body.proposedFix), repo
+
+    @app.get("/v1/assistant/status")
+    def assistant_status(p: Principal = Depends(viewer)):
+        st = assistant_mod.status(ai)
+        return {**st, "consentRequired": True, "defaultContext": "finding metadata only (no code)",
+                "allowedRoles": ["analyst", "admin"] + (["viewer"] if os.environ.get("AVISHKAR_ASSISTANT_VIEWERS") == "1" else []),
+                "canAsk": st["available"] and (p.has("analyst") or os.environ.get("AVISHKAR_ASSISTANT_VIEWERS") == "1")}
+
+    @app.post("/v1/assistant/preview")
+    def assistant_preview(body: AssistantIn, p: Principal = Depends(viewer)):
+        """Exactly what would leave the server if the user consents. Nothing is sent by this call."""
+        pkg, _ = _assistant_package(body, p)
+        return {"payload": pkg, "bytes": len(json.dumps(pkg)), "sendsCodeLines": bool(body.includeSnippets or body.proposedFix),
+                "provider": assistant_mod.status(ai)}
+
+    @app.post("/v1/assistant/ask")
+    def assistant_ask(body: AssistantIn, request: Request, p: Principal = Depends(viewer)):
+        if not (p.has("analyst") or os.environ.get("AVISHKAR_ASSISTANT_VIEWERS") == "1"):
+            raise ApiError(403, "forbidden", "The assistant needs the analyst role on this instance")
+        if not body.consent:
+            raise ApiError(403, "consent_required", "Consent is required before any scan data is sent to an AI provider")
+        pkg, repo = _assistant_package(body, p)
+        if not assistant_mod.status(ai)["available"]:
+            return assistant_mod.ask(ai, pkg)  # honest unavailable state; nothing is sent
+        if store.recent_audit_count(p.org_id, p.email or p.id, "assistant_ask", time.time() - 60) >= 10:
+            raise ApiError(429, "rate_limited", "Too many assistant questions; wait a minute")
+        res = assistant_mod.ask(ai, pkg)
+        store.audit(p.email or p.id, "assistant_ask", "repository", repo["id"], res["status"], request.state.cid,
+                    {"mode": body.mode, "findings": len(pkg["findings"]), "bytes": len(json.dumps(pkg)),
+                     "codeLines": bool(body.includeSnippets), "userCode": bool(body.proposedFix)}, p.org_id)
+        return res
+
+    @app.get("/v1/rules")
+    def rules(p: Principal = Depends(viewer)):
+        return {"kbVersion": knowledge.KB_VERSION, "items": [knowledge.describe(rid) for rid in knowledge.rule_ids()]}
+
+    @app.get("/v1/rules/{rule_id}")
+    def rule(rule_id: str, p: Principal = Depends(viewer)):
+        if rule_id not in knowledge.RULES:
             raise ApiError(404, "not_found", "Not found")
-        return JSONResponse(reporting.to_sarif(r, store.run_findings(run_id)),
-                            media_type="application/sarif+json")
+        return knowledge.describe(rule_id)
+
+    def _comps(repo_id: str) -> dict:
+        done = _complete_runs(repo_id, 5)
+        return {c["fingerprint"]: c for c in ((done[0]["score"] or {}).get("components") or []) if c["counted"]} if done else {}
+
+    def _enrich(f: dict, comps: dict) -> dict:
+        k = knowledge.RULES.get(f["rule_id"])
+        c = comps.get(f["fingerprint"])
+        return {**f, "cwe": [f"CWE-{x}" for x in (k["cwe"] if k else [])],
+                "assurance": k["detection"]["assurance"] if k else "heuristic",
+                "detectionMethod": k["detection"]["method"] if k else "external",
+                "debt": None if not c else {"impact": c["I"], "exposure": c["E"], "confidence": c["C"], "age": c["A"], "units": c["D"]}}
 
     @app.get("/v1/repositories/{repo_id}/findings")
-    def findings(repo_id: str, state: str | None = None, severity: str | None = None,
-                 cursor: str | None = None, limit: int = 50, p: Principal = Depends(viewer)):
+    def findings(repo_id: str,
+                 state: str | None = Query(None, pattern="^(open|fixed|accepted_risk|false_positive|duplicate|not_applicable)$"),
+                 severity: str | None = Query(None, pattern="^(critical|high|medium|low|informational)$"),
+                 confidence: str | None = Query(None, pattern="^(high|medium|low)$"),
+                 category: str | None = Query(None, max_length=40, pattern=r"^[\w\-]+$"),
+                 cwe: str | None = Query(None, pattern=r"^CWE-\d{1,5}$"),
+                 q: str | None = Query(None, max_length=100), path: str | None = Query(None, max_length=200),
+                 sort: str = Query("id", pattern="^(id|severity|confidence|path|rule|first_seen|last_seen)$"),
+                 order: str = Query("asc", pattern="^(asc|desc)$"), offset: int = Query(0, ge=0, le=100000),
+                 cursor: str | None = None, limit: int = Query(50, ge=1, le=200), p: Principal = Depends(viewer)):
         repo_or_404(repo_id, p)
         store.expire_exceptions(p.org_id)
-        rows, nxt = store.findings(repo_id, state, severity, cursor, max(1, min(limit, 200)))
-        return {"items": rows, "nextCursor": nxt}
+        rule_ids = None
+        if cwe:
+            n = int(cwe[4:])
+            rule_ids = [rid for rid, k in knowledge.RULES.items() if n in k["cwe"]] or ["__none__"]
+        rows, nxt, next_off, total = store.findings(repo_id, state, severity, cursor, limit, q=q, category=category, path=path,
+                                                    confidence=confidence, rule_ids=rule_ids, sort=sort, order=order,
+                                                    offset=offset)
+        comps = _comps(repo_id)
+        return {"items": [_enrich(r, comps) for r in rows], "nextCursor": nxt, "nextOffset": next_off, "total": total}
 
     @app.get("/v1/findings/{fid}")
     def finding(fid: str, p: Principal = Depends(viewer)):
         f = store.finding(fid, p.org_id)
         if not f:
             raise ApiError(404, "not_found", "Not found")
-        return f
+        out = _enrich(f, _comps(f["repository_id"]))
+        out["knowledge"] = knowledge.describe(f["rule_id"], f["category"])
+        return out
 
     @app.post("/v1/findings/{fid}/dispositions")
     def disposition(fid: str, body: DispositionIn, request: Request, p: Principal = Depends(analyst)):
@@ -420,6 +660,59 @@ def create_app(db_url: str | None = None, *, secret_key: str | None = None, scor
         store.audit(p.email or p.id, "installation_linked", "installation", body.installation_id, "ok",
                     request.state.cid, org=p.org_id)
         return {"installationId": body.installation_id, "account": body.account}
+
+    def _gh_client() -> gh.GitHubClient:
+        if github is None:
+            raise ApiError(503, "not_configured", "GitHub is not connected on this server (app credentials are missing)")
+        return github
+
+    def _own_installation(p: Principal, iid: str) -> None:
+        inst = store.installation(iid)
+        if not inst or inst["organization_id"] != p.org_id:
+            raise ApiError(404, "not_found", "Not found")
+
+    @app.get("/v1/github/repositories")
+    def gh_repositories(installation: str = Query(pattern=r"^\d{1,20}$"), p: Principal = Depends(analyst)):
+        """Repositories the linked GitHub App installation can read. Never fabricated: 503 when GitHub is not connected."""
+        client = _gh_client()
+        _own_installation(p, installation)
+        try:
+            return {"items": client.list_repositories(installation)}
+        except gh.GitHubError:
+            raise ApiError(502, "upstream_error", "GitHub did not return the repository list")
+
+    @app.get("/v1/github/branches")
+    def gh_branches(installation: str = Query(pattern=r"^\d{1,20}$"), repo: str = Query(pattern=r"^[A-Za-z0-9_.\-]{1,100}/[A-Za-z0-9_.\-]{1,100}$"),
+                    p: Principal = Depends(analyst)):
+        client = _gh_client()
+        if not gh.REPO_RE.match(repo):
+            raise ApiError(422, "invalid_input", "Invalid repository name")
+        _own_installation(p, installation)
+        try:
+            return {"items": client.list_branches(installation, repo)}
+        except gh.GitHubError:
+            raise ApiError(502, "upstream_error", "GitHub did not return the branch list")
+
+    @app.post("/v1/github/scan", status_code=202)
+    def gh_scan(body: GitHubScanIn, request: Request, p: Principal = Depends(analyst)):
+        """Scan the head commit of a branch. The commit SHA is resolved by GitHub, never taken from the client, so the
+        scanned snapshot is exactly what the branch pointed to; the job then runs like a webhook-triggered scan."""
+        client = _gh_client()
+        _own_installation(p, body.installation)
+        try:
+            br = next((b for b in client.list_branches(body.installation, body.repo) if b["name"] == body.branch), None)
+        except gh.GitHubError:
+            raise ApiError(502, "upstream_error", "GitHub did not return the branch list")
+        if not br:
+            raise ApiError(404, "not_found", "Branch not found")
+        repo = store.get_or_create_repo(p.org_id, body.repo)
+        store.set_ref_head(repo["id"], f"refs/heads/{body.branch}", br["sha"])
+        run_id, job, created = _enqueue(p, repo, "github", {"installation": body.installation, "repo": body.repo, "sha": br["sha"],
+                                                              "ref": f"refs/heads/{body.branch}", "pr": None},
+                                        br["sha"], request.state.cid, f"gh:{body.repo}:{br['sha']}")
+        store.audit(p.email or p.id, "github_scan_queued", "analysis_run", run_id, "ok", request.state.cid, org=p.org_id)
+        return {"jobId": job["id"], "runId": run_id, "repositoryId": repo["id"], "commitSha": br["sha"], "status": "queued",
+                "deduplicated": not created, "statusUrl": f"/v1/repositories/{repo['id']}/analyses/{run_id}"}
 
     @app.post("/v1/github/webhook")
     async def webhook(request: Request, x_hub_signature_256: str | None = Header(default=None),

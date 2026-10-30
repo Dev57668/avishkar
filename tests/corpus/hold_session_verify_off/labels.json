@@ -1,0 +1,15 @@
+{
+ "source": "synthetic",
+ "cohort": "tuning",
+ "fully_labeled": true,
+ "vulns": [
+  {
+   "path": "client.py",
+   "line": 4,
+   "kind": "noverify"
+  }
+ ],
+ "adjudicated": false,
+ "reviewers": 0,
+ "note": "was a known gap (rule added after this case): verification disabled by attribute assignment, not keyword | written after the detectors were frozen; labels by the implementer, not adjudicated"
+}

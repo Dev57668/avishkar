@@ -1,0 +1,7 @@
+import Koa from 'koa';
+
+const app = new Koa();
+
+app.use(async (ctx) => {
+  ctx.body = `<h1>Results for ${ctx.query.q}</h1>`;
+});

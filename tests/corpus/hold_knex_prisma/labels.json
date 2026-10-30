@@ -1,0 +1,20 @@
+{
+ "source": "synthetic",
+ "cohort": "tuning",
+ "fully_labeled": true,
+ "vulns": [
+  {
+   "path": "repo.js",
+   "line": 2,
+   "kind": "sqli"
+  },
+  {
+   "path": "repo.js",
+   "line": 6,
+   "kind": "sqli"
+  }
+ ],
+ "adjudicated": false,
+ "reviewers": 0,
+ "note": "was a known gap (rule added after this case): $queryRawUnsafe is not a recognised SQL sink | written after the detectors were frozen; labels by the implementer, not adjudicated"
+}

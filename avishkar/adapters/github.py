@@ -20,7 +20,7 @@ import jwt
 
 MAX_ARCHIVE = 25_000_000
 SHA_RE = re.compile(r"^[0-9a-f]{40}$")
-REPO_RE = re.compile(r"^[A-Za-z0-9_.\-]{1,100}/[A-Za-z0-9_.\-]{1,100}$")
+REPO_RE = re.compile(r"^(?!\.+/)(?!.*/\.+$)[A-Za-z0-9_.\-]{1,100}/[A-Za-z0-9_.\-]{1,100}$")  # no "." / ".." path components
 ALLOWED_EVENTS = {"ping", "pull_request", "push", "installation", "installation_repositories"}
 PR_ACTIONS = {"opened", "synchronize", "reopened"}
 CHECK_NAME = "Avishkar security debt"
@@ -91,6 +91,20 @@ class GitHubClient:
         tok = r.json()["token"]
         self._tokens[installation_id] = (tok, time.time() + 3000)
         return tok
+
+    def list_repositories(self, installation_id: str, limit: int = 100) -> list[dict]:
+        """Repositories this installation can read (one page, capped). Names only: no tokens or URLs."""
+        tok = self.installation_token(installation_id)
+        r = self._req("GET", f"/installation/repositories?per_page={min(limit, 100)}", tok)
+        return [{"name": x["full_name"], "defaultBranch": x.get("default_branch"), "private": bool(x.get("private"))}
+                for x in r.json().get("repositories", []) if REPO_RE.match(x.get("full_name", ""))]
+
+    def list_branches(self, installation_id: str, repo: str, limit: int = 100) -> list[dict]:
+        if not REPO_RE.match(repo):
+            raise GitHubError("invalid repository identifier")
+        tok = self.installation_token(installation_id)
+        r = self._req("GET", f"/repos/{repo}/branches?per_page={min(limit, 100)}", tok)
+        return [{"name": b["name"], "sha": b["commit"]["sha"]} for b in r.json() if SHA_RE.match(b.get("commit", {}).get("sha", ""))]
 
     def download_zipball(self, installation_id: str, repo: str, sha: str) -> bytes:
         if not REPO_RE.match(repo) or not SHA_RE.match(sha):

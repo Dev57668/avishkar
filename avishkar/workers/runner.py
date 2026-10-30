@@ -5,7 +5,6 @@ import json
 import os
 import tempfile
 import threading
-import time
 import uuid
 from pathlib import Path
 
@@ -42,6 +41,8 @@ class JobRunner:
                     self._archive(job, payload)
                 elif job["kind"] == "github":
                     self._github(job, payload)
+                elif job["kind"] == "sample":
+                    self._sample(job, payload)
                 else:
                     raise ValueError(f"unknown job kind {job['kind']}")
             self.store.complete_job(job["id"])
@@ -60,10 +61,11 @@ class JobRunner:
 
     # ------------------------------------------------------------ job kinds
     def _finish(self, job, collected):
-        self.store.set_run_status(job["run_id"], "running")
+        self.store.set_run_stage(job["run_id"], "scoring")
         base = self.store.baseline(job["repository_id"])
         with telemetry.span("assemble", stage="assemble", run_id=job["run_id"]):
             res = pipeline.assemble(self.cfg, self.pol, collected, base)
+        self.store.set_run_stage(job["run_id"], "saving")
         with telemetry.span("persist", stage="persist", run_id=job["run_id"], status=res["status"]):
             self.store.save_run(job["repository_id"], job["run_id"], res)
         self.store.audit("worker", "analysis_finished", "analysis_run", job["run_id"], res["status"],
@@ -72,10 +74,28 @@ class JobRunner:
 
     def _archive(self, job, payload):
         zp = Path(payload["spool_path"])
+        self.store.set_run_stage(job["run_id"], "scanning")
         with telemetry.span("sandbox_collect", stage="collect", run_id=job["run_id"]):
             collected = self.sandbox.collect(self.cfg.required_detectors, zip_path=zp)
         self._finish(job, collected)
         zp.unlink(missing_ok=True)  # kept across retries; removed on success or when dead-lettered
+
+    def _sample(self, job, payload):
+        """Scan a bundled sample (optionally with fix-pack edits applied to a copy). The files are ours, never user input."""
+        import shutil
+
+        from .. import samples
+        self.store.set_run_stage(job["run_id"], "preparing")
+        tmp = Path(tempfile.mkdtemp(prefix="avishkar-sample-"))
+        try:
+            samples.write_variant(payload["sample"], payload.get("fixes", []), tmp)
+            self.store.set_run_stage(job["run_id"], "scanning")
+            with telemetry.span("sandbox_collect", stage="collect", run_id=job["run_id"]):
+                collected = self.sandbox.collect(self.cfg.required_detectors, source_dir=tmp)
+            self._finish(job, collected)
+            self.store.prune_runs(job["repository_id"], keep=40)
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
 
     def _github(self, job, p):
         if not self.github:

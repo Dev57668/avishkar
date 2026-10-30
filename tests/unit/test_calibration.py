@@ -80,16 +80,19 @@ def test_shipped_config_has_no_caps():
 # ---------------------------------------------------------------- corpus & harness
 def test_corpus_is_well_formed():
     cases = [d for d in CORPUS.iterdir() if d.is_dir()]
-    assert len(cases) >= 40
+    assert len(cases) >= 80
+    cohorts = set()
     for d in cases:
         lab = json.loads((d / "labels.json").read_text())
+        cohorts.add(lab.get("cohort", "tuning"))
         assert lab["adjudicated"] is False and lab["reviewers"] == 0  # we must never claim human adjudication
         assert lab["source"] in ("independent", "synthetic")
         for v in lab["vulns"]:
             assert (d / v["path"]).exists()
-            if v["line"] is not None:
-                text = (d / v["path"]).read_text(encoding="utf8").splitlines()
-                assert 1 <= v["line"] <= len(text)
+            text = (d / v["path"]).read_text(encoding="utf8").splitlines()
+            for ln in ([v["line"]] if v.get("line") is not None else []) + list(v.get("lines") or []):
+                assert 1 <= ln <= len(text)
+    assert cohorts == {"tuning", "holdout", "holdout-2"}
 
 
 def test_independent_cases_are_byte_identical_to_sample_projects():
@@ -128,10 +131,14 @@ def test_report_never_claims_calibration_and_lists_honest_blockers():
 
 def test_precision_counts_and_known_detector_weaknesses_are_measured():
     d = cal.run_calibration(CORPUS)["detectors"]
-    assert d["byRule"]["JS-EVAL"]["fp"] >= 1                     # model.eval() trap
-    assert d["recallByKind"]["path-traversal"]["found"] == 0    # no rule exists: must show as missed, not hidden
-    assert d["recallByKind"]["sqli"]["missed"] >= 1              # taint through a variable is not detected
-    assert d["byRuleConfidence"]["SEC-GENERIC@low"]["fp"] >= 1   # placeholders flagged low, still not credentials
+    assert d["byRule"]["JS-EVAL"]["fp"] == 0                     # the model.eval() trap no longer fires (token scanner)
+    assert d["recallByKind"]["path-traversal"]["found"] >= 4     # path rules exist now (they were 0/4 before)
+    for kind in ("redos", "info-disclosure", "cors"):            # still no rule: must show as missed, never hidden
+        assert d["recallByKind"][kind]["found"] == 0 and d["recallByKind"][kind]["missed"] >= 1
+    assert d["byRuleConfidence"]["PY-SECRET-ASSIGN@low"]["fp"] >= 1   # placeholders: flagged low, still not credentials
+    coh = d["byCohort"]
+    assert set(coh) == {"tuning", "holdout", "holdout-2"}
+    assert coh["holdout-2"]["recall"] < coh["tuning"]["recall"]  # the fresh cases generalise worse: reported, not hidden
 
 
 def test_unlabeled_findings_are_not_counted_as_false_positives(tmp_path):
@@ -174,7 +181,13 @@ def test_candidate_is_marked_unapproved_capped_and_reproducible(tmp_path):
     assert a["calibration"]["anchorIsAHumanDecision"] is True and a["calibration"]["adjudicatedCases"] == 0
     assert "Do NOT enable policy blocking" in a["calibration"]["notes"]
     assert set(a["rule_confidence"].values()) <= {"low", "medium", "high"}
-    assert all(v == "low" for v in a["rule_confidence"].values())   # every rule has < MIN_N findings in this corpus
+    ev = a["calibration"]["ruleEvidence"]
+    for rule, tier in a["rule_confidence"].items():
+        if ev[rule]["n"] < cal.MIN_N:
+            assert tier == "low", rule                       # too little evidence: never trusted
+        elif tier == "high":
+            assert ev[rule]["precision"] is not None and cal.wilson_lower(round(ev[rule]["precision"] * ev[rule]["n"]), ev[rule]["n"]) >= cal.HIGH_LB
+    assert any(v["n"] < cal.MIN_N for v in ev.values())
     cfg = ScoreConfig.load(_write(tmp_path, a))
     assert cfg.rule_confidence == a["rule_confidence"] and cfg.k == a["normalization_k"] > 0
 

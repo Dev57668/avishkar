@@ -1,0 +1,27 @@
+{
+  "note": "Detector results on the cohorts BEFORE any rule was changed in response to the holdout cases. Holdout cases were then used to extend rules and reclassified as 'tuning'; these numbers are the honest out-of-sample estimate for the rules as first written.",
+  "date": "2026-10-30",
+  "scoreVersion": "score-v1",
+  "byCohort": {
+    "holdout": {
+      "cases": 27,
+      "tp": 23,
+      "fp": 5,
+      "unlabeled": 0,
+      "found": 23,
+      "missed": 6,
+      "precision": 0.821,
+      "recall": 0.793
+    },
+    "tuning": {
+      "cases": 42,
+      "tp": 63,
+      "fp": 2,
+      "unlabeled": 0,
+      "found": 63,
+      "missed": 7,
+      "precision": 0.969,
+      "recall": 0.9
+    }
+  }
+}

@@ -1,0 +1,25 @@
+{
+ "source": "synthetic",
+ "cohort": "holdout-2",
+ "fully_labeled": true,
+ "vulns": [
+  {
+   "path": "requirements.txt",
+   "line": 1,
+   "kind": "dependency"
+  },
+  {
+   "path": "requirements.txt",
+   "line": 2,
+   "kind": "dependency"
+  },
+  {
+   "path": "requirements.txt",
+   "line": 3,
+   "kind": "dependency"
+  }
+ ],
+ "adjudicated": false,
+ "reviewers": 0,
+ "note": "written after the detectors were frozen; labels by the implementer, not adjudicated"
+}

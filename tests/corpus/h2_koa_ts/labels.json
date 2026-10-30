@@ -1,0 +1,15 @@
+{
+ "source": "synthetic",
+ "cohort": "holdout-2",
+ "fully_labeled": true,
+ "vulns": [
+  {
+   "path": "app.ts",
+   "line": 6,
+   "kind": "xss"
+  }
+ ],
+ "adjudicated": false,
+ "reviewers": 0,
+ "note": "known gap: framework-specific response sink (ctx.body) | written after the detectors were frozen; labels by the implementer, not adjudicated"
+}

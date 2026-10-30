@@ -43,6 +43,10 @@ class Store:
                        "correlation_id,detail) VALUES(?,?,?,?,?,?,?,?,?)",
                        (org, actor, action, otype, oid, time.time(), outcome, corr, json.dumps(detail or {})))
 
+    def recent_audit_count(self, org, actor, action, since):
+        return self.d.query("SELECT COUNT(*) AS n FROM audit_event WHERE organization_id=? AND actor=? AND action=? AND ts>?",
+                            (org, actor, action, since))[0]["n"]
+
     def audit_log(self, org, limit=100):
         return self.d.query("SELECT * FROM audit_event WHERE organization_id=? ORDER BY id DESC LIMIT ?", (org, limit))
 
@@ -126,24 +130,52 @@ class Store:
                                       (repo_id,))}
 
     def create_run(self, repo_id, commit_sha, corr, status="queued"):
-        rid = _id("run")
-        self.d.execute("INSERT INTO analysis_run(id,repository_id,commit_sha,status,started_at,correlation_id)"
-                       " VALUES(?,?,?,?,?,?)", (rid, repo_id, commit_sha, status, time.time(), corr))
+        rid, now = _id("run"), time.time()
+        stages = json.dumps({"current": "queued", "timeline": [{"stage": "queued", "ts": now}]})
+        self.d.execute("INSERT INTO analysis_run(id,repository_id,commit_sha,status,started_at,correlation_id,stages)"
+                       " VALUES(?,?,?,?,?,?,?)", (rid, repo_id, commit_sha, status, now, corr, stages))
         return rid
 
     def set_run_status(self, run_id, status):
         self.d.execute("UPDATE analysis_run SET status=? WHERE id=?", (status, run_id))
+
+    def _timeline(self, run_id):
+        r = self.d.query("SELECT stages FROM analysis_run WHERE id=?", (run_id,))
+        st = json.loads(r[0]["stages"]) if r and r[0]["stages"] else {}
+        return st.get("timeline", [])
+
+    def set_run_stage(self, run_id, stage, status="running"):
+        """Record a real pipeline stage transition (queued -> preparing -> scanning -> scoring -> saving -> complete)."""
+        tl = self._timeline(run_id) + [{"stage": stage, "ts": time.time()}]
+        self.d.execute("UPDATE analysis_run SET status=?, stages=? WHERE id=?",
+                       (status, json.dumps({"current": stage, "timeline": tl}), run_id))
+
+    def prune_runs(self, repo_id, keep=40):
+        """Bound growth of demo repositories: drop the oldest runs' instances and rows (the finding ledger is kept)."""
+        old = self.d.query("SELECT id FROM analysis_run WHERE repository_id=? ORDER BY started_at DESC LIMIT 1000 OFFSET ?",
+                           (repo_id, keep))
+        for r in old:
+            self.d.execute("DELETE FROM finding_instance WHERE analysis_run_id=?", (r["id"],))
+            self.d.execute("DELETE FROM analysis_run WHERE id=?", (r["id"],))
+        return len(old)
+
+    def recent_job_count(self, org, kind, since):
+        return self.d.query("SELECT COUNT(*) AS n FROM job WHERE organization_id=? AND kind=? AND created_at>?",
+                            (org, kind, since))[0]["n"]
 
     def save_run(self, repo_id, run_id, result):
         """Finalize a run row and upsert the finding ledger (one transaction)."""
         now = time.time()
         d = self.d
         with d.transaction():
+            timeline = self._timeline(run_id) + [{"stage": "complete" if result["status"] == "complete" else result["status"],
+                                                   "ts": now}]
+            stages = {**result["stages"], "current": timeline[-1]["stage"], "timeline": timeline}
             d.execute("UPDATE analysis_run SET policy_version=?,status=?,completed_at=?,completeness=?,score=?,"
                       "decision=?,stages=?,notes=? WHERE id=?",
                       (result["decision"]["policyVersion"], result["status"], result["completedAt"],
                        json.dumps(result["completeness"]), json.dumps(result["securityDebt"]),
-                       json.dumps(result["decision"]), json.dumps(result["stages"]),
+                       json.dumps(result["decision"]), json.dumps(stages),
                        json.dumps(result["notes"]), run_id))
             for f in result["findings"]:
                 r = f.raw
@@ -173,9 +205,10 @@ class Store:
         rows = self.d.query("SELECT * FROM analysis_run WHERE id=?", (rid,))
         return self._decode_run(rows[0]) if rows else None
 
-    def runs(self, repo_id):
+    def runs(self, repo_id, limit=100):
         return [self._decode_run(r) for r in
-                self.d.query("SELECT * FROM analysis_run WHERE repository_id=? ORDER BY started_at DESC", (repo_id,))]
+                self.d.query("SELECT * FROM analysis_run WHERE repository_id=? ORDER BY started_at DESC LIMIT ?",
+                             (repo_id, limit))]
 
     @staticmethod
     def _decode_run(r):
@@ -184,23 +217,97 @@ class Store:
         return r
 
     # ------------------------------------------------------------ findings
-    def findings(self, repo_id, state=None, severity=None, cursor=None, limit=50):
-        sql = ("SELECT f.*, (SELECT path||':'||CAST(line_start AS TEXT) FROM finding_instance i WHERE i.finding_id=f.id "
-               "ORDER BY i.id DESC LIMIT 1) AS location, "
-               "(SELECT evidence FROM finding_instance i WHERE i.finding_id=f.id ORDER BY i.id DESC LIMIT 1) AS evidence "
-               "FROM finding f WHERE repository_id=?")
-        args = [repo_id]
-        if state:
-            sql += " AND state=?"; args.append(state)
-        if severity:
-            sql += " AND severity=?"; args.append(severity)
-        if cursor:
-            sql += " AND f.id>?"; args.append(cursor)
-        sql += " ORDER BY f.id LIMIT ?"
-        args.append(limit + 1)
+    LOC = "(SELECT path||':'||CAST(line_start AS TEXT) FROM finding_instance i WHERE i.finding_id=f.id ORDER BY i.id DESC LIMIT 1)"
+    EV = "(SELECT evidence FROM finding_instance i WHERE i.finding_id=f.id ORDER BY i.id DESC LIMIT 1)"
+    PATH = "(SELECT path FROM finding_instance i WHERE i.finding_id=f.id ORDER BY i.id DESC LIMIT 1)"
+    SORTS = {"id": "f.id", "severity": "CASE f.severity WHEN 'critical' THEN 0 WHEN 'high' THEN 1 WHEN 'medium' THEN 2 "
+                                         "WHEN 'low' THEN 3 ELSE 4 END",
+             "confidence": "CASE f.confidence WHEN 'high' THEN 0 WHEN 'medium' THEN 1 ELSE 2 END",
+             "path": PATH, "rule": "f.rule_id", "first_seen": "f.first_seen", "last_seen": "f.last_seen"}
+
+    @staticmethod
+    def _like(term: str) -> str:
+        return "%" + term.lower().replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%"
+
+    def _findings_where(self, repo_id, state, severity, category, confidence, rule_ids, path, q):
+        where, args = ["f.repository_id=?"], [repo_id]
+        for col, val in (("state", state), ("severity", severity), ("category", category), ("confidence", confidence)):
+            if val:
+                where.append(f"f.{col}=?")
+                args.append(val)
+        if rule_ids:
+            where.append("f.rule_id IN (" + ",".join("?" * len(rule_ids)) + ")")
+            args += list(rule_ids)
+        if path:
+            where.append(f"LOWER({self.PATH}) LIKE ? ESCAPE '\\'")
+            args.append(self._like(path))
+        if q:
+            like = self._like(q)
+            where.append(f"(LOWER(f.title) LIKE ? ESCAPE '\\' OR LOWER(f.rule_id) LIKE ? ESCAPE '\\' OR LOWER(f.category) LIKE ? "
+                         f"ESCAPE '\\' OR LOWER({self.PATH}) LIKE ? ESCAPE '\\' OR LOWER({self.EV}) LIKE ? ESCAPE '\\')")
+            args += [like] * 5
+        return " AND ".join(where), args
+
+    def findings(self, repo_id, state=None, severity=None, cursor=None, limit=50, *, q=None, category=None, path=None,
+                 confidence=None, rule_ids=None, sort="id", order="asc", offset=0):
+        """Filtered, sorted, paginated findings. sort=id uses a stable cursor; other sorts use offset paging.
+        Returns (rows, next_cursor, next_offset, total_matching)."""
+        if sort not in self.SORTS:
+            sort = "id"
+        where, args = self._findings_where(repo_id, state, severity, category, confidence, rule_ids, path, q)
+        total = self.d.query(f"SELECT COUNT(*) AS n FROM finding f WHERE {where}", args)[0]["n"]
+        sql = f"SELECT f.*, {self.LOC} AS location, {self.EV} AS evidence FROM finding f WHERE {where}"
+        if sort == "id" and cursor:
+            sql += " AND f.id>?"
+            args = args + [cursor]
+        direction = "DESC" if str(order).lower() == "desc" else "ASC"
+        sql += f" ORDER BY {self.SORTS[sort]} {direction}, f.id ASC LIMIT ?"
+        args = args + [limit + 1]
+        if sort != "id":
+            sql += " OFFSET ?"
+            args.append(max(0, int(offset)))
         rows = self.d.query(sql, args)
-        nxt = rows[limit - 1]["id"] if len(rows) > limit else None
-        return rows[:limit], nxt
+        more = len(rows) > limit
+        nxt = rows[limit - 1]["id"] if (more and sort == "id") else None
+        next_offset = (max(0, int(offset)) + limit) if (more and sort != "id") else None
+        return rows[:limit], nxt, next_offset, total
+
+    def findings_count(self, repo_id, **filters):
+        rows = self.d.query("SELECT state, severity, category, COUNT(*) AS n FROM finding WHERE repository_id=? "
+                            "GROUP BY state, severity, category", (repo_id,))
+        return rows
+
+    def all_findings(self, repo_id):
+        """Every ledger row for a repository (no pagination): small, used for dashboard aggregates."""
+        return self.d.query("SELECT * FROM finding WHERE repository_id=?", (repo_id,))
+
+    def latest_run(self, repo_id):
+        r = self.d.query("SELECT * FROM analysis_run WHERE repository_id=? ORDER BY started_at DESC LIMIT 1", (repo_id,))
+        return self._decode_run(r[0]) if r else None
+
+    def open_counts(self, org):
+        out = {}
+        for r in self.d.query("SELECT f.repository_id AS rid, f.severity AS sev, COUNT(*) AS n FROM finding f JOIN repository r "
+                              "ON r.id=f.repository_id WHERE r.organization_id=? AND f.state='open' GROUP BY f.repository_id, f.severity",
+                              (org,)):
+            out.setdefault(r["rid"], {})[r["sev"]] = r["n"]
+        return out
+
+    def repo_activity(self, repo_id, limit=15):
+        ev = []
+        for r in self.d.query("SELECT id,status,started_at,commit_sha,decision FROM analysis_run WHERE repository_id=? "
+                              "ORDER BY started_at DESC LIMIT ?", (repo_id, limit)):
+            dec = json.loads(r["decision"]) if r["decision"] else {}
+            ev.append({"ts": r["started_at"], "type": "scan", "runId": r["id"],
+                       "text": f"Scan {r['status']}" + (f" ({dec.get('outcome', '').replace('_', ' ')})" if dec else "")
+                               + (f" at {r['commit_sha'][:8]}" if r["commit_sha"] else "")})
+        for d in self.d.query("SELECT d.created_at AS ts, d.type AS type, d.actor AS actor, f.title AS title, f.id AS fid FROM disposition d "
+                              "JOIN finding f ON f.id=d.finding_id WHERE f.repository_id=? ORDER BY d.created_at DESC LIMIT ?",
+                              (repo_id, limit)):
+            ev.append({"ts": d["ts"], "type": "triage", "findingId": d["fid"],
+                       "text": f"{d['actor']} marked \"{d['title']}\" as {d['type'].replace('_', ' ')}"})
+        ev.sort(key=lambda e: -e["ts"])
+        return ev[:limit]
 
     def run_findings(self, run_id):
         """Findings observed in one run, joined with their ledger state."""

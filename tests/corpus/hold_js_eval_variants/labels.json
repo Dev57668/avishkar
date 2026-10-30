@@ -1,0 +1,20 @@
+{
+ "source": "synthetic",
+ "cohort": "tuning",
+ "fully_labeled": true,
+ "vulns": [
+  {
+   "path": "run.js",
+   "line": 8,
+   "kind": "eval"
+  },
+  {
+   "path": "run.js",
+   "line": 12,
+   "kind": "eval"
+  }
+ ],
+ "adjudicated": false,
+ "reviewers": 0,
+ "note": "was a known gap (rule added after this case): vm.runInNewContext executes strings but is not a recognised sink | written after the detectors were frozen; labels by the implementer, not adjudicated"
+}

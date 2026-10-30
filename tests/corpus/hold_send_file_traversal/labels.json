@@ -1,0 +1,15 @@
+{
+ "source": "synthetic",
+ "cohort": "tuning",
+ "fully_labeled": true,
+ "vulns": [
+  {
+   "path": "files.py",
+   "line": 8,
+   "kind": "path-traversal"
+  }
+ ],
+ "adjudicated": false,
+ "reviewers": 0,
+ "note": "was a known gap (rule added after this case): send_file() is not a recognised file sink | written after the detectors were frozen; labels by the implementer, not adjudicated"
+}

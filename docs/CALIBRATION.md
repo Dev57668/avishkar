@@ -10,44 +10,50 @@ choosing its parameters from labeled evidence: **C** (confidence per rule, from 
 Impact, exposure and aging are not fitted from this corpus: they have no outcome data behind them.
 
 ## What was built
-* `tests/corpus/`: 43 labeled cases. **3 independent** (copied byte-for-byte from `sample_projects/`, written separately
-  from these detectors: a vulnerable Python app, a vulnerable Node app, and a Java app) and **40 synthetic** (positives in
-  varied syntax, safe look-alikes such as `model.eval()`, strings/comments, placeholders, and deliberately hard cases).
-  Vulnerability lines are located by text, so labels cannot drift from the code.
+* `tests/corpus/`: 81 labeled cases in three cohorts. **3 independent** (copied byte-for-byte from `sample_projects/`,
+  written separately from these detectors) and **78 synthetic**: positives in varied syntax, safe look-alikes (such as
+  `model.eval()`, strings/comments, placeholders, `defusedxml`, ORM calls), and deliberately hard cases. Vulnerability lines
+  are located by text, so labels cannot drift from the code.
+  * `tuning`: cases that existed while the rules were written (improvements here may be in-sample).
+  * `holdout` / `holdout-2`: written after the rules were frozen (`scripts/build_corpus_holdout.py`). Cases that were then
+    used to extend rules were reclassified as `tuning` (the `RECLASSIFIED` set), so the holdout is not quietly re-fit.
 * `python -m avishkar calibrate tests/corpus` -> precision per rule and per rule@confidence with Wilson 95% bounds, recall
-  per vulnerability kind, factor monotonicity, replay/gaming checks, approval blockers.
-* `python -m avishkar calibrate tests/corpus --fit OUT.json [--anchor-case C --anchor-index I]` -> candidate config:
+  per vulnerability kind and per cohort, factor monotonicity, replay/gaming checks, approval blockers.
+* `python -m avishkar calibrate tests/corpus --fit OUT.json --anchor-case ind_python_app --anchor-index 80` -> candidate
+  config:
   * **Confidence caps** keyed `RULE@reported-confidence`. A cap can only *lower* a finding's confidence (never raise it
     above the detector's own). A rule with fewer than 8 labeled findings is capped at `low`, as spec P.3 requires.
-  * **K** solved so a reference case reads as a chosen index. Default: the heaviest independent case reads **80**
-    (`ind_python_app`, 21.0 raw units under the caps → **K = 13.05**; the shipped K = 20). The reference case and the
-    index are **human decisions**; the median of the corpus is deliberately *not* used because most cases are one-line
-    snippets and say nothing about how a real repository should read.
-* Coverage fix found while labeling: a repo containing only unsupported-language source (e.g. the Java sample) used to
-  scan as *complete, 0 findings, pass*. It is now `incomplete` / `not_evaluated`; mixed repos stay complete but list
+  * **K** solved so a reference case reads as a chosen index. The reference case and the index are **human decisions**.
+    With the current detectors the reference case carries 49.5 raw units under the caps (55.75 under the current version),
+    so the candidate K is 30.756 (the shipped K = 20). This moves whenever detectors change, which is another reason the
+    candidate must not be used for blocking.
+* Coverage fix found while labeling: a repo containing only unsupported-language source (e.g. the Java sample) is
+  `incomplete` / `not_evaluated`, never *complete, 0 findings, pass*. Mixed repos stay complete but list
   `securityDebt.coverage.notEvaluated` and a `NOT EVALUATED` note (also in SARIF and the PR comment).
 
 ## What the evidence says (details: `docs/calibration-report.generated.md`)
-* **No rule has enough data.** The best rule has n = 5 labeled findings; the 95% lower bound on precision is below
-  0.57 everywhere, so every rule's tier is `low` in the candidate. The minimum sample is 8 *per rule@confidence* and a
-  Wilson lower bound ≥ 0.80 for `high`; reaching `high` needs on the order of 15–20 correct findings per rule with no misses.
-* **Recall is the larger problem than precision.** Found vs. missed on this corpus: secrets 10/18, SQL injection 4/8
-  (taint through a variable is invisible to the detector), debug 2/3, path traversal 0/4, XXE, ReDoS, weak random,
-  insecure temp file, info disclosure, CORS by subscript: all 0 (no rule). A low score here is partly *absence of rules*,
-  which is exactly why zero findings must never be read as safe.
-* **Real false positives exist:** `model.eval()` is flagged by the JS eval rule (JS regex); placeholder secrets still
-  produce `SEC-GENERIC@low` findings (the detector already downgrades them: 1 of 3 correct).
-* **Secret detection misses the most common real-world shapes**: prefixed names (`AWS_SECRET_KEY`, `JWT_SECRET`,
-  `DB_PASSWORD`), dict-style `'password': '…'`, and short values. Fix candidates are listed above in the corpus labels.
+* **Out-of-sample numbers (frozen before the rules were extended, `docs/calibration-holdout-frozen.json`):** holdout
+  precision **0.821**, recall **0.793** (27 cases, 23 TP, 5 FP, 6 missed) versus tuning precision 0.969, recall 0.900.
+  That gap is the honest measure of how much the tuning numbers flatter the detectors. After the rules were extended
+  using the holdout, the in-sample table in the generated report shows holdout recall 1.0; do not quote it as accuracy.
+  A second, smaller set (`holdout-2`, 11 cases, written after that) gives precision 0.909 and recall 0.769.
+* **No rule has enough data.** The best rules have n = 5-6 labeled findings; reaching `high` needs a Wilson 95% lower bound
+  of at least 0.80 with at least 8 findings per rule@confidence, which is on the order of 15-20 correct findings per rule
+  with no misses. Every rule's tier is therefore `low` in the candidate.
+* **Recall is the larger problem than precision.** Known misses on the current corpus: secrets in unusual shapes, one
+  CORS-by-subscript case, info disclosure, ReDoS and insecure-temp-file variants. A low score can be partly *absence of
+  rules*, which is exactly why zero findings must never be read as safe.
+* **Known false-positive risks:** heuristic secret-assignment findings at `low` confidence (precision 2/6 at that
+  confidence on this corpus), and shell/weak-hash rules on look-alike code.
 * Mechanics hold: factors are monotonic, identical inputs give identical scores, accepting risk cannot lower the index,
   fixing lowers it.
 
 ## Why this cannot be approved yet (the report's own blockers)
 1. Labels are not adjudicated by ≥ 2 reviewers (P.2). I authored them; the 3 independent cases were labeled by me from
    their own `VULNERABILITY` comments. That is better than self-written code, but still one reviewer.
-2. Only 3 independent cases. Synthetic cases measure self-consistency with my own idea of a vulnerability, not real-world
-   precision. Real precision needs real repositories reviewed by humans.
-3. Fewer than 8 labeled findings for every rule.
+2. Only 3 independent cases; the other 78 are synthetic and measure self-consistency with the author's idea of a
+   vulnerability, not real-world precision. Real precision needs real repositories reviewed by humans.
+3. Fewer than 8 labeled findings for most rules (22 of them in the latest report).
 
 ## To finish calibration (owner actions)
 1. Collect 30+ real repositories (supported-language slices, with secure/near-miss examples), have two reviewers

@@ -201,3 +201,13 @@ def test_calibration_counts_false_positives_and_misses(tmp_path):
     r = run_calibration(tmp_path)
     assert r["detectors"]["byRule"]["PY-EVAL"]["fp"] == 1  # finding with no matching label
     assert r["detectors"]["recallByKind"]["cmdi"] == {"found": 0, "missed": 1, "recall": 0.0}  # label with no finding
+
+
+def test_sarif_rules_carry_cwe_tags_and_precision(env):
+    q = env.scan("r/sc", zip_dir(FIX / "insecure", {"d.py": "app.run(debug=True)\n"}))
+    s = env.client.get(f"/v1/analyses/{q.json()['runId']}/sarif", headers=env.h).json()
+    rules = {r["id"]: r for r in s["runs"][0]["tool"]["driver"]["rules"]}
+    shell = rules["PY-SHELL"]
+    assert "external/cwe/cwe-78" in shell["properties"]["tags"] and shell["helpUri"].endswith("/78.html")
+    assert shell["properties"]["precision"] == "high" and "shell" in shell["fullDescription"]["text"].lower()
+    assert rules["PY-DEBUG"]["properties"]["precision"] == "low"   # heuristic rules are labeled low precision

@@ -1,0 +1,9 @@
+{
+ "source": "synthetic",
+ "cohort": "holdout-2",
+ "fully_labeled": true,
+ "vulns": [],
+ "adjudicated": false,
+ "reviewers": 0,
+ "note": "written after the detectors were frozen; labels by the implementer, not adjudicated"
+}

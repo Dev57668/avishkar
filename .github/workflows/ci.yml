@@ -80,8 +80,11 @@ jobs:
           tok = call("/v1/auth/login", json.dumps({"email": st["demoLogin"]["email"], "password": st["demoLogin"]["password"]}).encode(),
                      {"Content-Type": "application/json"})["token"]
           repos = {r["name"]: r for r in call("/v1/repositories", headers={"Authorization": "Bearer " + tok})["items"]}
-          assert set(repos) == {"demo/vulnerable-python", "demo/vulnerable-javascript", "demo/vulnerable-java"}, repos
-          assert repos["demo/vulnerable-python"]["latestIndex"] == 76.2, repos
+          assert set(repos) == {"demo/vulnerable-python", "demo/vulnerable-javascript", "demo/secure-python", "demo/vulnerable-java"}, repos
+          # each vulnerable sample is scanned as shipped, then with every fix applied, so the latest run is the fixed one
+          assert repos["demo/vulnerable-python"]["latestIndex"] == 0.0 and repos["demo/vulnerable-python"]["runs"] == 2, repos
+          assert repos["demo/vulnerable-javascript"]["latestIndex"] == 0.0 and repos["demo/secure-python"]["latestIndex"] == 0.0, repos
+          assert repos["demo/vulnerable-java"]["latestIndex"] is None, repos  # unsupported language: incomplete, never zero
           print("seeded demo OK:", {k: v["latestIndex"] for k, v in repos.items()})
           EOF
       - name: logs on failure

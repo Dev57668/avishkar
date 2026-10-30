@@ -5,7 +5,7 @@ Corpus layout: <corpus>/<case>/<source files...> + <case>/labels.json
   {
     "source": "independent" | "synthetic",     # who wrote the code relative to the detectors
     "fully_labeled": true,                      # every real vulnerability in the case is listed
-    "vulns": [{"path": "app.py", "line": 35, "kind": "sqli"}],      # line may be omitted = any line
+    "vulns": [{"path": "app.py", "line": 35, "kind": "sqli"}],      # or "lines": [19, 21] (source or sink), or none = any
     "expected_status": "complete",              # optional; "incomplete" for unsupported-language cases
     "adjudicated": false, "reviewers": 0        # >=2 human reviewers needed before approval (P.2)
   }
@@ -35,6 +35,10 @@ RULE_KIND = {
     "JS-TLS": "noverify", "PY-DEBUG": "debug", "JS-INNERHTML": "xss", "ANY-CORS": "cors",
     "SEC-AWS-KEY": "secret", "SEC-GH-TOKEN": "secret", "SEC-SLACK": "secret", "SEC-PRIVKEY": "secret",
     "SEC-GENERIC": "secret", "DEP-UNPINNED": "dependency", "DEP-NOLOCK": "dependency",
+    "PY-SQLI-FLOW": "sqli", "PY-SECRET-ASSIGN": "secret", "PY-XML-PARSE": "xxe", "PY-TEMPFILE": "tempfile",
+    "PY-TEMPPATH": "tempfile", "PY-RANDOM": "weak-random", "PY-PATH": "path-traversal", "JS-XSS-REFLECT": "xss",
+    "JS-SQLI": "sqli", "JS-WEAKHASH": "weakhash", "JS-RANDOM": "weak-random", "JS-SECRET-ASSIGN": "secret",
+    "JS-PATH": "path-traversal",
 }
 # Confidence tiers proposed from measured precision (Wilson 95% lower bound, minimum sample).
 MIN_N = 8
@@ -78,6 +82,7 @@ def evaluate_detectors(corpus: Path, cfg: ScoreConfig, pol: Policy) -> dict:
     kinds: dict[str, dict] = {}
     sev: dict[str, dict] = {}
     cases, adjudicated, status_mismatch = [], 0, []
+    cohorts: dict[str, dict] = {}
 
     def b(d, k, fields):
         return d.setdefault(k, {f: 0 for f in fields})
@@ -96,33 +101,45 @@ def evaluate_detectors(corpus: Path, cfg: ScoreConfig, pol: Policy) -> dict:
         fully = bool(labels.get("fully_labeled", "vulns" not in labels))
         used = set()
         seen = set()
+        co = cohorts.setdefault(labels.get("cohort", "tuning"),
+                                {"cases": 0, "tp": 0, "fp": 0, "unlabeled": 0, "found": 0, "missed": 0})
+        co["cases"] += 1
         for f in res["findings"]:
             key = (f.raw.rule_id, f.raw.path, f.raw.line)
             if key in seen:
                 continue
             seen.add(key)
             k = kind_of(f.raw.rule_id)
-            hit = next((i for i, v in enumerate(vulns) if v["path"] == f.raw.path and v["kind"] == k
-                        and (v.get("line") is None or v["line"] == f.raw.line)), None)
+            def line_ok(v):  # a label may name one line, several acceptable lines (source or sink), or any line
+                allowed = v.get("lines") or ([v["line"]] if v.get("line") is not None else None)
+                return allowed is None or f.raw.line in allowed
+
+            cands = [i for i, v in enumerate(vulns) if v["path"] == f.raw.path and v["kind"] == k and line_ok(v)]
+            # prefer a not-yet-matched label so two findings can account for two labeled vulnerabilities
+            hit = next((i for i in cands if i not in used), cands[0] if cands else None)
             r = b(rules, f.raw.rule_id, ("tp", "fp", "unlabeled"))
             rc = b(rule_conf, f"{f.raw.rule_id}@{f.raw.confidence.value}", ("tp", "fp", "unlabeled"))
             s_ = b(sev, f.raw.severity.value, ("tp", "fp", "unlabeled"))
             if hit is not None:
                 used.add(hit)
+                co["tp"] += 1
                 r["tp"] += 1
                 rc["tp"] += 1
                 s_["tp"] += 1
             elif fully:
+                co["fp"] += 1
                 r["fp"] += 1
                 rc["fp"] += 1
                 s_["fp"] += 1
             else:
+                co["unlabeled"] += 1
                 r["unlabeled"] += 1
                 rc["unlabeled"] += 1
                 s_["unlabeled"] += 1
         for i, v in enumerate(vulns):
             kk = b(kinds, v["kind"], ("found", "missed"))
             kk["found" if i in used else "missed"] += 1
+            co["found" if i in used else "missed"] += 1
         cases.append({"case": d.name, "status": "complete", "source": labels.get("source", "unknown"),
                       "rawUnits": res["securityDebt"]["rawUnits"], "findings": len(res["findings"]),
                       "labeledVulns": len(vulns), "fullyLabeled": fully})
@@ -139,6 +156,9 @@ def evaluate_detectors(corpus: Path, cfg: ScoreConfig, pol: Policy) -> dict:
             "byRuleConfidence": {k: prec(v) for k, v in sorted(rule_conf.items())},
             "bySeverity": {k: prec(v) for k, v in sorted(sev.items())},
             "recallByKind": {k: rec(v) for k, v in sorted(kinds.items())},
+            "byCohort": {k: {**v, "precision": round(v["tp"] / (v["tp"] + v["fp"]), 3) if v["tp"] + v["fp"] else None,
+                             "recall": round(v["found"] / (v["found"] + v["missed"]), 3) if v["found"] + v["missed"] else None}
+                         for k, v in sorted(cohorts.items())},
             "statusMismatches": status_mismatch, "adjudicatedCases": adjudicated, "totalCases": len(cases),
             "independentCases": sum(1 for c in cases if c.get("source") == "independent")}
 
@@ -310,6 +330,12 @@ def render_markdown(r: dict) -> str:
           "| Rule@confidence | TP | FP | n | Wilson 95% lower |", "|---|---|---|---|---|"]
     for k, v in d["byRuleConfidence"].items():
         L.append(f"| {k} | {v['tp']} | {v['fp']} | {v['n']} | {v['wilsonLower95']} |")
+    L += ["", "## Tuning vs holdout cohorts",
+          "`tuning` = cases that existed while the rules were written (improvements here may be in-sample); `holdout` = written after "
+          "the rules were frozen (a fairer, still self-authored, estimate).",
+          "| Cohort | Cases | TP | FP | Precision | Found | Missed | Recall |", "|---|---|---|---|---|---|---|---|"]
+    for k, v in d["byCohort"].items():
+        L.append(f"| {k} | {v['cases']} | {v['tp']} | {v['fp']} | {v['precision']} | {v['found']} | {v['missed']} | {v['recall']} |")
     L += ["", "## Recall by vulnerability kind", "| Kind | Found | Missed | Recall |", "|---|---|---|---|"]
     for k, v in d["recallByKind"].items():
         L.append(f"| {k} | {v['found']} | {v['missed']} | {v['recall']} |")

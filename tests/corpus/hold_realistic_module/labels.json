@@ -1,0 +1,30 @@
+{
+ "source": "synthetic",
+ "cohort": "holdout",
+ "fully_labeled": true,
+ "vulns": [
+  {
+   "path": "service.py",
+   "line": 11,
+   "kind": "secret"
+  },
+  {
+   "path": "service.py",
+   "line": 20,
+   "kind": "pickle"
+  },
+  {
+   "path": "service.py",
+   "line": 29,
+   "kind": "noverify"
+  },
+  {
+   "path": "service.py",
+   "line": 33,
+   "kind": "cmdi"
+  }
+ ],
+ "adjudicated": false,
+ "reviewers": 0,
+ "note": "written after the detectors were frozen; labels by the implementer, not adjudicated"
+}

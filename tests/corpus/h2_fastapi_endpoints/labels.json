@@ -1,0 +1,20 @@
+{
+ "source": "synthetic",
+ "cohort": "holdout-2",
+ "fully_labeled": true,
+ "vulns": [
+  {
+   "path": "main.py",
+   "line": 10,
+   "kind": "cmdi"
+  },
+  {
+   "path": "main.py",
+   "line": 16,
+   "kind": "path-traversal"
+  }
+ ],
+ "adjudicated": false,
+ "reviewers": 0,
+ "note": "written after the detectors were frozen; labels by the implementer, not adjudicated"
+}

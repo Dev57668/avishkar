@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import pytest
 
 from avishkar.workers import runner as runner_mod
@@ -79,21 +81,27 @@ def test_seed_is_idempotent_and_real(tmp_path):
     assert again == {"viewer": False, "repos": []}  # nothing duplicated
     v = e.login("demo@avishkar.dev", "demo-view-only-1")
     repos = {r["name"]: r for r in e.client.get("/v1/repositories", headers=v).json()["items"]}
-    assert set(repos) == {"demo/vulnerable-python", "demo/vulnerable-javascript", "demo/vulnerable-java"}
+    assert set(repos) == {"demo/vulnerable-python", "demo/vulnerable-javascript", "demo/secure-python", "demo/vulnerable-java"}
     py = repos["demo/vulnerable-python"]
-    assert py["runs"] == 2 and py["latestIndex"] == 76.2 and py["latestRawUnits"] == 28.75  # the fixed run, not the first
+    assert py["runs"] == 2 and py["latestIndex"] == 0.0  # the all-fixes run is the latest, not the first
+    assert repos["demo/secure-python"]["runs"] == 1 and repos["demo/secure-python"]["latestIndex"] == 0.0
 
 
-def test_seeded_before_after_runs_match_the_landing_page(tmp_path):
+def test_seeded_before_after_runs_match_the_published_results_file(tmp_path):
+    """The numbers on the landing page (web/demo_results.json) must equal what a real scan produces."""
+    import json
+    golden = json.loads((Path(__file__).resolve().parents[2] / "web" / "demo_results.json").read_text())
     e = demo_env(tmp_path)
     v = e.login("demo@avishkar.dev", "demo-view-only-1")
-    rid = next(r["id"] for r in e.client.get("/v1/repositories", headers=v).json()["items"] if r["name"].endswith("python"))
+    rid = next(r["id"] for r in e.client.get("/v1/repositories", headers=v).json()["items"] if r["name"].endswith("vulnerable-python"))
     runs = e.client.get(f"/v1/repositories/{rid}/analyses", headers=v).json()["items"]
     by = {r["commitSha"]: r["securityDebt"] for r in runs}
-    assert by["sample-before"]["normalizedIndex"] == 79.6 and by["sample-before"]["rawUnits"] == 31.75
-    assert by["sample-after"]["normalizedIndex"] == 76.2 and by["sample-after"]["rawUnits"] == 28.75
-    findings = e.client.get(f"/v1/repositories/{rid}/findings?limit=200", headers=v).json()["items"]
-    assert len(findings) == 12 and sum(f["state"] == "fixed" for f in findings) == 1
+    g = golden["samples"]["vulnerable-python"]
+    assert by["sample"]["normalizedIndex"] == g["before"]["normalizedIndex"] and by["sample"]["grossUnits"] == g["before"]["grossUnits"]
+    after_label = f"sample + {g['fixCount']} fixes"
+    assert by[after_label]["normalizedIndex"] == g["after"]["normalizedIndex"] == 0.0
+    findings = e.client.get(f"/v1/repositories/{rid}/findings?limit=200", headers=v).json()
+    assert findings["total"] == g["before"]["findings"] and {f["state"] for f in findings["items"]} == {"fixed"}
 
 
 def test_unsupported_java_sample_is_not_evaluated_not_clean(tmp_path):
@@ -109,7 +117,7 @@ def test_demo_viewer_is_strictly_read_only(tmp_path):
     e = demo_env(tmp_path)
     v = e.login("demo@avishkar.dev", "demo-view-only-1")
     assert e.client.get("/v1/auth/me", headers=v).json()["role"] == "viewer"
-    rid = next(r["id"] for r in e.client.get("/v1/repositories", headers=v).json()["items"] if r["name"].endswith("python"))
+    rid = next(r["id"] for r in e.client.get("/v1/repositories", headers=v).json()["items"] if r["name"] == "demo/vulnerable-python")
     f = e.client.get(f"/v1/repositories/{rid}/findings", headers=v).json()["items"][0]
     assert e.scan("r/x", zip_dir(FIX / "secure"), headers=v, drain=False).status_code == 403
     assert e.client.post(f"/v1/findings/{f['id']}/dispositions", headers=v,

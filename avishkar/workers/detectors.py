@@ -11,6 +11,8 @@ from pathlib import Path
 from typing import Callable
 
 from ..domain.models import Confidence, Exposure, RawFinding, Severity
+from ..domain.redaction import redact_text
+from .shapes import PLACEHOLDER
 
 SUPPORT_MATRIX = {
     "python": {"status": "supported", "ext": [".py"]},
@@ -40,7 +42,6 @@ SECRET_RULES = [
         r"""(?ix)\b(?:api[_-]?key|secret|passwd|password|token|auth)[\w-]*\s*[:=]\s*["']([A-Za-z0-9_\-/+=]{12,})["']"""),
      "Hard-coded credential assignment", Confidence.MEDIUM, 1),
 ]
-PLACEHOLDER = re.compile(r"(?i)(example|placeholder|changeme|your[_-]|xxxx|<.*>|dummy|test)")
 
 
 def detect_secrets(root: Path, files: list[Path]) -> list[RawFinding]:
@@ -102,9 +103,27 @@ PATTERN_RULES = [
 ]
 
 
+def _regex_scan(text: str, rel: str, ext: str, only: set[str] | None = None) -> list[RawFinding]:
+    out = []
+    for n, line in enumerate(text.splitlines(), 1):
+        s = line.strip()
+        if s.startswith(("#", "//", "*")):
+            continue
+        for rule_id, rx, exts, sev, conf, title, fix, cat in PATTERN_RULES:
+            if ext in exts and rx.search(line) and (only is None or rule_id in only):
+                out.append(RawFinding("code-patterns", rule_id, cat, sev, conf, title, rel, n,
+                                      redact_text(s[:160]), Exposure.UNKNOWN, fix, "small"))
+    return out
+
+
+JS_EXT = {".js", ".jsx", ".ts", ".tsx", ".mjs"}
+
+
 def detect_patterns(root: Path, files: list[Path]) -> list[RawFinding]:
-    """Python goes through the AST detector (alias-aware, ignores comments/strings); a file that does not
-    parse falls back to the regex rules so it is still covered. JS/TS use the regex rules."""
+    """Python -> AST detector; JavaScript/TypeScript -> token-stream detector (both alias-aware, both ignore comments
+    and strings). A file the structural scanners cannot handle falls back to the legacy regex rules so it is still
+    covered. The wildcard-CORS rule is a line regex for both languages."""
+    from .jsscan import scan_js
     from .pyast import scan_python
     out = []
     for p in files:
@@ -113,20 +132,19 @@ def detect_patterns(root: Path, files: list[Path]) -> list[RawFinding]:
             continue
         rel = p.relative_to(root).as_posix()
         text = p.read_text(errors="replace")
-        if ext == ".py":
-            try:
-                out.extend(scan_python(text, rel))
-                continue
-            except (SyntaxError, ValueError, RecursionError):
-                pass  # regex fallback below
-        for n, line in enumerate(text.splitlines(), 1):
-            s = line.strip()
-            if s.startswith(("#", "//", "*")):
-                continue
-            for rule_id, rx, exts, sev, conf, title, fix, cat in PATTERN_RULES:
-                if ext in exts and rx.search(line):
-                    out.append(RawFinding("code-patterns", rule_id, cat, sev, conf, title, rel, n,
-                                          s[:160], Exposure.UNKNOWN, fix, "small"))
+        structural = None
+        try:
+            if ext == ".py":
+                structural = scan_python(text, rel)
+            elif ext in JS_EXT:
+                structural = scan_js(text, rel)
+        except (SyntaxError, ValueError, RecursionError, IndexError):
+            structural = None  # fall back below; never silently skip the file
+        if structural is not None:
+            out.extend(structural)
+            out.extend(_regex_scan(text, rel, ext, only={"ANY-CORS"}))
+        else:
+            out.extend(_regex_scan(text, rel, ext))
     return out
 
 

@@ -14,8 +14,11 @@
   },
   {
    "path": "app.js",
-   "line": 19,
-   "kind": "sqli"
+   "kind": "sqli",
+   "lines": [
+    19,
+    21
+   ]
   },
   {
    "path": "app.js",
