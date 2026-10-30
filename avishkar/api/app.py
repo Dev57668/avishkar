@@ -3,11 +3,13 @@ Untrusted repository content is never parsed here -- it is spooled and handled b
 from __future__ import annotations
 
 import hashlib
+import io
 import json
 import os
 import secrets
 import time
 import uuid
+import zipfile
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -34,6 +36,7 @@ from .security import (ROLES, LoginThrottle, Principal, TokenService, hash_api_k
 
 WEB_DIR = Path(__file__).resolve().parents[2] / "web"
 MAX_UPLOAD = 25_000_000
+LIMITED = {"zip_bytes": 2_000_000, "files": 300, "declared_bytes": 10_000_000, "per_hour": 3}  # non-admin uploads in "limited" mode
 MAX_WEBHOOK_BODY = 5_000_000
 
 
@@ -276,7 +279,7 @@ def create_app(db_url: str | None = None, *, secret_key: str | None = None, scor
 
     @app.post("/v1/auth/register", status_code=202)
     def register(body: SignupIn, request: Request):
-        """Self sign-up for the public demo. Always a read-only VIEWER, and the account cannot sign in until the emailed
+        """Self sign-up for the public demo. The person gets a private one-user organization (role analyst there), and the account cannot sign in until the emailed
         link is opened. Needs the mailer (Resend) and AVISHKAR_SIGNUP=1 in demo mode; otherwise it is refused."""
         if not (demo.enabled and demo.signup and mail):
             raise ApiError(403, "signup_disabled", "Sign-up is not enabled on this instance")
@@ -286,7 +289,10 @@ def create_app(db_url: str | None = None, *, secret_key: str | None = None, scor
         email = body.email.lower()
         if store.user_by_email(email):
             raise ApiError(409, "conflict", "That email cannot be registered")
-        u = store.create_user(org, email, hash_password(body.password), "viewer")
+        # Each self-registered account gets its OWN organization (existing tenant isolation), so its uploads, findings and
+        # runs are visible to nobody else. Analyst is therefore safe inside that private org.
+        own = store.create_org("user-" + secrets.token_hex(8))
+        u = store.create_user(own["id"], email, hash_password(body.password), "analyst")
         store.mark_unverified(u["id"])
         store.audit("signup", "signup", "user", u["id"], "ok", request.state.cid, org=org)
         try:
@@ -463,11 +469,24 @@ def create_app(db_url: str | None = None, *, secret_key: str | None = None, scor
         if demo.uploads == "off" or (demo.uploads == "admin" and not p.has("admin")):
             raise ApiError(403, "uploads_disabled",
                            "Uploads are disabled on this instance" + (" for non-admin users" if demo.uploads == "admin" else ""))
-        data = await archive.read(MAX_UPLOAD + 1)
-        if len(data) > MAX_UPLOAD:
-            raise ApiError(413, "too_large", "Archive exceeds upload limit")
+        capped = demo.uploads == "limited" and not p.has("admin")
+        data = await archive.read((LIMITED["zip_bytes"] if capped else MAX_UPLOAD) + 1)
+        if len(data) > (LIMITED["zip_bytes"] if capped else MAX_UPLOAD):
+            raise ApiError(413, "too_large", "Archive exceeds the upload limit"
+                           + (f" ({LIMITED['zip_bytes'] // 1_000_000} MB on this instance)" if capped else ""))
         if data[:2] != b"PK":
             raise ApiError(422, "invalid_input", "Upload must be a zip archive")
+        if capped:
+            if store.recent_audit_count(p.org_id, p.email or p.id, "analysis_queued", time.time() - 3600) >= LIMITED["per_hour"]:
+                raise ApiError(429, "rate_limited", f"Upload limit reached ({LIMITED['per_hour']} per hour on this instance)")
+            try:  # cheap pre-check of the central directory; the extractor still enforces the real limits while unpacking
+                with zipfile.ZipFile(io.BytesIO(data)) as z:
+                    infos = z.infolist()
+                if len(infos) > LIMITED["files"] or sum(i.file_size for i in infos) > LIMITED["declared_bytes"]:
+                    raise ApiError(413, "too_large", f"Archive has too many files or is too large uncompressed "
+                                   f"(max {LIMITED['files']} files, {LIMITED['declared_bytes'] // 1_000_000} MB)")
+            except zipfile.BadZipFile:
+                raise ApiError(422, "invalid_input", "Upload must be a valid zip archive")
         repo = store.get_or_create_repo(p.org_id, repository)
         runner_mod.SPOOL_DIR.mkdir(parents=True, exist_ok=True)
         spool = runner_mod.SPOOL_DIR / f"up_{uuid.uuid4().hex}.zip"

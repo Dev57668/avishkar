@@ -80,7 +80,7 @@ export function section(id, title, body, actions) {
 
 export const canUpload = () => {
   const up = session.cfg && session.cfg.uploads;
-  return (up === 'all' && session.has('analyst')) || (up === 'admin' && session.has('admin'));
+  return ((up === 'all' || up === 'limited') && session.has('analyst')) || (up === 'admin' && session.has('admin'));
 };
 
 export const rel = (ts) => h('time', { title: when(ts), datetime: ts ? new Date(ts * 1000).toISOString() : false }, ago(ts));

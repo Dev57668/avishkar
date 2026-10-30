@@ -6,7 +6,7 @@ from files in this repository, and lets only the owner (admin) upload.
 
 Environment:
   AVISHKAR_DEMO_MODE=1               enable demo seeding (used by `serve`)
-  AVISHKAR_UPLOADS=all|admin|off     who may POST /v1/analyses (default: all; demo deployments use admin)
+  AVISHKAR_UPLOADS=all|admin|limited|off   who may POST /v1/analyses (default: all; "limited" = size/file/rate caps for non-admins)
   AVISHKAR_PUBLISH_DEMO_LOGIN=1      expose the demo viewer's login via GET /v1/public/status (viewer role only)
   AVISHKAR_DEMO_EMAIL / AVISHKAR_DEMO_PASSWORD   the read-only demo account (password >= 10 chars)
 """
@@ -25,7 +25,7 @@ from .domain.scoring import ScoreConfig
 from . import samples
 from .workers import pipeline
 
-UPLOAD_MODES = ("all", "admin", "off")
+UPLOAD_MODES = ("all", "admin", "limited", "off")  # limited: admins unrestricted, other analysts get small capped uploads
 
 
 @dataclass(frozen=True)

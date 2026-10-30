@@ -33,7 +33,7 @@ function banner() {
   const sb = session.cfg && session.cfg.sandbox;
   if (sb && !sb.isolationBoundary) frag.append(h('div', { class: 'note-bar' }, icon('shield'), ` Sandbox mode “${sb.mode}” is not an isolation boundary: only scan code you trust.`));
   if (session.pub && session.pub.demo) frag.append(h('div', { class: 'note-bar' }, icon('spark'), ' Public demo: results come from the bundled sample projects, scanned by the real pipeline. Uploads are ',
-    session.cfg && session.cfg.uploads === 'all' ? 'enabled.' : 'limited to the owner (no container sandbox on this host).'));
+    session.cfg && session.cfg.uploads === 'all' ? 'enabled.' : session.cfg && session.cfg.uploads === 'limited' ? 'open to signed-in accounts with small size limits (2 MB zip, 3 per hour).' : 'limited to the owner (no container sandbox on this host).'));
   return frag;
 }
 
@@ -56,7 +56,7 @@ async function route() {
 
 function uploadPanel(view) {
   if (!canUpload()) {
-    view.append(h('p', { class: 'mut sm' }, session.cfg && session.cfg.uploads !== 'all'
+    view.append(h('p', { class: 'mut sm' }, session.cfg && !['all', 'limited'].includes(session.cfg.uploads)
       ? 'Uploading your own code is disabled for this account on this instance (it cannot sandbox untrusted code here). Run Avishkar locally with the Docker sandbox to scan your own repositories.' : 'Your role cannot upload.'));
     return;
   }
@@ -79,7 +79,7 @@ function uploadPanel(view) {
         go(`#/repo/${q.repositoryId}`);
       } catch (err) { clear(out).append(errorState(err)); } finally { btn.disabled = false; }
     } }, h('label', { class: 'field' }, h('span', {}, 'Repository name'), repo), h('label', { class: 'field' }, h('span', {}, 'Zip archive'), file), btn), out,
-    h('p', { class: 'mut sm' }, 'Archives are unpacked in isolation; path traversal, symlinks and zip bombs are rejected.')));
+    h('p', { class: 'mut sm' }, 'Archives are unpacked with path-traversal, symlink and zip-bomb checks. The code is parsed, never executed.' + (session.cfg && session.cfg.uploads === 'limited' && !session.has('admin') ? ' Limits here: 2 MB zip, 300 files, 3 uploads per hour.' : ''))));
 }
 
 async function signOut() {

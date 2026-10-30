@@ -18,8 +18,8 @@ services:
         sync: false
       - key: AVISHKAR_DEMO_MODE
         value: "1"
-      - key: AVISHKAR_UPLOADS           # only the admin may upload; nobody can scan strangers' code here
-        value: admin
+      - key: AVISHKAR_UPLOADS           # limited: admin unrestricted; signed-in analysts get small capped uploads (parsed, never executed)
+        value: limited
       - key: RESEND_API_KEY             # set in the Render dashboard (never committed); sign-up stays hidden until all three are set
         sync: false
       - key: AVISHKAR_EMAIL_FROM        # a sender Resend has verified, e.g. "Avishkar <no-reply@yourdomain>"

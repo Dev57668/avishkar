@@ -116,6 +116,12 @@ Multi-statement writes use `Database.transaction()`; `SELECT`s end their transac
   are capped at 3 per hour per address and answer identically for unknown addresses. Reset applies only to self-registered
   accounts. Without the mailer sign-up is hidden. `POST /v1/auth/guest` gives a one-click session as the shared demo viewer.
   Tested against a mocked Resend API only; no live email was sent.
+  Each self-registered account gets its own one-user organization (role analyst there), so its uploads and findings are
+  invisible to everyone else (existing tenant isolation, tested). With `AVISHKAR_UPLOADS=limited`, non-admin analysts may
+  upload zips of at most 2 MB / 300 files / 10 MB declared uncompressed, 3 per hour; admins are uncapped; the shared
+  demo viewer and guests cannot upload. **Residual risk:** the scanner only parses uploaded code (never executes it),
+  but on Render the `process` sandbox is not an isolation boundary, so a parser or resource-exhaustion bug could affect
+  the API host. Use `AVISHKAR_UPLOADS=admin` to turn this off.
 * **HTTP headers**: API and HTML responses carry `nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: no-referrer`;
   HTML adds a CSP with no inline script; `/static` is `no-cache` (revalidated), everything else `no-store`.
 
