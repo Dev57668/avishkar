@@ -43,6 +43,10 @@ def main(argv=None) -> int:
         from .api.app import bootstrap_admin, create_app
         app = create_app(a.db)
         boot = bootstrap_admin(app.state.store)
+        if app.state.demo.enabled:
+            from .demo import seed_demo
+            print("demo mode: seeding", seed_demo(app.state.store, app.state.cfg, app.state.pol, app.state.sandbox,
+                                                  app.state.demo))
         print(f"Avishkar dashboard: http://{a.host}:{a.port}/")
         if boot:
             print(f"First-run admin created: {boot['email']} / "

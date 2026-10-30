@@ -331,3 +331,7 @@ body.static .needs-auth{display:block;opacity:.6}
 body.static .signin form,body.static .scanform{pointer-events:none}
 body.static input:disabled,body.static button:disabled{cursor:not-allowed}
 body.static .head-side .sticky{display:none}
+
+.static-note button{font:inherit;margin-left:8px;padding:2px 10px;border:1px solid currentColor;border-radius:6px;background:transparent;color:inherit;cursor:pointer}
+.static-note.live{background:#e6f7ff;color:#05324a;border-color:#7cc7ea}
+.static-note .mono{font-family:var(--mono);font-size:.95em}

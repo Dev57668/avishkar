@@ -137,10 +137,18 @@
     </div>
     <main>
       <div class="static-note" id="static-note" role="note" hidden>
-        <b>Static showcase: no backend is connected.</b> Sign-in and scanning are switched off on this site because the
-        scanner (a Python API with a background worker and a sandbox) is not hosted here. The sections below are the real
+        <b id="static-why">Static showcase: no backend is connected.</b> Sign-in and scanning are switched off here because
+        the scanner (a Python API with a background worker) is not reachable from this page. The sections below are the real
         dashboard UI. To use it, run it locally: see
         <a href="https://github.com/Dev57668/avishkar/blob/master/RUN_LOCALLY.md" rel="noopener noreferrer">RUN_LOCALLY.md</a>.
+        <button type="button" id="retry" hidden>Try again</button>
+      </div>
+      <div class="static-note live" id="demo-note" role="note" hidden>
+        <b>Live public demo.</b> Browse pre-scanned sample projects (the real scanner's output, including the before/after
+        fix). Sign in with the read-only demo account:
+        <span class="mono" id="demo-cred"></span> <button type="button" id="demo-fill">Fill in the login</button><br>
+        <span id="demo-uploads">Uploads are disabled on this public instance: it cannot safely scan code from strangers
+        (no container sandbox on this host). Run it locally to scan your own code.</span>
       </div>
       <section class="card signin" aria-labelledby="h-in">
         <div>
@@ -175,6 +183,7 @@
           <label class="drop" for="file"><input id="file" type="file" accept=".zip" required><span class="drop-t" id="drop-t">Drop a .zip here or <u>choose a file</u></span><span class="drop-s">Archives are unpacked in isolation; traversal, symlinks and zip bombs are rejected.</span></label>
           <button class="btn solid">Analyze <span class="arr">&rarr;</span></button>
         </form>
+        <p class="mut" id="up-note" hidden style="margin:14px 0 0;font-size:15px"><b>Uploads are off for this account.</b> Viewers can browse results only; on the public demo only the owner can upload.</p>
         <p class="mut" style="margin:14px 0 0;font-size:15px">The index is a prioritization signal from uncalibrated provisional weights, not a breach probability or proof of safety.</p>
       </section>
       <section class="card needs-auth" aria-labelledby="h-repos"><div class="label">Highest debt first</div><h2 id="h-repos">Repositories</h2><div id="repos" class="mut">Loading&hellip;</div></section>
@@ -226,7 +235,7 @@
 
 <script>
 const $=s=>document.querySelector(s);
-let KEY=null,CUR=null,CFG={},ME=null;
+let KEY=null,CUR=null,CFG={},ME=null,ROLE=null;
 try{KEY=sessionStorage.getItem('tk')}catch{}
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 async function api(path,opt={}){
@@ -273,7 +282,7 @@ async function openRepo(id,name,fstate='',fsev=''){
      <pre class="f-ev"><code>${esc(f.evidence)}</code></pre>
      <p class="f-fix"><span class="f-k">Fix</span>${esc(f.remediation)} <span class="mut">(effort: ${esc(f.effort)})</span></p>
      <div class="f-bot"><span class="f-meta">${esc(f.rule_id)} · ${esc(f.category)} · confidence ${esc(f.confidence)} · state <b>${esc(String(f.state).replace(/_/g,' '))}</b></span>
-       <span class="f-act"><select aria-label="Triage ${esc(f.title)}" data-f="${esc(f.id)}" data-v="${f.version}"><option value="">Triage…</option><option value="false_positive">False positive</option><option value="not_applicable">Not applicable</option><option value="accepted_risk">Accept risk (30 d)</option><option value="open">Reopen</option></select>${CFG.ai&&CFG.ai.enabled?`<button data-x="${esc(f.id)}">Explain (AI)</button>`:''}</span></div>
+       <span class="f-act">${ROLE==='viewer'?'<span class="mut">read-only</span>':`<select aria-label="Triage ${esc(f.title)}" data-f="${esc(f.id)}" data-v="${f.version}"><option value="">Triage…</option><option value="false_positive">False positive</option><option value="not_applicable">Not applicable</option><option value="accepted_risk">Accept risk (30 d)</option><option value="open">Reopen</option></select>${CFG.ai&&CFG.ai.enabled?`<button data-x="${esc(f.id)}">Explain (AI)</button>`:''}`}</span></div>
      ${f.explanation&&f.explanation.content?`<div class="f-ai"><b>AI explanation (advisory, does not affect the score):</b> ${esc(f.explanation.content.summary)} <i>${esc(f.explanation.content.why_it_matters)}</i><ol>${f.explanation.content.remediation_steps.map(x=>'<li>'+esc(x)+'</li>').join('')}</ol></div>`:''}
    </li>`).join('')||'<li class="fcard">No findings.</li>'}</ul>
   <div class="label" style="margin-top:32px">Did it improve?</div><h2>Run history</h2>
@@ -363,10 +372,13 @@ $('#admin').addEventListener('submit',async e=>{
 });
 
 async function start(){
-  try{const me=await api('/v1/auth/me');ME=me.email;$('#who').textContent=`${me.email||me.id} (${me.role})`;CFG=await api('/v1/config');
+  try{const me=await api('/v1/auth/me');ME=me.email;ROLE=me.role;$('#who').textContent=`${me.email||me.id} (${me.role})`;CFG=await api('/v1/config');
     document.body.classList.add('authed');
     if(CFG.sandbox&&!CFG.sandbox.isolationBoundary)say('Sandbox mode "'+CFG.sandbox.mode+'" is not an isolation boundary: scan only code you trust.');
     if(me.role==='admin'){$('#admin').hidden=false;showAdmin()}else{$('#admin').hidden=true}
+    const up=(CFG.uploads||'all');const canUp=up==='all'&&me.role!=='viewer'||up==='admin'&&me.role==='admin';
+    document.querySelectorAll('#upform input,#upform button').forEach(e=>{e.disabled=!canUp;e.title=canUp?'':'Uploads are disabled for this account'});
+    $('#up-note').hidden=canUp;
     loadRepos()}catch(e){KEY=null;document.body.classList.remove('authed');say('Sign in required.')}
 }
 $('#keyform').onsubmit=async e=>{e.preventDefault();
@@ -385,17 +397,46 @@ $('#upform').onsubmit=async e=>{
     await loadRepos();openRepo(q.repositoryId,$('#repo').value)}
   catch(e){say('Failed: '+e.message)}
 };
-const STATIC=(document.querySelector('meta[name="avishkar-mode"]')||{}).content==='static';
-if(STATIC){
-  // Static hosting has no /v1 API. Keep the UI visible but inert, and say why, instead of failing with a JSON error.
+/* ---- which mode are we in? live (API reachable), demo (public read-only instance) or static (no API) ---- */
+const FORCED_STATIC=(document.querySelector('meta[name="avishkar-mode"]')||{}).content==='static';
+function setStatic(why){
   document.body.classList.add('static');
-  $('#static-note').hidden=false;
+  $('#demo-note').hidden=true;$('#static-note').hidden=false;
+  $('#static-why').textContent=why||'Static showcase: no backend is connected.';
+  $('#retry').hidden=FORCED_STATIC;
   KEY=null;try{sessionStorage.removeItem('tk')}catch{}
   document.querySelectorAll('#keyform input,#keyform button,#upform input,#upform button').forEach(e=>{e.disabled=true;e.title='Disabled: no backend is connected'});
-  ['keyform','upform'].forEach(id=>$('#'+id).addEventListener('submit',e=>{e.preventDefault();e.stopImmediatePropagation()},true));
   $('#repos').textContent='Repositories appear here once a backend is connected.';$('#repos').classList.remove('mut');
-  say('Static showcase: sign-in and scanning are disabled because no backend is connected.');
-}else if(KEY)start();
+  say(why||'Static showcase: sign-in and scanning are disabled because no backend is connected.');
+}
+['keyform','upform'].forEach(id=>$('#'+id).addEventListener('submit',e=>{if(document.body.classList.contains('static')){e.preventDefault();e.stopImmediatePropagation()}},true));
+async function probe(){
+  const ctl=new AbortController(),t=setTimeout(()=>ctl.abort(),75000);
+  try{const r=await fetch('/v1/public/status',{signal:ctl.signal});if(!r.ok)return null;
+    const j=await r.json();return j&&j.service==='avishkar'?j:null}catch{return null}finally{clearTimeout(t)}
+}
+function setLive(pub){
+  document.body.classList.remove('static');$('#static-note').hidden=true;
+  document.querySelectorAll('#keyform input,#keyform button').forEach(e=>{e.disabled=false;e.title=''});
+  if(pub.demo){
+    $('#demo-note').hidden=false;
+    const L=pub.demoLogin;
+    if(L){$('#demo-cred').textContent=`${L.email} / ${L.password}`;$('#demo-fill').onclick=()=>{$('#em').value=L.email;$('#pw').value=L.password;$('#pw').focus()}}
+    else{$('#demo-cred').textContent='(no public login is published)';$('#demo-fill').hidden=true}
+    $('#demo-uploads').hidden=pub.uploads==='all';
+  }
+  say('');
+}
+async function boot(){
+  if(FORCED_STATIC)return setStatic();
+  const slow=setTimeout(()=>say('Connecting to the scanner… a free-tier backend can take up to a minute to wake up.'),2500);
+  const pub=await probe();clearTimeout(slow);
+  if(!pub)return setStatic('Backend unreachable right now: it may be asleep or down. Showing the static page.');
+  setLive(pub);
+  if(KEY)start();
+}
+$('#retry').onclick=()=>{$('#retry').hidden=true;boot()};
+boot();
 </script>
 <script src="/static/vendor/gsap.min.js"></script>
 <script type="module" src="/static/landing.js"></script>

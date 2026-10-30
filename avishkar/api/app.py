@@ -19,6 +19,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from ..adapters import github as gh
 from ..adapters.ai import ExplanationService
 from ..adapters.store import Store
+from ..demo import DemoSettings
 from .. import telemetry
 from ..domain import reporting
 from ..domain.policy import Policy
@@ -91,10 +92,12 @@ def bootstrap_admin(store: Store, org_name: str = "default", email: str | None =
 def create_app(db_url: str | None = None, *, secret_key: str | None = None, score_cfg: ScoreConfig | None = None,
                policy: Policy | None = None, sandbox: Sandbox | None = None, github: gh.GitHubClient | None = None,
                ai: ExplanationService | None = None, start_worker: bool | None = None,
-               webhook_secret: str | None = None, max_active_jobs: int | None = None) -> FastAPI:
+               webhook_secret: str | None = None, max_active_jobs: int | None = None,
+               demo: DemoSettings | None = None) -> FastAPI:
     telemetry.configure_logging()
     telemetry.configure_tracing()
     cfg = score_cfg or ScoreConfig.load()
+    demo = demo or DemoSettings.from_env()
     pol = policy or Policy.load()
     store = Store(db_url or os.environ.get("DATABASE_URL", "data/avishkar_v2.db"))
     tokens = TokenService(secret_key or os.environ.get("AVISHKAR_SECRET_KEY") or secrets.token_urlsafe(48))
@@ -124,6 +127,7 @@ def create_app(db_url: str | None = None, *, secret_key: str | None = None, scor
                   description="AI Generated Code Security Debt Scorer. The score is a prioritization "
                               "signal, not proof of safety.")
     app.state.store, app.state.runner, app.state.tokens = store, runner, tokens
+    app.state.cfg, app.state.pol, app.state.sandbox, app.state.demo = cfg, pol, sbx, demo
 
     @app.middleware("http")
     async def correlation(request: Request, call_next):
@@ -238,12 +242,18 @@ def create_app(db_url: str | None = None, *, secret_key: str | None = None, scor
     def health():
         return {"status": "ok"}
 
+    @app.get("/v1/public/status")
+    def public_status():
+        """Unauthenticated, tiny and secret-free: lets the web page pick live / demo / static mode. The demo login is
+        included only when the operator opted in AND it is a viewer (read-only) account."""
+        return demo.public_status(sbx.describe(), cfg.version)
+
     @app.get("/v1/config")
     def config(p: Principal = Depends(viewer)):
         return {"scoreVersion": cfg.version, "k": cfg.k, "calibrated": False, "agingEnabled": cfg.aging_enabled,
                 "requiredDetectors": list(cfg.required_detectors), "policyVersion": pol.version,
                 "policyMode": pol.mode, "supportMatrix": SUPPORT_MATRIX, "sandbox": sbx.describe(),
-                "ai": ai.status(), "github": {"configured": github is not None and bool(wh_secret)},
+                "ai": ai.status(), "uploads": demo.uploads, "github": {"configured": github is not None and bool(wh_secret)},
                 "database": "postgresql" if store.d.pg else "sqlite",
                 "disclaimer": "Index is a prioritization signal, not a breach probability or proof of safety."}
 
@@ -289,6 +299,9 @@ def create_app(db_url: str | None = None, *, secret_key: str | None = None, scor
                               commit_sha: str | None = Form(default=None, pattern=r"^[0-9a-fA-F]{4,64}$"),
                               archive: UploadFile = File(), idempotency_key: str | None = Header(default=None),
                               p: Principal = Depends(analyst)):
+        if demo.uploads == "off" or (demo.uploads == "admin" and not p.has("admin")):
+            raise ApiError(403, "uploads_disabled",
+                           "Uploads are disabled on this instance" + (" for non-admin users" if demo.uploads == "admin" else ""))
         data = await archive.read(MAX_UPLOAD + 1)
         if len(data) > MAX_UPLOAD:
             raise ApiError(413, "too_large", "Archive exceeds upload limit")

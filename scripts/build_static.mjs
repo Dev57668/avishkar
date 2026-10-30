@@ -1,10 +1,11 @@
-// Builds the static showcase for Vercel (or any static host) into dist/.
-//   node scripts/build_static.mjs
-// The FastAPI app serves web/ under /static and index.html at /. A static host has no API, so this script
-//   * copies web/* (except index.html) to dist/static/  -> the absolute /static/... URLs in the page keep working
-//   * writes dist/index.html with <meta name="avishkar-mode" content="static">, which switches the dashboard
-//     section to its "backend not connected" state (see the script at the bottom of web/index.html)
-// No dependencies: Vercel only needs Node, which its build image already has.
+// Builds the web page for a static host (Vercel) into dist/.
+//   node scripts/build_static.mjs            page probes GET /v1/public/status and picks live / demo / static itself
+//   node scripts/build_static.mjs --static   force the inert "no backend" mode (no probing)
+// The FastAPI app serves web/ under /static and index.html at /. A static host serves the same URLs from dist/:
+//   * web/* (except index.html) -> dist/static/   (the absolute /static/... URLs in the page keep working)
+//   * index.html                -> dist/index.html (with a <meta name="avishkar-mode" content="static"> only if --static)
+// If the host rewrites /v1/* to a deployed API (see vercel.json + docs/DEPLOY_ONLINE.md) the page becomes live;
+// if not, the probe fails and it falls back to the static note. No dependencies.
 import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync, readdirSync, statSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -22,9 +23,11 @@ for (const name of readdirSync(web)) {
 }
 
 let html = readFileSync(join(web, 'index.html'), 'utf8');
-const meta = '<meta name="avishkar-mode" content="static">';
-if (!html.includes('<meta charset="utf-8">')) throw new Error('index.html: expected <meta charset="utf-8"> anchor');
-html = html.replace('<meta charset="utf-8">', `<meta charset="utf-8">\n${meta}`);
+if (process.argv.includes('--static')) {
+  const meta = '<meta name="avishkar-mode" content="static">';
+  if (!html.includes('<meta charset="utf-8">')) throw new Error('index.html: expected <meta charset="utf-8"> anchor');
+  html = html.replace('<meta charset="utf-8">', `<meta charset="utf-8">\n${meta}`);
+}
 writeFileSync(join(dist, 'index.html'), html);
 
 // licenses ship with the site (GSAP terms, OFL text for fonts)

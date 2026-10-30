@@ -53,3 +53,37 @@ jobs:
         env:
           AVISHKAR_WORKER_IMAGE: avishkar-worker:ci
           AVISHKAR_DOCKER_TESTS: "1"
+
+  # Builds the Render image and checks it boots in demo mode, seeds the samples and enforces the upload policy.
+  api-image:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -f infra/Dockerfile.api -t avishkar-api:ci .
+      - name: run in demo mode and check behaviour
+        run: |
+          docker run -d --name api -p 8000:8000 \
+            -e AVISHKAR_DEMO_MODE=1 -e AVISHKAR_UPLOADS=admin -e AVISHKAR_PUBLISH_DEMO_LOGIN=1 \
+            -e AVISHKAR_DEMO_PASSWORD=view-only-demo-ci -e AVISHKAR_ADMIN_EMAIL=owner@ci.test \
+            -e AVISHKAR_ADMIN_PASSWORD=owner-password-ci -e AVISHKAR_SECRET_KEY=ci-secret-key-ci-secret-key-ci-secret \
+            avishkar-api:ci
+          for i in $(seq 1 40); do curl -fs localhost:8000/healthz && break; sleep 2; done
+          curl -fs localhost:8000/v1/public/status | tee status.json
+          python3 - <<'EOF'
+          import json, urllib.request
+          def call(path, data=None, headers=None):
+              req = urllib.request.Request("http://localhost:8000" + path, data=data, headers=headers or {})
+              return json.load(urllib.request.urlopen(req))
+          st = call("/v1/public/status")
+          assert st["demo"] and st["uploads"] == "admin" and st["demoLogin"]["role"] == "viewer", st
+          tok = call("/v1/auth/login", json.dumps({"email": st["demoLogin"]["email"], "password": st["demoLogin"]["password"]}).encode(),
+                     {"Content-Type": "application/json"})["token"]
+          repos = {r["name"]: r for r in call("/v1/repositories", headers={"Authorization": "Bearer " + tok})["items"]}
+          assert set(repos) == {"demo/vulnerable-python", "demo/vulnerable-javascript", "demo/vulnerable-java"}, repos
+          assert repos["demo/vulnerable-python"]["latestIndex"] == 76.2, repos
+          print("seeded demo OK:", {k: v["latestIndex"] for k, v in repos.items()})
+          EOF
+      - name: logs on failure
+        if: failure()
+        run: docker logs api

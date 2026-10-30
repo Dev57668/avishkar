@@ -1,0 +1,20 @@
+# Avishkar API (control plane + embedded worker + dashboard). Build from the repo root:
+#   docker build -f infra/Dockerfile.api -t avishkar-api .
+# NOTE: this image runs the scan worker with AVISHKAR_SANDBOX=process (a child process, NOT an isolation boundary).
+# Never expose uploads to untrusted users from this image: use AVISHKAR_UPLOADS=admin|off (see docs/DEPLOY_ONLINE.md).
+FROM python:3.12-slim
+ENV PYTHONUNBUFFERED=1 PYTHONDONTWRITEBYTECODE=1 PIP_NO_CACHE_DIR=1
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install -r requirements.txt
+COPY avishkar avishkar
+COPY config config
+COPY web web
+COPY sample_projects sample_projects
+COPY infra/semgrep-rules.yml infra/semgrep-rules.yml
+RUN useradd -m -u 10001 app && mkdir -p /app/data && chown -R app /app/data
+USER app
+ENV AVISHKAR_SANDBOX=process
+EXPOSE 8000
+# PaaS hosts inject $PORT; default 8000 for local use.
+CMD ["sh", "-c", "exec python -m avishkar serve --host 0.0.0.0 --port ${PORT:-8000} --db /app/data/avishkar.db"]

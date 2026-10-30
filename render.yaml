@@ -1,0 +1,30 @@
+# Render Blueprint: public read-only demo API. Create it with: Render dashboard -> New -> Blueprint -> pick this repo.
+# Free plan = sleeps when idle (first request can take ~30-60 s) and the disk is EPHEMERAL: the database is rebuilt
+# and the sample projects are re-scanned on every start. Anything the admin uploads is lost on restart.
+services:
+  - type: web
+    name: avishkar-api
+    runtime: docker
+    dockerfilePath: ./infra/Dockerfile.api
+    plan: free
+    healthCheckPath: /healthz
+    autoDeploy: true
+    envVars:
+      - key: AVISHKAR_SECRET_KEY        # signs session tokens; generated once by Render, never in git
+        generateValue: true
+      - key: AVISHKAR_ADMIN_EMAIL       # YOU set these two in the dashboard (prompted on first deploy)
+        sync: false
+      - key: AVISHKAR_ADMIN_PASSWORD
+        sync: false
+      - key: AVISHKAR_DEMO_MODE
+        value: "1"
+      - key: AVISHKAR_UPLOADS           # only the admin may upload; nobody can scan strangers' code here
+        value: admin
+      - key: AVISHKAR_PUBLISH_DEMO_LOGIN
+        value: "1"
+      - key: AVISHKAR_DEMO_EMAIL        # read-only (viewer) account, published on the landing page ON PURPOSE
+        value: demo@avishkar.dev
+      - key: AVISHKAR_DEMO_PASSWORD
+        value: view-only-demo-2026
+      - key: AVISHKAR_SANDBOX
+        value: process
