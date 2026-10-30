@@ -1,0 +1,9 @@
+# `vercel deploy --prebuilt` uploads only .vercel/output; this protects a plain `vercel` / Git build from
+# uploading anything but what the static build needs.
+*
+!web
+!web/**
+!scripts
+!scripts/build_static.mjs
+!vercel.json
+!THIRD_PARTY_NOTICES.md

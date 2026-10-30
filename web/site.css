@@ -323,3 +323,11 @@ html{background:var(--void)}
 
 /* never let decorative elements widen the page */
 html,body{overflow-x:clip}
+
+/* static showcase (Vercel): dashboard UI stays visible but inert */
+.static-note{margin:0 0 18px;padding:14px 16px;border:1px dashed var(--line-2);border-radius:8px;background:#fff8c9;color:#3b3200;font:15px/1.5 var(--sans)}
+.static-note a{color:inherit;text-decoration:underline}
+body.static .needs-auth{display:block;opacity:.6}
+body.static .signin form,body.static .scanform{pointer-events:none}
+body.static input:disabled,body.static button:disabled{cursor:not-allowed}
+body.static .head-side .sticky{display:none}

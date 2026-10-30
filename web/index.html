@@ -136,6 +136,12 @@
       <div class="head-side"><div class="sticky inline">first run? the login is printed in the server terminal</div><div id="status" role="status" aria-live="polite"></div></div>
     </div>
     <main>
+      <div class="static-note" id="static-note" role="note" hidden>
+        <b>Static showcase: no backend is connected.</b> Sign-in and scanning are switched off on this site because the
+        scanner (a Python API with a background worker and a sandbox) is not hosted here. The sections below are the real
+        dashboard UI. To use it, run it locally: see
+        <a href="https://github.com/Dev57668/avishkar/blob/master/RUN_LOCALLY.md" rel="noopener noreferrer">RUN_LOCALLY.md</a>.
+      </div>
       <section class="card signin" aria-labelledby="h-in">
         <div>
           <h2 id="h-in">Sign in</h2>
@@ -379,7 +385,17 @@ $('#upform').onsubmit=async e=>{
     await loadRepos();openRepo(q.repositoryId,$('#repo').value)}
   catch(e){say('Failed: '+e.message)}
 };
-if(KEY)start();
+const STATIC=(document.querySelector('meta[name="avishkar-mode"]')||{}).content==='static';
+if(STATIC){
+  // Static hosting has no /v1 API. Keep the UI visible but inert, and say why, instead of failing with a JSON error.
+  document.body.classList.add('static');
+  $('#static-note').hidden=false;
+  KEY=null;try{sessionStorage.removeItem('tk')}catch{}
+  document.querySelectorAll('#keyform input,#keyform button,#upform input,#upform button').forEach(e=>{e.disabled=true;e.title='Disabled: no backend is connected'});
+  ['keyform','upform'].forEach(id=>$('#'+id).addEventListener('submit',e=>{e.preventDefault();e.stopImmediatePropagation()},true));
+  $('#repos').textContent='Repositories appear here once a backend is connected.';$('#repos').classList.remove('mut');
+  say('Static showcase: sign-in and scanning are disabled because no backend is connected.');
+}else if(KEY)start();
 </script>
 <script src="/static/vendor/gsap.min.js"></script>
 <script type="module" src="/static/landing.js"></script>

@@ -39,3 +39,9 @@ Thumbs.db
 
 # Avishkar v2 runtime data
 data/
+
+# static build output
+dist/
+.vercel/
+
+.env.local
