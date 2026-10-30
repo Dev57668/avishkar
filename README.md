@@ -1,198 +1,60 @@
-# AI-Generated Code Security-Debt Scorer
+# Avishkar: AI-Generated Code Security Debt Scorer
 
-> Avishkar Industrial-Ready Hackathon Project
+> Avishkar Industrial-Ready Hackathon project. A working prototype, honest about its limits.
 
-A developer security platform that detects vulnerabilities in AI-generated code, calculates a measurable "Security Debt Score" (0-100), explains risks using Claude AI, and demonstrates scan → fix → rescan improvement.
+Avishkar scans a code snapshot with **deterministic detectors**, turns the evidence into a **0-100 security-debt index**, and shows the exact file and line, CWE, impact, fix and a secure example for every finding. You can fix the code, rescan, and see what moved and why.
 
-## 🎯 Product Thesis
+**The index is a prioritization signal from provisional, uncalibrated weights. It is not a probability of compromise, a compliance grade, or proof that code is safe. Zero findings is not a pass.**
 
-Traditional security tools answer: **"What vulnerabilities exist?"**
+Live demo: <https://avishkar-red.vercel.app> (static site on Vercel, API on Render's free tier: the first load can take about a minute while it wakes up). Use **Continue as guest** and open the **Demo lab**.
 
-This platform adds: **"How much security debt has accumulated, what's driving it, and how much did a fix reduce it?"**
+## What it does
 
-## 🏗️ Architecture
+| Area | Details |
+|---|---|
+| Detection | Python AST (alias resolution, same-function flows), JavaScript/TypeScript token-stream scanner, secrets, dependencies, CORS. 40 documented rules. Unsupported languages (e.g. Java) are reported as *not evaluated*, never as clean. |
+| Scoring | Versioned `score-v1`: `D = I x E x C x A`, `Index = 100(1 - e^(-D/K))`. Every finding's contribution is shown and the total is recomputed for a reproducibility check. Incomplete scans give "not calculated", never zero. |
+| Console | Overview, per-repository dashboard (gauge, severity, trend, vulnerable files, activity), before/after comparison, vulnerability explorer (search, filters, sorting, details), admin area. |
+| Demo lab | Pick a bundled sample, run a **real** scan, watch the recorded pipeline stages, apply the fix pack, rescan, compare. |
+| Reports | JSON, printable HTML (print to PDF), SARIF 2.1.0 with CWE tags. |
+| AI assistant | Optional, off by default, consent-gated, payload preview, secrets redacted, cannot change findings or scores. |
+| GitHub | Webhooks, check runs, PR comments, repository/branch browsing, manual branch scans (tested against a mock). |
+| Access | Roles (viewer/analyst/admin), API keys, read-only guest, email sign-up with verification and password reset (needs Resend settings), private organization per self-registered account, capped uploads. |
+| Operations | Durable job queue, audit log, login throttle, security headers + CSP, Docker sandbox for real isolation, PostgreSQL support, CI (tests, Postgres, Docker sandbox, API image, lint + types). |
 
-```
-Repository/ZIP → FastAPI Backend → Scanners (Semgrep + Gitleaks + Custom)
-                                    ↓
-                            Finding Normalizer
-                                    ↓
-                            Claude AI Reasoning
-                                    ↓
-                            Security Debt Engine
-                                    ↓
-                        SQLite Database + Next.js Dashboard
-                                    ↓
-                            GitHub PR Integration
-```
-
-## 🚀 Quick Start
-
-### Prerequisites
-
-- Python 3.10+
-- Node.js 18+
-- Git
-
-### Backend Setup
+## Run it
 
 ```bash
-cd backend
-
-# Install Python dependencies
-pip install -r requirements.txt
-
-# Install Semgrep
-pip install semgrep
-
-# Download Gitleaks (Windows)
-# Visit: https://github.com/gitleaks/gitleaks/releases
-# Place gitleaks.exe in C:\tools\gitleaks\ or update config
-
-# Create .env file
-cp .env.example .env
-# Edit .env with your CLAUDE_API_KEY
-
-# Run backend
-uvicorn main:app --reload
+python -m pip install -r requirements.txt
+python -m avishkar serve --port 8011 --db data/local.db     # prints a first-run admin login
+python -m avishkar scan sample_projects/vulnerable-python   # CLI scan
+python -m pytest -q                                         # test suite
 ```
 
-Backend runs at: http://localhost:8000
+More: [RUN_LOCALLY.md](RUN_LOCALLY.md) (step by step), [docs/AVISHKAR_V2.md](docs/AVISHKAR_V2.md) (architecture, security model, configuration),
+[docs/DEPLOY_ONLINE.md](docs/DEPLOY_ONLINE.md) (Vercel + Render), [docs/CALIBRATION.md](docs/CALIBRATION.md) (what the score evidence does and does not show),
+[docs/Avishkar_Features_and_Roadmap.docx](docs/Avishkar_Features_and_Roadmap.docx), [demo video](docs/demo/Avishkar_Demo.webm) (features, pending work, roadmap).
 
-API docs at: http://localhost:8000/docs
+## Honest limitations
 
-### Frontend Setup
+* **Detectors miss things.** Held-out recall on our own labelled cases was about 0.8; precision about 0.8 on the same cohort. Detection is heuristic (no full JS parser, no cross-file data flow).
+* **Not calibrated.** The corpus is 81 small cases written by us with no independent second reviewer. Do not use the index to block releases.
+* **Public uploads are small and capped.** On Render the `process` sandbox is not an isolation boundary; the scanner only parses uploaded code and never executes it. Use `AVISHKAR_UPLOADS=admin` to turn public uploads off, or the Docker sandbox for real isolation.
+* **Tested against mocks, not live services:** GitHub, the AI provider and email (Resend).
 
-```bash
-cd frontend
-
-# Install dependencies
-npm install
-
-# Create .env.local
-echo "NEXT_PUBLIC_API_URL=http://localhost:8000" > .env.local
-
-# Run frontend
-npm run dev
-```
-
-Frontend runs at: http://localhost:3000
-
-### Testing
-
-```bash
-cd backend
-pytest tests/ -v
-```
-
-## 📊 Security Debt Formula
+## Repository layout
 
 ```
-Finding Debt = Severity × Exploitability × Exposure × Remediation Effort × Confidence
-
-Project Score = min(100, sum(finding_debt) / PROJECT_CAPACITY × 100)
+avishkar/        FastAPI app, workers (sandboxed detectors), scoring, reporting, knowledge base
+web/             landing page + console (vanilla ES modules, no build step)
+config/          score and policy configuration (score-v1), candidate (not approved)
+sample_projects/ bundled demo samples (vulnerable and secure)
+tests/           unit, integration and the labelled calibration corpus
+infra/           Dockerfiles (API, scan worker), Semgrep rule pack
+scripts/         static build for Vercel, demo-results and corpus generators
+backend/ frontend/   the earlier prototype (kept for history; see docs/MERGE_PLAN.md)
 ```
 
-**Risk Bands**:
-- 0-20: LOW
-- 21-40: MODERATE
-- 41-60: ELEVATED
-- 61-80: HIGH
-- 81-100: CRITICAL
+## License
 
-## 🔍 Detection Strategy
-
-| Risk Area | Scanner | Example |
-|-----------|---------|---------|
-| SQL Injection | Semgrep + Custom | String concatenation in queries |
-| Secrets | Gitleaks | API keys, tokens in source |
-| Weak Crypto | Semgrep + Custom | MD5/SHA1 for passwords |
-| Command Injection | Semgrep | os.system(user_input) |
-| Path Traversal | Semgrep | Unvalidated file paths |
-| Insecure Config | Custom | debug=True, verify=False |
-
-## 🎬 Demo Flow
-
-1. Open dashboard → "New Scan"
-2. Upload `sample_projects/vulnerable-python.zip`
-3. Wait ~10 seconds → Score: 78 (HIGH)
-4. Open SQL Injection finding → AI explanation
-5. Apply parameterized query fix
-6. Rescan → Score: 52 (ELEVATED) ✅
-7. Show trend chart with improvement
-
-## 📁 Project Structure
-
-```
-AVISHKAR/
-├── backend/
-│   ├── main.py              # FastAPI app
-│   ├── config.py            # Configuration
-│   ├── api/                 # API endpoints
-│   ├── scanners/            # Semgrep, Gitleaks, Custom
-│   ├── ai/                  # Claude API integration
-│   ├── scoring/             # Debt calculation
-│   ├── models/              # Pydantic models
-│   └── database/            # SQLite + CRUD
-├── frontend/                # Next.js dashboard
-├── rules/                   # Custom security rules
-├── sample_projects/         # Vulnerable demo projects
-└── tests/                   # Test suite
-```
-
-## 🔒 Security Features
-
-- Path traversal validation
-- 50MB file size limit
-- Workspace isolation
-- Secret redaction in logs/UI
-- Webhook signature verification
-- Rate limiting on AI calls
-- Input sanitization
-
-## 📚 Implementation Phases
-
-1. ✅ Repository skeleton + FastAPI
-2. ⏳ Upload & repository ingestion
-3. ⏳ Semgrep integration
-4. ⏳ Gitleaks integration
-5. ⏳ Custom Python security rules
-6. ⏳ Normalization + SQLite database
-7. ⏳ Security Debt Engine
-8. ⏳ AI reasoning layer (Claude API)
-9. ⏳ Next.js Dashboard
-10. ⏳ GitHub integration
-
-## 🛠️ Tech Stack
-
-- **Backend**: Python, FastAPI, SQLite
-- **Scanners**: Semgrep, Gitleaks, Custom (AST-based)
-- **AI**: Anthropic Claude API
-- **Frontend**: Next.js, React, Recharts
-- **Deployment**: Vercel (frontend), Python host (backend)
-
-## 📖 API Endpoints
-
-- `GET /health` - Health check
-- `POST /api/upload` - Upload ZIP for scanning
-- `POST /api/scan-repo` - Scan Git repository
-- `GET /api/scans/{scan_id}` - Get scan results
-- `GET /api/projects` - List projects
-- `GET /api/scans/{scan_id}/findings` - Get findings
-- `POST /api/github/webhook` - GitHub webhook handler
-
-## 🎓 References
-
-- [OWASP Top 10:2025](https://top10.owasp.org/2025/)
-- [Semgrep Documentation](https://semgrep.dev/docs/)
-- [Gitleaks GitHub](https://github.com/gitleaks/gitleaks)
-- [GitHub Apps Documentation](https://docs.github.com/en/apps)
-- [Anthropic Claude API](https://docs.anthropic.com/)
-
-## 📝 License
-
-MIT License - Built for Avishkar Industrial-Ready Hackathon
-
----
-
-**Built with Antigravity IDE for rapid AI-assisted development**
+MIT. Third-party components: see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
