@@ -110,7 +110,26 @@ function renderLogin(msg) {
     pub.demo ? h('div', { class: 'note-bar' }, h('span', {}, h('b', {}, 'Live public demo. '), L ? 'Use the read-only demo account:' : 'The operator has not published a demo login.'), ' ',
       L ? h('code', {}, `${L.email} / ${L.password}`) : null, L ? h('button', { class: 'btn sm', type: 'button', onclick: () => { em.value = L.email; pw.value = L.password; pw.focus(); } }, 'Fill in the login') : null) : null,
     form,
+    pub.guest ? h('button', { class: 'btn wide', type: 'button', onclick: async () => {
+      try { const j = await api('/v1/auth/guest', { method: 'POST' }); session.save(j.token); await start(); } catch (x) { err.textContent = x.message; err.hidden = false; }
+    } }, 'Continue as guest (read-only)') : null,
+    pub.signup ? h('button', { class: 'btn wide', type: 'button', onclick: () => renderSignup() }, 'Create an account') : null,
     h('p', { class: 'mut sm' }, h('b', {}, 'First run? '), 'There is no self sign-up. The first time the server starts it prints an admin email and password in its terminal.')));
+}
+
+function renderSignup() {
+  const em = h('input', { type: 'email', required: true, autocomplete: 'username' });
+  const pw = h('input', { type: 'password', required: true, minlength: '10', autocomplete: 'new-password' });
+  const err = h('div', { class: 'errstate', role: 'alert', hidden: true });
+  const btn = h('button', { class: 'btn primary wide' }, 'Create account');
+  clear(mount).append(h('div', { class: 'logincard' }, h('h2', {}, 'Create an account'),
+    h('p', { class: 'mut sm' }, 'Accounts here are read-only (browse and run the demo lab). Your email is not verified and is only used as your login name. Use a password you do not use elsewhere.'),
+    h('form', { class: 'loginform', onsubmit: async (e) => {
+      e.preventDefault(); btn.disabled = true; err.hidden = true;
+      try { const j = await api('/v1/auth/register', { method: 'POST', body: { email: em.value, password: pw.value } }); session.save(j.token); await start(); }
+      catch (x) { err.textContent = x.message; err.hidden = false; } finally { btn.disabled = false; }
+    } }, h('label', { class: 'field' }, h('span', {}, 'Email'), em), h('label', { class: 'field' }, h('span', {}, 'Password (10+ characters)'), pw), err, btn),
+    h('button', { class: 'btn wide', type: 'button', onclick: () => renderLogin() }, 'Back to sign in')));
 }
 
 /* ---------------- static mode: recorded results, clearly labelled ---------------- */

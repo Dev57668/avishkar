@@ -47,6 +47,12 @@ class LoginIn(BaseModel):
     password: str = Field(min_length=1, max_length=200)
 
 
+class SignupIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    email: str = Field(pattern=r"^[^@\s]+@[^@\s]+\.[^@\s]+$", max_length=200)
+    password: str = Field(min_length=10, max_length=200)
+
+
 class UserIn(BaseModel):
     model_config = ConfigDict(extra="forbid")
     email: str = Field(pattern=r"^[^@\s]+@[^@\s]+\.[^@\s]+$", max_length=200)
@@ -237,6 +243,42 @@ def create_app(db_url: str | None = None, *, secret_key: str | None = None, scor
         tok, exp = tokens.issue(u)
         store.audit(u["email"], "login", "user", u["id"], "ok", request.state.cid, org=u["organization_id"])
         return {"token": tok, "expiresAt": exp, "user": {"id": u["id"], "email": u["email"], "role": u["role"]}}
+
+    def _public_org() -> str:
+        org = store.d.query("SELECT id FROM organization ORDER BY created_at LIMIT 1")
+        return org[0]["id"]
+
+    @app.post("/v1/auth/register", status_code=201)
+    def register(body: SignupIn, request: Request):
+        """Self sign-up for the public demo. Always a read-only VIEWER; the email is NOT verified (no mail service is
+        configured), so it proves nothing about who the person is. Off unless AVISHKAR_SIGNUP=1 in demo mode."""
+        if not (demo.enabled and demo.signup):
+            raise ApiError(403, "signup_disabled", "Sign-up is not enabled on this instance")
+        org = _public_org()
+        if store.recent_audit_count(org, "signup", "signup", time.time() - 3600) >= 30:
+            raise ApiError(429, "rate_limited", "Too many sign-ups right now; try again later")
+        email = body.email.lower()
+        if store.user_by_email(email):
+            raise ApiError(409, "conflict", "That email cannot be registered")
+        u = store.create_user(org, email, hash_password(body.password), "viewer")
+        store.audit("signup", "signup", "user", u["id"], "ok", request.state.cid, org=org)
+        tok, exp = tokens.issue(store.user_by_email(email))
+        return {"token": tok, "expiresAt": exp, "user": {"id": u["id"], "email": u["email"], "role": "viewer"}}
+
+    @app.post("/v1/auth/guest")
+    def guest(request: Request):
+        """One-click read-only session as the shared demo viewer. Same privileges as the published demo login."""
+        if not (demo.enabled and demo.password):
+            raise ApiError(403, "guest_disabled", "Guest access is not enabled on this instance")
+        u = store.user_by_email(demo.email)
+        if not u or u["role"] != "viewer":
+            raise ApiError(403, "guest_disabled", "Guest access is not enabled on this instance")
+        org = u["organization_id"]
+        if store.recent_audit_count(org, "guest", "guest_session", time.time() - 60) >= 60:
+            raise ApiError(429, "rate_limited", "Too many guest sessions; wait a minute")
+        store.audit("guest", "guest_session", "user", u["id"], "ok", request.state.cid, org=org)
+        tok, exp = tokens.issue(u)
+        return {"token": tok, "expiresAt": exp, "user": {"id": u["id"], "email": u["email"], "role": "viewer"}}
 
     @app.get("/v1/auth/me")
     def me(p: Principal = Depends(principal)):

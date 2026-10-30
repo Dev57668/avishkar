@@ -33,6 +33,7 @@ class DemoSettings:
     enabled: bool = False
     uploads: str = "all"
     publish_login: bool = False
+    signup: bool = False
     email: str = "demo@avishkar.dev"
     password: str = ""
 
@@ -43,6 +44,7 @@ class DemoSettings:
             raise ValueError(f"AVISHKAR_UPLOADS must be one of {UPLOAD_MODES}")
         return cls(enabled=os.environ.get("AVISHKAR_DEMO_MODE") == "1", uploads=uploads,
                    publish_login=os.environ.get("AVISHKAR_PUBLISH_DEMO_LOGIN") == "1",
+                   signup=os.environ.get("AVISHKAR_SIGNUP") == "1",
                    email=os.environ.get("AVISHKAR_DEMO_EMAIL", "demo@avishkar.dev").lower(),
                    password=os.environ.get("AVISHKAR_DEMO_PASSWORD", ""))
 
@@ -51,6 +53,7 @@ class DemoSettings:
         if self.enabled and self.publish_login and self.password:
             login = {"email": self.email, "password": self.password, "role": "viewer"}
         return {"service": "avishkar", "demo": self.enabled, "uploads": self.uploads, "demoLogin": login,
+                "signup": self.enabled and self.signup, "guest": self.enabled and bool(self.password),
                 "scoreVersion": score_version, "calibrated": False,
                 "sandbox": {"mode": sandbox_info["mode"], "isolationBoundary": sandbox_info["isolationBoundary"]}}
 

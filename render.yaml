@@ -20,6 +20,8 @@ services:
         value: "1"
       - key: AVISHKAR_UPLOADS           # only the admin may upload; nobody can scan strangers' code here
         value: admin
+      - key: AVISHKAR_SIGNUP            # public self sign-up, always read-only viewers, email unverified
+        value: "1"
       - key: AVISHKAR_PUBLISH_DEMO_LOGIN
         value: "1"
       - key: AVISHKAR_DEMO_EMAIL        # read-only (viewer) account, published on the landing page ON PURPOSE
