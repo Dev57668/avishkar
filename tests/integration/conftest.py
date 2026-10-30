@@ -37,6 +37,22 @@ def _truncate_all(url):
     db.conn.close()
 
 
+_OPEN: list = []
+
+
+@pytest.fixture(autouse=True)
+def _close_databases():
+    """Close every Env's database connection after each test (PostgreSQL has a connection cap; CI runs hundreds of Envs)."""
+    yield
+    while _OPEN:
+        e = _OPEN.pop()
+        try:
+            e.client.close()
+            e.store.d.conn.close()
+        except Exception:
+            pass
+
+
 class Env:
     """Test harness: app + client + helpers. Worker thread is off; tests drain the queue deterministically."""
 
@@ -48,6 +64,7 @@ class Env:
         if self.db_url.startswith("postgres"):
             _truncate_all(self.db_url)
         self.app = create_app(self.db_url, secret_key="s" * 40, sandbox=self.sandbox, start_worker=False, **kw)
+        _OPEN.append(self)
         self.client = TestClient(self.app)
         self.store = self.app.state.store
         self.runner = self.app.state.runner
