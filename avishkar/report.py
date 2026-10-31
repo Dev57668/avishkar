@@ -1,9 +1,9 @@
-"""Scan report: a JSON document and a self-contained, print-friendly HTML page ("Save as PDF" from any browser).
+"""Scan report: a JSON document, a self-contained print-friendly HTML page, and a PDF (see `report_pdf`).
 
 Every number and sentence is built from persisted scan data or from the static knowledge base; nothing is estimated,
 and the limitations section is generated from what the run actually did (incomplete, unsupported languages,
-heuristic rules, uncalibrated score). No PDF library is used on purpose (no extra dependency, no server-side rendering
-of untrusted text): the HTML is escaped end to end and styled for print.
+heuristic rules, uncalibrated score). The HTML is escaped end to end and styled for print; the PDF is built with reportlab
+from the same dict, with untrusted text escaped and only built-in fonts.
 """
 from __future__ import annotations
 

@@ -267,7 +267,7 @@ def test_report_html_is_escaped_and_printable(env):
     body = r.text
     assert "<script>alert(1)</script>" not in body and "&lt;script&gt;alert(1)&lt;/script&gt;" in body
     assert "@media print" in body and "<script" not in body.lower().replace("&lt;script", "")
-    assert env.client.get(f"/v1/analyses/{run['runId']}/report?format=pdf", headers=env.h).status_code == 422
+    assert env.client.get(f"/v1/analyses/{run['runId']}/report?format=docx", headers=env.h).status_code == 422
 
 
 def test_report_requires_auth_and_tenant(env):

@@ -55,7 +55,8 @@ export function exportMenu(runId, repoName) {
   const items = [
     ['SARIF 2.1.0 (code scanning)', async () => download(`/v1/analyses/${runId}/sarif`, `${safe}.sarif`)],
     ['JSON report', async () => download(`/v1/analyses/${runId}/report?format=json`, `${safe}-report.json`)],
-    ['HTML report (print to PDF)', async () => { await openInNewTab(`/v1/analyses/${runId}/report?format=html`); }],
+    ['PDF report', async () => download(`/v1/analyses/${runId}/report?format=pdf`, `${safe}-report.pdf`)],
+    ['HTML report (printable)', async () => { await openInNewTab(`/v1/analyses/${runId}/report?format=html`); }],
   ];
   const close = () => { list.hidden = true; btn.setAttribute('aria-expanded', 'false'); };
   for (const [label, fn] of items) {

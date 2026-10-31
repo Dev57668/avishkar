@@ -4,6 +4,7 @@ pydantic>=2.6
 python-multipart>=0.0.9
 pytest>=8
 httpx>=0.27
+reportlab>=4.0         # PDF reports (GET /v1/analyses/{id}/report?format=pdf)
 PyJWT[crypto]>=2.8
 cryptography>=42
 anthropic>=0.39        # optional: AI explanations (AVISHKAR_AI_ENABLED=1)

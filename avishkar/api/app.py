@@ -14,7 +14,7 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import Depends, FastAPI, File, Form, Header, Query, Request, UploadFile
-from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -621,7 +621,7 @@ def create_app(db_url: str | None = None, *, secret_key: str | None = None, scor
         return analysis.org_overview(repos_)
 
     @app.get("/v1/analyses/{run_id}/report")
-    def report(run_id: str, format: str = Query("json", pattern="^(json|html)$"), p: Principal = Depends(viewer)):
+    def report(run_id: str, format: str = Query("json", pattern="^(json|html|pdf)$"), p: Principal = Depends(viewer)):
         """Executive summary, metadata, findings with CWE/remediation, before/after and limitations, from real scan data."""
         r = run_or_404(run_id, p)
         repo = store.repo(r["repository_id"], p.org_id)
@@ -634,6 +634,11 @@ def create_app(db_url: str | None = None, *, secret_key: str | None = None, scor
                                       cfg=cfg, service_version=app.version, generated_at=time.time())
         if format == "html":
             return HTMLResponse(report_mod.render_html(rep))
+        if format == "pdf":
+            from ..report_pdf import render_pdf
+            safe = "".join(ch if ch.isalnum() or ch in "-_." else "_" for ch in repo["name"])[:60] or "report"
+            return Response(render_pdf(rep), media_type="application/pdf",
+                            headers={"Content-Disposition": f'attachment; filename="{safe}-report.pdf"'})
         return JSONResponse(rep)
 
     # ------------------------------------------------------------ optional AI assistant (advisory, consent-gated)
