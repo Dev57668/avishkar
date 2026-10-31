@@ -69,7 +69,7 @@ function uploadPanel(view) {
       e.preventDefault();
       const f = file.files[0];
       if (!f) return;
-      const maxMb = session.has('admin') ? 25 : 2;
+      const maxMb = session.has('admin') ? ((session.cfg && session.cfg.uploadLimitMb) || 25) : 2;
       if (f.size > maxMb * 1024 * 1024) { toast(`That file is larger than the ${maxMb} MB upload limit for your account.`, 'warn'); return; }
       // Names may only contain letters, digits, . _ - and /: turn spaces into dashes and drop anything else.
       const name = repo.value.trim().replace(/\s+/g, '-').replace(/[^\w.\-/]/g, '').slice(0, 100);

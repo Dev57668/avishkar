@@ -75,3 +75,13 @@ def test_admin_is_not_capped_and_demo_viewer_cannot_upload(tmp_path):
     e.add_user(e.org["id"], "demo@avishkar.dev", "viewer")
     g = {"Authorization": "Bearer " + e.client.post("/v1/auth/guest").json()["token"]}
     assert up(e, g, small_zip()).status_code == 403
+
+
+def test_admin_upload_cap_is_enforced_and_reported_in_config(tmp_path, monkeypatch):
+    from avishkar.api import app as app_mod
+
+    monkeypatch.setattr(app_mod, "MAX_UPLOAD", 1_000_000)
+    e, _ = env(tmp_path)
+    assert e.client.get("/v1/config", headers=e.h).json()["uploadLimitMb"] == 1
+    assert up(e, e.h, b"PK" + b"0" * 1_100_000).status_code == 413
+    assert up(e, e.h, small_zip()).status_code == 202

@@ -35,7 +35,7 @@ from .security import (ROLES, LoginThrottle, Principal, TokenService, hash_api_k
                        verify_password)
 
 WEB_DIR = Path(__file__).resolve().parents[2] / "web"
-MAX_UPLOAD = 25_000_000
+MAX_UPLOAD = int(os.environ.get("AVISHKAR_MAX_UPLOAD_MB", "50")) * 1_000_000  # admin zip size cap; the unpacker still enforces file-count and uncompressed-size limits
 LIMITED = {"zip_bytes": 2_000_000, "files": 300, "declared_bytes": 10_000_000, "per_hour": 3}  # non-admin uploads in "limited" mode
 MAX_WEBHOOK_BODY = 5_000_000
 
@@ -421,7 +421,7 @@ def create_app(db_url: str | None = None, *, secret_key: str | None = None, scor
                 "requiredDetectors": list(cfg.required_detectors), "policyVersion": pol.version,
                 "policyMode": pol.mode, "supportMatrix": SUPPORT_MATRIX, "sandbox": sbx.describe(),
                 "ai": ai.status(), "uploads": demo.uploads, "github": {"configured": github is not None and bool(wh_secret)},
-                "database": "postgresql" if store.d.pg else "sqlite",
+                "database": "postgresql" if store.d.pg else "sqlite", "uploadLimitMb": MAX_UPLOAD // 1_000_000,
                 "disclaimer": "Index is a prioritization signal, not a breach probability or proof of safety."}
 
     @app.get("/v1/metrics")
