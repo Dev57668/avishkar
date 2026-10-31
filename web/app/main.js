@@ -204,8 +204,8 @@ async function start() {
     session.cfg = await api('/v1/config');
   } catch { session.save(null); session.me = null; mode = 'login'; renderLogin('Your session expired or is invalid. Please sign in.'); return; }
   mode = 'authed';
-  shell();
-  route();
+  if ($('#cview')) $('#cview').remove();   // a stale view would make route() treat this as a landing-page anchor and skip rendering
+  route();                                 // route() builds the shell on first render
 }
 
 async function boot() {

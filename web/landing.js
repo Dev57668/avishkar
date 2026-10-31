@@ -104,7 +104,13 @@ function hero() {
   try { renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: 'high-performance' }); }
   catch { canvas.remove(); return null; }
   renderer.setPixelRatio(Math.min(devicePixelRatio, 1.75));
+  renderer.localClippingEnabled = true;
   const scene = new THREE.Scene();
+  scene.fog = new THREE.Fog(0x060a11, 21, 34);                   // the far end of the sheet dissolves into the stage instead of ending in an edge
+  // Only a window of lines around the scan head is drawn. The sheet is laid back, so lines far below the head would
+  // otherwise swing towards the camera and pass through it.
+  const HEAD = 1.2, ABOVE = 8, BELOW = 10;
+  const clip = [new THREE.Plane(), new THREE.Plane()];
   const camera = new THREE.PerspectiveCamera(32, 1, 0.1, 200);
   camera.position.set(0, 0, 34);
 
@@ -129,7 +135,7 @@ function hero() {
 
   const file = new THREE.Group();
   const lineY = n => H / 2 - (PAD + (n - FIRST_LINE) * LH + LH / 2) * U;
-  const bg = new THREE.Mesh(new THREE.PlaneGeometry(W, H), new THREE.MeshBasicMaterial({ color: 0x08101a, transparent: true, opacity: 0.86 }));
+  const bg = new THREE.Mesh(new THREE.PlaneGeometry(W, H), new THREE.MeshBasicMaterial({ color: 0x0c1524, transparent: true, opacity: 0.94, clippingPlanes: clip }));
   // The light source: a wide cobalt bloom behind the sheet, so the code reads as lit from beneath.
   const bloomTex = (() => { const c = document.createElement('canvas'); c.width = c.height = 256; const g = c.getContext('2d');
     const gr = g.createRadialGradient(128, 128, 0, 128, 128, 128); gr.addColorStop(0, 'rgba(61,123,255,.3)'); gr.addColorStop(0.45, 'rgba(61,123,255,.09)'); gr.addColorStop(1, 'rgba(61,123,255,0)');
@@ -137,17 +143,17 @@ function hero() {
   const bloom = new THREE.Mesh(new THREE.PlaneGeometry(W * 2.6, W * 2.6), new THREE.MeshBasicMaterial({ map: bloomTex, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
   bloom.position.set(0, 0, -3);
   bg.position.z = -0.03; file.add(bg);
-  const edge = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.PlaneGeometry(W, H)), new THREE.LineBasicMaterial({ color: 0x22364a }));
+  const edge = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.PlaneGeometry(W, H)), new THREE.LineBasicMaterial({ color: 0x2c4560, clippingPlanes: clip }));
   file.add(edge);
-  const text = new THREE.Mesh(new THREE.PlaneGeometry(W, H), new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false }));
+  const text = new THREE.Mesh(new THREE.PlaneGeometry(W, H), new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false, clippingPlanes: clip }));
   file.add(text);
 
   // One highlight row per finding: a wash across the line and a solid gutter mark, revealed when scanned.
   const SEV = { high: 0xff4d5e, medium: 0xffb547, low: 0x7cb4ff };
   FINDINGS.forEach(f => {
     const row = new THREE.Group(); row.position.set(0, lineY(f.line), -0.02);
-    const wash = new THREE.Mesh(new THREE.PlaneGeometry(W, LH * U), new THREE.MeshBasicMaterial({ color: SEV[f.sev], transparent: true, opacity: 0, depthWrite: false }));
-    const mark = new THREE.Mesh(new THREE.PlaneGeometry(0.07, LH * U), new THREE.MeshBasicMaterial({ color: SEV[f.sev], transparent: true, opacity: 0 }));
+    const wash = new THREE.Mesh(new THREE.PlaneGeometry(W, LH * U), new THREE.MeshBasicMaterial({ color: SEV[f.sev], transparent: true, opacity: 0, depthWrite: false, clippingPlanes: clip }));
+    const mark = new THREE.Mesh(new THREE.PlaneGeometry(0.07, LH * U), new THREE.MeshBasicMaterial({ color: SEV[f.sev], transparent: true, opacity: 0, clippingPlanes: clip }));
     mark.position.x = -W / 2 + 0.035; mark.position.z = 0.03;
     row.add(wash, mark); file.add(row); f.wash = wash; f.mark = mark;
   });
@@ -173,7 +179,7 @@ function hero() {
   // The file scrolls up beneath a fixed scan head, like paper through a reader.
   const rig = new THREE.Group(); rig.add(file, scanner);
   const pivot = new THREE.Group(); pivot.add(bloom, rig); scene.add(pivot);
-  rig.rotation.set(-0.95, 0.12, 0.05);   // laid back like a page on a desk, so it fills the figure's width
+  rig.rotation.set(-0.9, 0, 0);          // laid back like a page on a desk; kept square so the scan line and text rows stay parallel
 
   let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
   const dg = new THREE.BufferGeometry(); const dp = new Float32Array(500 * 3);
@@ -207,13 +213,16 @@ function hero() {
     renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix();
     const wide = w > 900;
     pivot.position.set(0, wide ? 0.6 : 1, wide ? -2 : -6);
+    scene.updateMatrixWorld(true);                               // clip planes live in the rig's frame: keep HEAD-BELOW <= y <= HEAD+ABOVE
+    clip[0].set(new THREE.Vector3(0, 1, 0), -(HEAD - BELOW)).applyMatrix4(rig.matrixWorld);
+    clip[1].set(new THREE.Vector3(0, -1, 0), HEAD + ABOVE).applyMatrix4(rig.matrixWorld);
   };
   // the figure box grows as findings arrive, so follow the box itself, not just the window
   new ResizeObserver(layout).observe(canvas.parentElement); layout();
 
 
   const state = { exit: 0 };
-  const SWEEP = 7.5, HOLD = 3.5, CYCLE = SWEEP + HOLD, HEAD = 1.2;
+  const SWEEP = 7.5, HOLD = 3.5, CYCLE = SWEEP + HOLD;
   const yTop = lineY(FIRST_LINE) + 0.6, yBot = lineY(FIRST_LINE + SRC.length - 1) - 0.6;
   let visible = true, last = performance.now(), clock = 2.4, lastCycle = 0, hudDone = false;
   new IntersectionObserver(([e]) => { visible = e.isIntersecting; }).observe(canvas);
@@ -277,7 +286,7 @@ const heroState = hero();
     const ol = code.querySelector('ol'), lines = [...ol.querySelectorAll('li:not(.ann)')];
     const target = ol.querySelector('li.target'), ann = document.getElementById('annot'), pEl = document.getElementById('scrub-p');
     const beam = document.createElement('div'); beam.className = 'scrub-beam'; beam.setAttribute('aria-hidden', 'true');
-    code.classList.add('scrub'); code.appendChild(beam);
+    code.classList.add('scrub'); code.appendChild(beam); document.body.classList.add('can-scrub');
     let p = 0;
     const render = () => {
       const y = ol.offsetTop + p * ol.offsetHeight;                 // beam position inside the panel
@@ -309,4 +318,100 @@ const heroState = hero();
     const n = document.getElementById('fig3-note');
     if (n) n.textContent = `fixed ${b.findings} of ${b.findings} detected findings → the index went down. zero findings is not proof the code is secure!`;
   }
+}
+
+
+/* ------------------------------------------------------------ navigation: solid bar once scrolled, hide on fast scroll down, scroll-spy */
+{
+  const nav = $('#nav'), links = $('#nav-links'), ind = $('#nav-ind'), burger = $('#burger');
+  const anchors = [...links.querySelectorAll('a')];
+  // #app has no nav link of its own: reaching it clears the highlight instead of leaving the previous section lit
+  const sections = [...anchors.map((a) => a.getAttribute('href')), '#app'].map((h) => document.querySelector(h)).filter(Boolean)
+    .sort((a, b) => (a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1));
+  let current = null;
+  const moveInd = (a) => {
+    if (!a) { ind.style.opacity = '0'; return; }
+    ind.style.opacity = '1'; ind.style.width = `${a.offsetWidth}px`; ind.style.transform = `translateX(${a.offsetLeft}px)`;
+  };
+  const setActive = (id) => {
+    if (id === current) return;
+    current = id;
+    anchors.forEach((a) => a.classList.toggle('on', a.getAttribute('href') === `#${id}`));
+    moveInd(anchors.find((a) => a.classList.contains('on')));
+  };
+  anchors.forEach((a) => {
+    a.addEventListener('mouseenter', () => moveInd(a));
+    a.addEventListener('click', () => { links.classList.remove('open'); burger.setAttribute('aria-expanded', 'false'); });
+  });
+  links.addEventListener('mouseleave', () => moveInd(anchors.find((a) => a.classList.contains('on'))));
+  burger.addEventListener('click', () => {
+    const open = !links.classList.contains('open');
+    links.classList.toggle('open', open); burger.setAttribute('aria-expanded', String(open));
+    burger.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+  });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && links.classList.contains('open')) { burger.click(); burger.focus(); } });
+
+  let lastY = scrollY, ticking = false;
+  const onScroll = () => {
+    ticking = false;
+    const y = scrollY;
+    nav.classList.toggle('scrolled', y > 10);
+    nav.classList.toggle('hide', y > 600 && y - lastY > 12 && !links.classList.contains('open'));
+    if (y < lastY) nav.classList.remove('hide');
+    lastY = y;
+    // the active section is the last one whose top has passed a line 35% down the viewport
+    let id = null;
+    for (const s of sections) if (s.getBoundingClientRect().top < innerHeight * 0.35) id = s.id;
+    setActive(id);
+  };
+  addEventListener('scroll', () => { if (!ticking) { ticking = true; requestAnimationFrame(onScroll); } }, { passive: true });
+  addEventListener('resize', () => moveInd(anchors.find((a) => a.classList.contains('on'))));
+  onScroll();
+}
+
+/* ------------------------------------------------------------ scroll reveals */
+{
+  const io = new IntersectionObserver((entries) => {
+    for (const e of entries) if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
+  }, { rootMargin: '0px 0px -10% 0px', threshold: 0.05 });
+  document.querySelectorAll('.rv').forEach((el) => io.observe(el));
+}
+
+/* ------------------------------------------------------------ pipeline connector fills as the section scrolls through */
+{
+  const wrap = document.querySelector('.pipe-wrap'), line = wrap && wrap.querySelector('.pipe-line');
+  if (wrap && line) {
+    const steps = [...wrap.querySelectorAll('.pipe li')];
+    const vertical = () => matchMedia('(max-width: 900px)').matches;
+    const update = () => {
+      const r = wrap.getBoundingClientRect();
+      const p = REDUCED ? 1 : Math.min(1, Math.max(0, (innerHeight * 0.75 - r.top) / (r.height + innerHeight * 0.25)));
+      line.style.setProperty('--fill', p.toFixed(3));
+      steps.forEach((s, i) => { const at = vertical() ? (i + 0.5) / steps.length : i / (steps.length - 1); s.classList.toggle('lit', p >= at - 0.001); });
+    };
+    addEventListener('scroll', () => requestAnimationFrame(update), { passive: true });
+    addEventListener('resize', update); update();
+  }
+}
+
+/* ------------------------------------------------------------ FAQ: animate open/close height, one open at a time */
+{
+  const items = [...document.querySelectorAll('.faq details')];
+  const animate = (d, open) => {
+    const body = d.querySelector('.faq-a');
+    if (REDUCED || !body.animate) { d.open = open; return; }
+    if (open) {
+      d.open = true;
+      body.animate([{ height: '0px', opacity: 0 }, { height: `${body.scrollHeight}px`, opacity: 1 }], { duration: 380, easing: 'cubic-bezier(.22,1,.36,1)' });
+    } else {
+      const a = body.animate([{ height: `${body.offsetHeight}px`, opacity: 1 }, { height: '0px', opacity: 0 }], { duration: 280, easing: 'cubic-bezier(.22,1,.36,1)' });
+      a.onfinish = () => { d.open = false; };
+    }
+  };
+  items.forEach((d) => d.querySelector('summary').addEventListener('click', (e) => {
+    e.preventDefault();
+    const open = !d.open;
+    if (open) items.filter((x) => x !== d && x.open).forEach((x) => animate(x, false));
+    animate(d, open);
+  }));
 }
