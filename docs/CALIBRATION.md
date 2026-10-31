@@ -10,7 +10,7 @@ choosing its parameters from labeled evidence: **C** (confidence per rule, from 
 Impact, exposure and aging are not fitted from this corpus: they have no outcome data behind them.
 
 ## What was built
-* `tests/corpus/`: 82 labeled cases in three cohorts. **4 independent** (copied byte-for-byte from `sample_projects/`,
+* `tests/corpus/`: 83 labeled cases in three cohorts. **5 independent** (copied byte-for-byte from `sample_projects/`,
   written separately from these detectors) and **78 synthetic**: positives in varied syntax, safe look-alikes (such as
   `model.eval()`, strings/comments, placeholders, `defusedxml`, ORM calls), and deliberately hard cases. Vulnerability lines
   are located by text, so labels cannot drift from the code.
@@ -27,7 +27,7 @@ Impact, exposure and aging are not fitted from this corpus: they have no outcome
     With the current detectors the reference case carries 49.5 raw units under the caps (55.75 under the current version),
     so the candidate K is 30.756 (the shipped K = 20). This moves whenever detectors change, which is another reason the
     candidate must not be used for blocking.
-* Coverage fix found while labeling: a repo containing only unsupported-language source (e.g. the Go sample) is
+* Coverage fix found while labeling: a repo containing only unsupported-language source (e.g. the Rust sample) is
   `incomplete` / `not_evaluated`, never *complete, 0 findings, pass*. Mixed repos stay complete but list
   `securityDebt.coverage.notEvaluated` and a `NOT EVALUATED` note (also in SARIF and the PR comment).
 

@@ -687,17 +687,104 @@
    }
   },
   "go-http-service": {
-   "name": "Go HTTP service (unsupported language)",
-   "kind": "unsupported",
+   "name": "Go notes service",
+   "kind": "vulnerable",
    "language": "Go",
-   "fixCount": 0,
+   "fixCount": 8,
    "before": {
-    "status": "incomplete",
-    "decision": "not_evaluated",
+    "status": "complete",
+    "decision": "pass",
     "fixesApplied": 0,
-    "normalizedIndex": null,
-    "grossUnits": null,
-    "rawUnits": null,
+    "normalizedIndex": 58.8,
+    "grossUnits": 17.75,
+    "rawUnits": 17.75,
+    "findings": 8,
+    "severity": {
+     "critical": 0,
+     "high": 3,
+     "medium": 4,
+     "low": 1,
+     "informational": 0
+    },
+    "filesScanned": 1,
+    "coverage": {
+     "analyzedSourceFiles": 1,
+     "notEvaluated": {}
+    },
+    "items": [
+     {
+      "rule": "GO-SECRET-ASSIGN",
+      "title": "Hard-coded credential in Go",
+      "severity": "high",
+      "confidence": "medium",
+      "path": "main.go",
+      "line": 16
+     },
+     {
+      "rule": "GO-SQLI",
+      "title": "SQL built by formatting or concatenation in Go",
+      "severity": "high",
+      "confidence": "low",
+      "path": "main.go",
+      "line": 21
+     },
+     {
+      "rule": "GO-CMDI",
+      "title": "OS command built from non-literal input in Go",
+      "severity": "high",
+      "confidence": "medium",
+      "path": "main.go",
+      "line": 26
+     },
+     {
+      "rule": "GO-WEAKHASH",
+      "title": "Weak hash algorithm in Go",
+      "severity": "low",
+      "confidence": "medium",
+      "path": "main.go",
+      "line": 31
+     },
+     {
+      "rule": "GO-RANDOM",
+      "title": "math/rand used for a security value",
+      "severity": "medium",
+      "confidence": "low",
+      "path": "main.go",
+      "line": 36
+     },
+     {
+      "rule": "GO-PATH",
+      "title": "File path built from request data",
+      "severity": "medium",
+      "confidence": "medium",
+      "path": "main.go",
+      "line": 40
+     },
+     {
+      "rule": "GO-XSS-REFLECT",
+      "title": "Request data written to the response unescaped",
+      "severity": "medium",
+      "confidence": "low",
+      "path": "main.go",
+      "line": 45
+     },
+     {
+      "rule": "GO-TLS",
+      "title": "TLS verification disabled in Go",
+      "severity": "medium",
+      "confidence": "high",
+      "path": "main.go",
+      "line": 49
+     }
+    ]
+   },
+   "after": {
+    "status": "complete",
+    "decision": "pass",
+    "fixesApplied": 8,
+    "normalizedIndex": 0.0,
+    "grossUnits": 0.0,
+    "rawUnits": 0.0,
     "findings": 0,
     "severity": {
      "critical": 0,
@@ -708,10 +795,8 @@
     },
     "filesScanned": 1,
     "coverage": {
-     "analyzedSourceFiles": 0,
-     "notEvaluated": {
-      ".go": 1
-     }
+     "analyzedSourceFiles": 1,
+     "notEvaluated": {}
     },
     "items": []
    }
@@ -819,6 +904,36 @@
     "coverage": {
      "analyzedSourceFiles": 1,
      "notEvaluated": {}
+    },
+    "items": []
+   }
+  },
+  "rust-web-service": {
+   "name": "Rust web service (unsupported language)",
+   "kind": "unsupported",
+   "language": "Rust",
+   "fixCount": 0,
+   "before": {
+    "status": "incomplete",
+    "decision": "not_evaluated",
+    "fixesApplied": 0,
+    "normalizedIndex": null,
+    "grossUnits": null,
+    "rawUnits": null,
+    "findings": 0,
+    "severity": {
+     "critical": 0,
+     "high": 0,
+     "medium": 0,
+     "low": 0,
+     "informational": 0
+    },
+    "filesScanned": 1,
+    "coverage": {
+     "analyzedSourceFiles": 0,
+     "notEvaluated": {
+      ".rs": 1
+     }
     },
     "items": []
    }

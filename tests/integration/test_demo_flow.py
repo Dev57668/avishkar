@@ -65,7 +65,7 @@ def test_secure_sample_is_clean_but_not_called_proof_of_safety(tmp_path):
 
 
 def test_unsupported_language_sample_is_not_evaluated(tmp_path):
-    r = scan_variant("go-http-service", [], tmp_path)
+    r = scan_variant("rust-web-service", [], tmp_path)
     assert r["status"] == "incomplete" and r["securityDebt"]["normalizedIndex"] is None
 
 

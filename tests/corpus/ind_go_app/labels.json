@@ -1,0 +1,52 @@
+{
+ "source": "independent",
+ "fully_labeled": true,
+ "adjudicated": false,
+ "reviewers": 0,
+ "note": "sample_projects/go-http-service",
+ "vulns": [
+  {
+   "path": "main.go",
+   "line": 16,
+   "kind": "secret"
+  },
+  {
+   "path": "main.go",
+   "kind": "sqli",
+   "lines": [
+    20,
+    21
+   ]
+  },
+  {
+   "path": "main.go",
+   "line": 26,
+   "kind": "cmdi"
+  },
+  {
+   "path": "main.go",
+   "line": 31,
+   "kind": "weakhash"
+  },
+  {
+   "path": "main.go",
+   "line": 36,
+   "kind": "weak-random"
+  },
+  {
+   "path": "main.go",
+   "line": 40,
+   "kind": "path-traversal"
+  },
+  {
+   "path": "main.go",
+   "line": 45,
+   "kind": "xss"
+  },
+  {
+   "path": "main.go",
+   "line": 49,
+   "kind": "noverify"
+  }
+ ]
+}

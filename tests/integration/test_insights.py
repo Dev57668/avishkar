@@ -216,9 +216,9 @@ def test_dashboard_empty_and_unsupported_languages(env, tmp_path):
     rid = env.store.get_or_create_repo(env.org["id"], "empty/repo")["id"]
     d = env.client.get(f"/v1/repositories/{rid}/dashboard", headers=env.h).json()
     assert d["health"]["status"] == "no_data" and d["score"] is None and d["trend"] == []
-    mixed = zip_dir(FIX / "secure", {"B.go": "package b\n"})
+    mixed = zip_dir(FIX / "secure", {"B.rs": "fn main() {}\n"})
     dm = env.client.get(f"/v1/repositories/{env.scan('r/mix', mixed).json()['repositoryId']}/dashboard", headers=env.h).json()
-    assert dm["coverage"]["notEvaluated"] == {".go": 1}
+    assert dm["coverage"]["notEvaluated"] == {".rs": 1}
 
 
 def test_overview_ranks_repositories_by_real_index(env):

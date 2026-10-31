@@ -42,6 +42,8 @@ RULE_KIND = {
     "JS-PATH": "path-traversal",
     "JAVA-SQLI": "sqli", "JAVA-CMDI": "cmdi", "JAVA-DESER": "deserialization", "JAVA-WEAKHASH": "weakhash",
     "JAVA-WEAKCIPHER": "weak-crypto", "JAVA-RANDOM": "weak-random", "JAVA-SECRET-ASSIGN": "secret", "JAVA-TLS": "noverify",
+    "GO-SQLI": "sqli", "GO-CMDI": "cmdi", "GO-WEAKHASH": "weakhash", "GO-WEAKCIPHER": "weak-crypto", "GO-RANDOM": "weak-random",
+    "GO-SECRET-ASSIGN": "secret", "GO-TLS": "noverify", "GO-PATH": "path-traversal", "GO-XSS-REFLECT": "xss",
     "JAVA-XXE": "xxe", "JAVA-PATH": "path-traversal", "JAVA-XSS-REFLECT": "xss", "JAVA-EVAL": "eval",
 }
 # Confidence tiers proposed from measured precision (Wilson 95% lower bound, minimum sample).

@@ -1,0 +1,8 @@
+{
+  "name": "Rust web service (unsupported language)",
+  "language": "Rust",
+  "kind": "unsupported",
+  "description": "A Rust file. Second Read has no Rust detector, so the honest result is 'not evaluated', never 'clean'.",
+  "expected": "Incomplete / not evaluated, no score.",
+  "fixes": []
+}

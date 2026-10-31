@@ -18,12 +18,13 @@ SUPPORT_MATRIX = {
     "python": {"status": "supported", "ext": [".py"]},
     "javascript/typescript": {"status": "supported", "ext": [".js", ".jsx", ".ts", ".tsx", ".mjs"]},
     "java": {"status": "supported", "ext": [".java"]},
+    "go": {"status": "supported", "ext": [".go"]},
     "config/iac": {"status": "experimental", "ext": [".env", ".yml", ".yaml", ".json", ".tf", ".ini", ".cfg"]},
     "dependencies": {"status": "supported", "files": ["requirements.txt", "package.json"]},
     "other languages": {"status": "unsupported", "ext": []},
 }
 
-CODE_EXT = {".py", ".js", ".jsx", ".ts", ".tsx", ".mjs", ".java"}
+CODE_EXT = {".py", ".js", ".jsx", ".ts", ".tsx", ".mjs", ".java", ".go"}
 SECRET_EXT = CODE_EXT | {".env", ".yml", ".yaml", ".json", ".tf", ".ini", ".cfg", ".txt", ".sh", ".toml", ".properties"}
 
 
@@ -100,7 +101,7 @@ PATTERN_RULES = [
     ("JS-TLS", re.compile(r"rejectUnauthorized\s*:\s*false|NODE_TLS_REJECT_UNAUTHORIZED\s*=\s*['\"]?0"), JS, Severity.MEDIUM, Confidence.HIGH,
      "TLS certificate verification disabled", "Do not disable certificate validation.", "transport"),
     ("ANY-CORS", re.compile(r"""(?i)access-control-allow-origin["']?\s*[:,]\s*["']\*|allow_origins\s*=\s*\[\s*["']\*["']"""),
-     PY | JS | {".java"}, Severity.MEDIUM, Confidence.MEDIUM, "Wildcard CORS origin", "Restrict allowed origins.", "config"),
+     PY | JS | {".java", ".go"}, Severity.MEDIUM, Confidence.MEDIUM, "Wildcard CORS origin", "Restrict allowed origins.", "config"),
 ]
 
 
@@ -121,9 +122,10 @@ JS_EXT = {".js", ".jsx", ".ts", ".tsx", ".mjs"}
 
 
 def detect_patterns(root: Path, files: list[Path]) -> list[RawFinding]:
-    """Python -> AST detector; JavaScript/TypeScript and Java -> token-stream detectors (alias-aware, ignore comments
+    """Python -> AST detector; JavaScript/TypeScript, Java and Go -> token-stream detectors (alias-aware, ignore comments
     and strings). A file the structural scanners cannot handle falls back to the legacy regex rules so it is still
     covered. The wildcard-CORS rule is a line regex for both languages."""
+    from .goscan import scan_go
     from .javascan import scan_java
     from .jsscan import scan_js
     from .pyast import scan_python
@@ -142,6 +144,8 @@ def detect_patterns(root: Path, files: list[Path]) -> list[RawFinding]:
                 structural = scan_js(text, rel)
             elif ext == ".java":
                 structural = scan_java(text, rel)
+            elif ext == ".go":
+                structural = scan_go(text, rel)
         except (SyntaxError, ValueError, RecursionError, IndexError):
             structural = None  # fall back below; never silently skip the file
         if structural is not None:

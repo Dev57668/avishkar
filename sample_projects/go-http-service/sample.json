@@ -1,8 +1,145 @@
 {
-  "name": "Go HTTP service (unsupported language)",
+  "name": "Go notes service",
   "language": "Go",
-  "kind": "unsupported",
-  "description": "A Go file. Second Read has no Go detector, so the honest result is 'not evaluated', never 'clean'.",
-  "expected": "Incomplete / not evaluated, no score.",
-  "fixes": []
+  "kind": "vulnerable",
+  "description": "A Go HTTP service with SQL built by formatting, a shell command, MD5, math/rand tokens, a path read, reflected output, disabled TLS verification and a hard-coded token. Intentionally insecure, for education.",
+  "expected": "Findings from the Go token scanner.",
+  "fixes": [
+    {
+      "id": "go-secret",
+      "title": "Read the admin token from the environment",
+      "file": "main.go",
+      "removes": [
+        "GO-SECRET-ASSIGN"
+      ],
+      "explanation": "The token is no longer in the repository (rotate the exposed value).",
+      "edits": [
+        [
+          "const adminToken = \"go-admin-token-5d83a1c9e7\"",
+          "var adminToken = os.Getenv(\"ADMIN_TOKEN\")"
+        ]
+      ]
+    },
+    {
+      "id": "go-sqli",
+      "title": "Use a placeholder for the search term",
+      "file": "main.go",
+      "removes": [
+        "GO-SQLI"
+      ],
+      "explanation": "The term is passed as a query argument instead of being formatted into the SQL text.",
+      "edits": [
+        [
+          "\tq := fmt.Sprintf(\"SELECT id, title FROM notes WHERE title LIKE '%%%s%%'\", term)\n\trows, _ := db.Query(q)",
+          "\trows, _ := db.Query(\"SELECT id, title FROM notes WHERE title LIKE $1\", \"%\"+term+\"%\")"
+        ]
+      ]
+    },
+    {
+      "id": "go-cmdi",
+      "title": "Run ls with a fixed argument list",
+      "file": "main.go",
+      "removes": [
+        "GO-CMDI"
+      ],
+      "explanation": "No shell parses the directory name; it is a single argument to a fixed program.",
+      "edits": [
+        [
+          "exec.Command(\"sh\", \"-c\", \"ls \"+r.FormValue(\"dir\"))",
+          "exec.Command(\"ls\", \"--\", r.FormValue(\"dir\"))"
+        ]
+      ]
+    },
+    {
+      "id": "go-hash",
+      "title": "Use SHA-256 instead of MD5",
+      "file": "main.go",
+      "removes": [
+        "GO-WEAKHASH"
+      ],
+      "explanation": "MD5 is broken for security use. (A real password store should use argon2 or bcrypt.)",
+      "edits": [
+        [
+          "\t\"crypto/md5\"\n",
+          "\t\"crypto/sha256\"\n"
+        ],
+        [
+          "sum := md5.Sum([]byte(password))\n\treturn sum[:]",
+          "sum := sha256.Sum256([]byte(password))\n\treturn sum[:]"
+        ]
+      ]
+    },
+    {
+      "id": "go-random",
+      "title": "Draw the session token from crypto/rand",
+      "file": "main.go",
+      "removes": [
+        "GO-RANDOM"
+      ],
+      "explanation": "crypto/rand is a cryptographically secure source; math/rand is predictable.",
+      "edits": [
+        [
+          "\t\"math/rand\"\n",
+          "\t\"crypto/rand\"\n\t\"math/big\"\n"
+        ],
+        [
+          "func newSessionToken() int {\n\treturn rand.Int()\n}",
+          "func newSessionToken() int64 {\n\tn, _ := rand.Int(rand.Reader, big.NewInt(1<<62))\n\treturn n.Int64()\n}"
+        ]
+      ]
+    },
+    {
+      "id": "go-path",
+      "title": "Confine downloads to the notes directory",
+      "file": "main.go",
+      "removes": [
+        "GO-PATH"
+      ],
+      "explanation": "Only the base name is used, so '../' cannot leave the directory.",
+      "edits": [
+        [
+          "\t\"os/exec\"\n",
+          "\t\"os/exec\"\n\t\"path/filepath\"\n"
+        ],
+        [
+          "os.ReadFile(\"/srv/notes/\" + r.FormValue(\"name\"))",
+          "os.ReadFile(filepath.Join(\"/srv/notes\", filepath.Base(r.FormValue(\"name\"))))"
+        ]
+      ]
+    },
+    {
+      "id": "go-xss",
+      "title": "Escape the name before writing it",
+      "file": "main.go",
+      "removes": [
+        "GO-XSS-REFLECT"
+      ],
+      "explanation": "html.EscapeString turns markup into harmless text.",
+      "edits": [
+        [
+          "\t\"fmt\"\n",
+          "\t\"fmt\"\n\t\"html\"\n"
+        ],
+        [
+          "fmt.Fprintf(w, \"<h1>Hello %s</h1>\", r.FormValue(\"name\"))",
+          "fmt.Fprintf(w, \"<h1>Hello %s</h1>\", html.EscapeString(r.FormValue(\"name\")))"
+        ]
+      ]
+    },
+    {
+      "id": "go-tls",
+      "title": "Verify TLS certificates",
+      "file": "main.go",
+      "removes": [
+        "GO-TLS"
+      ],
+      "explanation": "Certificate verification is back on.",
+      "edits": [
+        [
+          "InsecureSkipVerify: true",
+          "MinVersion: tls.VersionTLS12"
+        ]
+      ]
+    }
+  ]
 }

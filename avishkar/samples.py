@@ -218,7 +218,7 @@ def _read(sample: Sample) -> dict[str, str]:
         raise SampleError(f"sample folder missing: {sample.folder}")
     out = {}
     for p in sorted(root.rglob("*")):
-        if p.is_file() and p.suffix.lower() in (".py", ".js", ".ts", ".tsx", ".jsx", ".java", ".go", ".md", ".json", ".txt", ".yml", ".yaml") and p.name != "sample.json" and "__pycache__" not in p.parts:
+        if p.is_file() and p.suffix.lower() in (".py", ".js", ".ts", ".tsx", ".jsx", ".java", ".go", ".rs", ".md", ".json", ".txt", ".yml", ".yaml") and p.name != "sample.json" and "__pycache__" not in p.parts:
             out[p.relative_to(root).as_posix()] = p.read_text(encoding="utf8", errors="replace")
     return out
 

@@ -108,7 +108,7 @@ def test_seeded_before_after_runs_match_the_published_results_file(tmp_path):
 def test_unsupported_language_sample_is_not_evaluated_not_clean(tmp_path):
     e = demo_env(tmp_path)
     v = e.login("demo@avishkar.dev", "demo-view-only-1")
-    rid = next(r["id"] for r in e.client.get("/v1/repositories", headers=v).json()["items"] if r["name"].endswith("go-http-service"))
+    rid = next(r["id"] for r in e.client.get("/v1/repositories", headers=v).json()["items"] if r["name"].endswith("rust-web-service"))
     run = e.client.get(f"/v1/repositories/{rid}/analyses", headers=v).json()["items"][0]
     assert run["status"] == "incomplete" and run["decision"]["outcome"] == "not_evaluated"
     assert run["securityDebt"]["normalizedIndex"] is None
