@@ -12,7 +12,7 @@ Live demo: <https://avishkar-red.vercel.app> (static site on Vercel, API on Rend
 
 | Area | Details |
 |---|---|
-| Detection | Python AST (alias resolution, same-function flows), JavaScript/TypeScript, Java and Go token-stream scanners, secrets, dependencies, CORS. 61 documented rules. Unsupported languages (e.g. Rust) are reported as *not evaluated*, never as clean. |
+| Detection | Python AST (alias resolution, same-function flows), JavaScript/TypeScript, Java, Kotlin, Go, C# and PHP token-stream scanners, secrets, dependencies, CORS. 84 documented rules. Unsupported languages (e.g. Rust) are reported as *not evaluated*, never as clean. |
 | Scoring | Versioned `score-v1`: `D = I x E x C x A`, `Index = 100(1 - e^(-D/K))`. Every finding's contribution is shown and the total is recomputed for a reproducibility check. Incomplete scans give "not calculated", never zero. |
 | Console | Overview, per-repository dashboard (gauge, severity, trend, vulnerable files, activity), before/after comparison, vulnerability explorer (search, filters, sorting, details), admin area. |
 | Demo lab | Pick a bundled sample, run a **real** scan, watch the recorded pipeline stages, apply the fix pack, rescan, compare. |
@@ -37,7 +37,7 @@ More: [RUN_LOCALLY.md](RUN_LOCALLY.md) (step by step), [docs/AVISHKAR_V2.md](doc
 
 ## Honest limitations
 
-* **Detectors miss things.** Held-out recall on our own labelled cases was about 0.8; precision about 0.8 on the same cohort. Detection is heuristic (no full JS or Java parser, no cross-file data flow). The Java and Go rules each have only one independent labelled case (written by us, no real-world Go code was tested), so their accuracy is largely unmeasured.
+* **Detectors miss things.** Held-out recall on our own labelled cases was about 0.8; precision about 0.8 on the same cohort. Detection is heuristic (no full JS or Java parser, no cross-file data flow). The Java, Kotlin, Go, C# and PHP rules each have at most one labelled case written by us (no real-world code in those languages was tested), so their accuracy is largely unmeasured.
 * **Not calibrated.** The corpus is 81 small cases written by us with no independent second reviewer. Do not use the index to block releases.
 * **Public uploads are small and capped.** On Render the `process` sandbox is not an isolation boundary; the scanner only parses uploaded code and never executes it. Use `AVISHKAR_UPLOADS=admin` to turn public uploads off, or the Docker sandbox for real isolation.
 * **Tested against mocks, not live services:** GitHub, the AI provider and email (Resend).

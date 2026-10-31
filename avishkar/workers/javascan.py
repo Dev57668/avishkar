@@ -42,6 +42,7 @@ XXE_SAFE = ("disallow-doctype-decl", "FEATURE_SECURE_PROCESSING", "IS_SUPPORTING
 SHELL_PROGS = {"sh", "bash", "zsh", "cmd", "cmd.exe", "powershell", "powershell.exe", "/bin/sh", "/bin/bash"}
 SHELL_FLAGS = {"-c", "/c", "-command"}
 CONTROL = {"if", "for", "while", "switch", "catch", "synchronized", "try", "return", "new", "else", "do"}
+KT_INTERP = re.compile(r"\$[A-Za-z_{]")
 PUNCT2 = {"->", "::", "+=", "==", "!=", "<=", ">=", "&&", "||", "++", "--"}
 
 
@@ -50,9 +51,10 @@ class Tok:
     kind: str       # id | num | str | chr | punct
     text: str       # for str/chr the unquoted content
     line: int
+    interp: bool = False   # Kotlin: the string contains $name / ${expr} interpolation, so it is not a constant
 
 
-def tokenize(src: str) -> list[Tok]:
+def tokenize(src: str, kotlin: bool = False) -> list[Tok]:
     out: list[Tok] = []
     i, n, line = 0, len(src), 1
     while i < n and len(out) < MAX_TOKENS:
@@ -75,7 +77,7 @@ def tokenize(src: str) -> list[Tok]:
             while j > 0 and src[j - 1] == "\\":
                 j = src.find('"""', j + 1)
             j = n if j < 0 else j
-            out.append(Tok("str", src[i + 3:j], line))
+            out.append(Tok("str", src[i + 3:j], line, kotlin and bool(KT_INTERP.search(src[i + 3:j]))))
             line += src.count("\n", i, j)
             i = min(n, j + 3)
         elif c == '"' or c == "'":
@@ -87,7 +89,8 @@ def tokenize(src: str) -> list[Tok]:
                 else:
                     buf.append(src[j])
                     j += 1
-            out.append(Tok("str" if c == '"' else "chr", "".join(buf), line))  # unterminated: stop at the newline
+            body = "".join(buf)
+            out.append(Tok("str" if c == '"' else "chr", body, line, kotlin and c == '"' and bool(KT_INTERP.search(body))))  # unterminated: stop at the newline
             i = j + 1 if j < n and src[j] == c else j
         elif c.isalpha() or c in "_$":
             j = i + 1
@@ -113,8 +116,9 @@ def tokenize(src: str) -> list[Tok]:
 
 
 class _Analyzer:
-    def __init__(self, toks: list[Tok], lines: list[str], text: str):
+    def __init__(self, toks: list[Tok], lines: list[str], text: str, kotlin: bool = False):
         self.T, self.n, self.lines, self.text = toks, len(toks), lines, text
+        self.kotlin = kotlin
         self.hits: list[tuple[str, int, Confidence | None, str | None]] = []
         self.pair: dict[int, int] = {}
         stack: list[int] = []
@@ -184,10 +188,12 @@ class _Analyzer:
         return out
 
     def literal_only(self, lo: int, hi: int) -> bool:
-        return all(t.kind in ("str", "chr", "num") or t.text in ("+", "(", ")") for t in self.T[lo:hi]) and hi > lo
+        return all((t.kind in ("str", "chr", "num") and not t.interp) or t.text in ("+", "(", ")") for t in self.T[lo:hi]) and hi > lo
 
     def has_concat(self, lo: int, hi: int) -> bool:
         seg = self.T[lo:hi]
+        if any(t.kind == "str" and t.interp for t in seg):
+            return True  # Kotlin "...$x..." / "...${x}..."
         if any(t.kind == "punct" and t.text == "+" for t in seg) and not self.literal_only(lo, hi):
             return True
         return any(t.text in ("format", "formatted", "concat") and k > 0 and self.T[lo + k - 1].text in (".",)
@@ -229,6 +235,8 @@ class _Analyzer:
                 self._constructor(i)
             elif nxt_open and self.is_p(i - 1, "."):
                 self._method_call(i)
+            elif self.kotlin and nxt_open and t.text[:1].isupper() and not self.is_p(i - 1, ".") and not self.is_p(i - 1, "fun"):
+                self._construct(t.text, i + 1, t.line, i)  # Kotlin has no `new`: Foo(args) constructs
             elif t.text == "checkServerTrusted" and nxt_open:
                 self._trust_manager(i)
             elif t.text in ("NoopHostnameVerifier", "ALLOW_ALL_HOSTNAME_VERIFIER", "TrustAllStrategy"):
@@ -251,7 +259,7 @@ class _Analyzer:
             if not (self.is_p(i, "=") and T[i - 1].kind == "id") or self.is_p(i + 1, "="):
                 continue
             end = i + 1
-            while end < self.n and not self.is_p(end, ";") and end - i < 80:
+            while end < self.n and not self.is_p(end, ";") and end - i < 80 and not (self.kotlin and self._stmt_end(end, i)):
                 end += 1
             name = T[i - 1].text
             if any(t.text == "getRuntime" for t in T[i + 1:end]):
@@ -292,7 +300,11 @@ class _Analyzer:
                     break
         if not self.is_p(k, "("):
             return
-        line, a = T[i].line, self.args(k)
+        self._construct(cls, k, T[i].line, i)
+
+    def _construct(self, cls: str, k: int, line: int, i: int):
+        T = self.T
+        a = self.args(k)
         if cls in ("ObjectInputStream", "XMLDecoder"):
             self.hit("JAVA-DESER", line, M)
         elif cls == "Yaml" and not any(t.text in ("SafeConstructor",) for t in T[k:self.pair.get(k, k)]):
@@ -395,20 +407,30 @@ class _Analyzer:
             if self.T[i].text in XML_FACTORIES and self.is_p(i + 1, ".") and self.txt(i + 2) in ("newInstance", "newFactory"):
                 self.hit("JAVA-XXE", self.T[i].line, L)
 
+    def _stmt_end(self, k: int, start: int) -> bool:
+        """Kotlin has no semicolons: a statement ends at a line break unless the line ended with an operator or open bracket."""
+        T = self.T
+        if T[k].line == T[start].line:
+            return False
+        prev = T[k - 1]
+        return not (prev.kind == "punct" and prev.text in ("+", ",", "(", "{", "[", "&&", "||", ".", "?", ":", "=", "->"))
+
     def secrets(self):
         """`String password = "literal";` style declarations and assignments (also fields and constants)."""
         T = self.T
-        for i in range(1, self.n - 2):
-            if self.is_p(i, "=") and T[i - 1].kind == "id" and T[i + 1].kind == "str" and (self.is_p(i + 2, ";") or self.is_p(i + 2, ",")):
+        for i in range(1, self.n - 1):
+            if self.is_p(i, "=") and T[i - 1].kind == "id" and T[i + 1].kind == "str" and not T[i + 1].interp and (
+                    self.is_p(i + 2, ";") or self.is_p(i + 2, ",")
+                    or (self.kotlin and (i + 2 >= self.n or T[i + 2].line > T[i + 1].line or self.is_p(i + 2, ")")))):
                 name = T[i - 1].text
                 if CRED_NAME.search(name) and not CRED_NAME_EXCLUDE.search(name):
                     self._secret_value(T[i - 1].line, name, T[i + 1].text)
 
 
-def scan_java(text: str, rel: str) -> list[RawFinding]:
-    toks = tokenize(text)
+def scan_java(text: str, rel: str, kotlin: bool = False) -> list[RawFinding]:
+    toks = tokenize(text, kotlin)
     lines = text.splitlines()
-    an = _Analyzer(toks, lines, text)
+    an = _Analyzer(toks, lines, text, kotlin)
     an.run()
     an.secrets()
     hits = an.hits
@@ -423,3 +445,8 @@ def scan_java(text: str, rel: str) -> list[RawFinding]:
         out.append(RawFinding("code-patterns", rule, k["category"], sev, conf or dconf, k["name"], rel, ln, evidence,
                               Exposure.UNKNOWN, k["remediation"], "small"))
     return out
+
+
+def scan_kotlin(text: str, rel: str) -> list[RawFinding]:
+    """Kotlin shares the JVM rules (JAVA-*): same APIs, with `$x` string interpolation and constructors without `new`."""
+    return scan_java(text, rel, kotlin=True)

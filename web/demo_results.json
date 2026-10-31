@@ -397,6 +397,121 @@
     "items": []
    }
   },
+  "csharp-orders-api": {
+   "name": "C# orders API",
+   "kind": "vulnerable",
+   "language": "C#",
+   "fixCount": 8,
+   "before": {
+    "status": "complete",
+    "decision": "pass",
+    "fixesApplied": 0,
+    "normalizedIndex": 63.7,
+    "grossUnits": 20.25,
+    "rawUnits": 20.25,
+    "findings": 8,
+    "severity": {
+     "critical": 0,
+     "high": 4,
+     "medium": 3,
+     "low": 1,
+     "informational": 0
+    },
+    "filesScanned": 1,
+    "coverage": {
+     "analyzedSourceFiles": 1,
+     "notEvaluated": {}
+    },
+    "items": [
+     {
+      "rule": "CS-SECRET-ASSIGN",
+      "title": "Hard-coded credential in C#",
+      "severity": "high",
+      "confidence": "medium",
+      "path": "OrdersController.cs",
+      "line": 15
+     },
+     {
+      "rule": "CS-SQLI",
+      "title": "SQL built by concatenation or interpolation in C#",
+      "severity": "high",
+      "confidence": "medium",
+      "path": "OrdersController.cs",
+      "line": 20
+     },
+     {
+      "rule": "CS-CMDI",
+      "title": "OS command built from non-literal input in C#",
+      "severity": "high",
+      "confidence": "medium",
+      "path": "OrdersController.cs",
+      "line": 26
+     },
+     {
+      "rule": "CS-WEAKHASH",
+      "title": "Weak hash algorithm in C#",
+      "severity": "low",
+      "confidence": "medium",
+      "path": "OrdersController.cs",
+      "line": 32
+     },
+     {
+      "rule": "CS-RANDOM",
+      "title": "System.Random used for a security value",
+      "severity": "medium",
+      "confidence": "low",
+      "path": "OrdersController.cs",
+      "line": 38
+     },
+     {
+      "rule": "CS-DESER",
+      "title": "Unsafe deserialization in C#",
+      "severity": "high",
+      "confidence": "medium",
+      "path": "OrdersController.cs",
+      "line": 43
+     },
+     {
+      "rule": "CS-PATH",
+      "title": "File path built from request data in C#",
+      "severity": "medium",
+      "confidence": "medium",
+      "path": "OrdersController.cs",
+      "line": 49
+     },
+     {
+      "rule": "CS-TLS",
+      "title": "TLS certificate validation disabled in C#",
+      "severity": "medium",
+      "confidence": "high",
+      "path": "OrdersController.cs",
+      "line": 54
+     }
+    ]
+   },
+   "after": {
+    "status": "complete",
+    "decision": "pass",
+    "fixesApplied": 8,
+    "normalizedIndex": 0.0,
+    "grossUnits": 0.0,
+    "rawUnits": 0.0,
+    "findings": 0,
+    "severity": {
+     "critical": 0,
+     "high": 0,
+     "medium": 0,
+     "low": 0,
+     "informational": 0
+    },
+    "filesScanned": 1,
+    "coverage": {
+     "analyzedSourceFiles": 1,
+     "notEvaluated": {}
+    },
+    "items": []
+   }
+  },
   "django-blog-backend": {
    "name": "Django blog backend",
    "kind": "vulnerable",
@@ -801,6 +916,236 @@
     "items": []
    }
   },
+  "kotlin-notes-service": {
+   "name": "Kotlin notes service",
+   "kind": "vulnerable",
+   "language": "Kotlin",
+   "fixCount": 6,
+   "before": {
+    "status": "complete",
+    "decision": "pass",
+    "fixesApplied": 0,
+    "normalizedIndex": 51.0,
+    "grossUnits": 14.25,
+    "rawUnits": 14.25,
+    "findings": 6,
+    "severity": {
+     "critical": 0,
+     "high": 3,
+     "medium": 2,
+     "low": 1,
+     "informational": 0
+    },
+    "filesScanned": 1,
+    "coverage": {
+     "analyzedSourceFiles": 1,
+     "notEvaluated": {}
+    },
+    "items": [
+     {
+      "rule": "JAVA-SECRET-ASSIGN",
+      "title": "Hard-coded credential in Java/Kotlin",
+      "severity": "high",
+      "confidence": "medium",
+      "path": "Main.kt",
+      "line": 9
+     },
+     {
+      "rule": "JAVA-SQLI",
+      "title": "SQL built by concatenation in Java/Kotlin",
+      "severity": "high",
+      "confidence": "medium",
+      "path": "Main.kt",
+      "line": 14
+     },
+     {
+      "rule": "JAVA-CMDI",
+      "title": "OS command built from non-literal input in Java/Kotlin",
+      "severity": "high",
+      "confidence": "medium",
+      "path": "Main.kt",
+      "line": 19
+     },
+     {
+      "rule": "JAVA-WEAKHASH",
+      "title": "Weak hash algorithm in Java/Kotlin",
+      "severity": "low",
+      "confidence": "medium",
+      "path": "Main.kt",
+      "line": 23
+     },
+     {
+      "rule": "JAVA-RANDOM",
+      "title": "java.util.Random / Math.random for a security value",
+      "severity": "medium",
+      "confidence": "low",
+      "path": "Main.kt",
+      "line": 28
+     },
+     {
+      "rule": "JAVA-DESER",
+      "title": "Unsafe deserialization in Java/Kotlin",
+      "severity": "medium",
+      "confidence": "medium",
+      "path": "Main.kt",
+      "line": 32
+     }
+    ]
+   },
+   "after": {
+    "status": "complete",
+    "decision": "pass",
+    "fixesApplied": 6,
+    "normalizedIndex": 0.0,
+    "grossUnits": 0.0,
+    "rawUnits": 0.0,
+    "findings": 0,
+    "severity": {
+     "critical": 0,
+     "high": 0,
+     "medium": 0,
+     "low": 0,
+     "informational": 0
+    },
+    "filesScanned": 1,
+    "coverage": {
+     "analyzedSourceFiles": 1,
+     "notEvaluated": {}
+    },
+    "items": []
+   }
+  },
+  "php-legacy-shop": {
+   "name": "PHP legacy shop",
+   "kind": "vulnerable",
+   "language": "PHP",
+   "fixCount": 10,
+   "before": {
+    "status": "complete",
+    "decision": "pass",
+    "fixesApplied": 0,
+    "normalizedIndex": 71.0,
+    "grossUnits": 24.75,
+    "rawUnits": 24.75,
+    "findings": 10,
+    "severity": {
+     "critical": 0,
+     "high": 5,
+     "medium": 4,
+     "low": 1,
+     "informational": 0
+    },
+    "filesScanned": 1,
+    "coverage": {
+     "analyzedSourceFiles": 1,
+     "notEvaluated": {}
+    },
+    "items": [
+     {
+      "rule": "PHP-SECRET-ASSIGN",
+      "title": "Hard-coded credential in PHP",
+      "severity": "high",
+      "confidence": "medium",
+      "path": "index.php",
+      "line": 4
+     },
+     {
+      "rule": "PHP-SQLI",
+      "title": "SQL built by concatenation or interpolation in PHP",
+      "severity": "high",
+      "confidence": "medium",
+      "path": "index.php",
+      "line": 9
+     },
+     {
+      "rule": "PHP-CMDI",
+      "title": "OS command built from non-literal input in PHP",
+      "severity": "high",
+      "confidence": "medium",
+      "path": "index.php",
+      "line": 14
+     },
+     {
+      "rule": "PHP-WEAKHASH",
+      "title": "md5/sha1/crypt used for a password or token in PHP",
+      "severity": "low",
+      "confidence": "medium",
+      "path": "index.php",
+      "line": 19
+     },
+     {
+      "rule": "PHP-RANDOM",
+      "title": "rand/mt_rand/uniqid used for a security value in PHP",
+      "severity": "medium",
+      "confidence": "low",
+      "path": "index.php",
+      "line": 23
+     },
+     {
+      "rule": "PHP-INCLUDE",
+      "title": "File include built from request data in PHP",
+      "severity": "high",
+      "confidence": "medium",
+      "path": "index.php",
+      "line": 27
+     },
+     {
+      "rule": "PHP-DESER",
+      "title": "Unsafe deserialization in PHP",
+      "severity": "high",
+      "confidence": "medium",
+      "path": "index.php",
+      "line": 31
+     },
+     {
+      "rule": "PHP-XSS-REFLECT",
+      "title": "Request data echoed unescaped in PHP",
+      "severity": "medium",
+      "confidence": "low",
+      "path": "index.php",
+      "line": 35
+     },
+     {
+      "rule": "PHP-TLS",
+      "title": "TLS verification disabled in PHP",
+      "severity": "medium",
+      "confidence": "high",
+      "path": "index.php",
+      "line": 40
+     },
+     {
+      "rule": "PHP-PATH",
+      "title": "File path built from request data in PHP",
+      "severity": "medium",
+      "confidence": "medium",
+      "path": "index.php",
+      "line": 45
+     }
+    ]
+   },
+   "after": {
+    "status": "complete",
+    "decision": "pass",
+    "fixesApplied": 10,
+    "normalizedIndex": 0.0,
+    "grossUnits": 0.0,
+    "rawUnits": 0.0,
+    "findings": 0,
+    "severity": {
+     "critical": 0,
+     "high": 0,
+     "medium": 0,
+     "low": 0,
+     "informational": 0
+    },
+    "filesScanned": 1,
+    "coverage": {
+     "analyzedSourceFiles": 1,
+     "notEvaluated": {}
+    },
+    "items": []
+   }
+  },
   "python-ops-cli": {
    "name": "Python ops CLI",
    "kind": "vulnerable",
@@ -1069,7 +1414,7 @@
     "items": [
      {
       "rule": "JAVA-SECRET-ASSIGN",
-      "title": "Hard-coded credential in Java",
+      "title": "Hard-coded credential in Java/Kotlin",
       "severity": "high",
       "confidence": "medium",
       "path": "VulnerableApp.java",
@@ -1077,7 +1422,7 @@
      },
      {
       "rule": "JAVA-SECRET-ASSIGN",
-      "title": "Hard-coded credential in Java",
+      "title": "Hard-coded credential in Java/Kotlin",
       "severity": "high",
       "confidence": "medium",
       "path": "VulnerableApp.java",
@@ -1085,7 +1430,7 @@
      },
      {
       "rule": "JAVA-SQLI",
-      "title": "SQL built by concatenation in Java",
+      "title": "SQL built by concatenation in Java/Kotlin",
       "severity": "high",
       "confidence": "low",
       "path": "VulnerableApp.java",
@@ -1093,7 +1438,7 @@
      },
      {
       "rule": "JAVA-CMDI",
-      "title": "OS command built from non-literal input in Java",
+      "title": "OS command built from non-literal input in Java/Kotlin",
       "severity": "high",
       "confidence": "low",
       "path": "VulnerableApp.java",
@@ -1101,7 +1446,7 @@
      },
      {
       "rule": "JAVA-WEAKHASH",
-      "title": "Weak hash algorithm in Java",
+      "title": "Weak hash algorithm in Java/Kotlin",
       "severity": "low",
       "confidence": "medium",
       "path": "VulnerableApp.java",
@@ -1109,7 +1454,7 @@
      },
      {
       "rule": "JAVA-DESER",
-      "title": "Unsafe deserialization in Java",
+      "title": "Unsafe deserialization in Java/Kotlin",
       "severity": "medium",
       "confidence": "medium",
       "path": "VulnerableApp.java",

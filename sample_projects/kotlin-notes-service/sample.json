@@ -1,0 +1,99 @@
+{
+  "name": "Kotlin notes service",
+  "language": "Kotlin",
+  "kind": "vulnerable",
+  "description": "A Kotlin service with SQL built by string interpolation, a shell command, MD5, java.util.Random tokens, ObjectInputStream and a hard-coded password. Intentionally insecure, for education.",
+  "expected": "Findings from the JVM token scanner (Java/Kotlin rules).",
+  "fixes": [
+    {
+      "id": "kt-secret",
+      "title": "Read the password from the environment",
+      "file": "Main.kt",
+      "removes": [
+        "JAVA-SECRET-ASSIGN"
+      ],
+      "explanation": "The password is no longer in the repository (rotate the exposed value).",
+      "edits": [
+        [
+          "const val ADMIN_PASSWORD = \"kotlin-admin-pass-9b27e4c1\"",
+          "val ADMIN_PASSWORD: String? = System.getenv(\"ADMIN_PASSWORD\")"
+        ]
+      ]
+    },
+    {
+      "id": "kt-sqli",
+      "title": "Use a PreparedStatement",
+      "file": "Main.kt",
+      "removes": [
+        "JAVA-SQLI"
+      ],
+      "explanation": "The term is bound as a parameter instead of being interpolated into the SQL text.",
+      "edits": [
+        [
+          "    val stmt = conn.createStatement()\n    val rs = stmt.executeQuery(\"SELECT * FROM notes WHERE title LIKE '%$term%'\")",
+          "    val stmt = conn.prepareStatement(\"SELECT * FROM notes WHERE title LIKE ?\")\n    stmt.setString(1, \"%$term%\")\n    val rs = stmt.executeQuery()"
+        ]
+      ]
+    },
+    {
+      "id": "kt-cmdi",
+      "title": "Run ls with an argument list",
+      "file": "Main.kt",
+      "removes": [
+        "JAVA-CMDI"
+      ],
+      "explanation": "No shell parses the directory name; it is one argument to a fixed program.",
+      "edits": [
+        [
+          "Runtime.getRuntime().exec(\"ls $dir\").waitFor()",
+          "ProcessBuilder(\"ls\", dir).start().waitFor()"
+        ]
+      ]
+    },
+    {
+      "id": "kt-hash",
+      "title": "Use SHA-256 instead of MD5",
+      "file": "Main.kt",
+      "removes": [
+        "JAVA-WEAKHASH"
+      ],
+      "explanation": "MD5 is broken for security use.",
+      "edits": [
+        [
+          "MessageDigest.getInstance(\"MD5\")",
+          "MessageDigest.getInstance(\"SHA-256\")"
+        ]
+      ]
+    },
+    {
+      "id": "kt-random",
+      "title": "Use SecureRandom for the token",
+      "file": "Main.kt",
+      "removes": [
+        "JAVA-RANDOM"
+      ],
+      "explanation": "SecureRandom is a cryptographically secure source.",
+      "edits": [
+        [
+          "return Random().nextLong()",
+          "return java.security.SecureRandom().nextLong()"
+        ]
+      ]
+    },
+    {
+      "id": "kt-deser",
+      "title": "Do not deserialize untrusted bytes",
+      "file": "Main.kt",
+      "removes": [
+        "JAVA-DESER"
+      ],
+      "explanation": "The bytes are treated as text data instead of being turned back into objects.",
+      "edits": [
+        [
+          "    val ois = ObjectInputStream(input)\n    return ois.readObject()",
+          "    return String(input.readBytes())"
+        ]
+      ]
+    }
+  ]
+}

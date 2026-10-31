@@ -1,0 +1,129 @@
+{
+  "name": "C# orders API",
+  "language": "C#",
+  "kind": "vulnerable",
+  "description": "An ASP.NET controller with SQL built by concatenation, a shell command, MD5, System.Random tokens, BinaryFormatter, a file read from request data, disabled TLS validation and a hard-coded password. Intentionally insecure, for education.",
+  "expected": "Findings from the C# token scanner.",
+  "fixes": [
+    {
+      "id": "cs-secret",
+      "title": "Read the password from the environment",
+      "file": "OrdersController.cs",
+      "removes": [
+        "CS-SECRET-ASSIGN"
+      ],
+      "explanation": "The password is no longer in the repository (rotate the exposed value).",
+      "edits": [
+        [
+          "private const string AdminPassword = \"orders-admin-pw-4f8a21c7\";",
+          "private static readonly string AdminPassword = Environment.GetEnvironmentVariable(\"ADMIN_PASSWORD\");"
+        ]
+      ]
+    },
+    {
+      "id": "cs-sqli",
+      "title": "Use a SQL parameter",
+      "file": "OrdersController.cs",
+      "removes": [
+        "CS-SQLI"
+      ],
+      "explanation": "The customer name is bound as a parameter instead of being concatenated into the SQL text.",
+      "edits": [
+        [
+          "var cmd = new SqlCommand(\"SELECT * FROM Orders WHERE Customer = '\" + customer + \"'\", conn);",
+          "var cmd = new SqlCommand(\"SELECT * FROM Orders WHERE Customer = @customer\", conn);\n            cmd.Parameters.AddWithValue(\"@customer\", customer);"
+        ]
+      ]
+    },
+    {
+      "id": "cs-cmdi",
+      "title": "Pass the path as a single argument",
+      "file": "OrdersController.cs",
+      "removes": [
+        "CS-CMDI"
+      ],
+      "explanation": "A fixed program receives the path through ArgumentList; no shell parses it.",
+      "edits": [
+        [
+          "Process.Start(\"cmd.exe\", \"/c type \" + path);",
+          "var psi = new ProcessStartInfo(\"more\");\n            psi.ArgumentList.Add(path);\n            Process.Start(psi);"
+        ]
+      ]
+    },
+    {
+      "id": "cs-hash",
+      "title": "Use SHA-256 instead of MD5",
+      "file": "OrdersController.cs",
+      "removes": [
+        "CS-WEAKHASH"
+      ],
+      "explanation": "MD5 is broken for security use. (A real password store should use PBKDF2 or Argon2.)",
+      "edits": [
+        [
+          "using var md5 = MD5.Create();\n            return Convert.ToHexString(md5.ComputeHash(",
+          "using var sha = SHA256.Create();\n            return Convert.ToHexString(sha.ComputeHash("
+        ]
+      ]
+    },
+    {
+      "id": "cs-random",
+      "title": "Use RandomNumberGenerator for the token",
+      "file": "OrdersController.cs",
+      "removes": [
+        "CS-RANDOM"
+      ],
+      "explanation": "RandomNumberGenerator is a cryptographically secure source.",
+      "edits": [
+        [
+          "return new Random().Next().ToString();",
+          "return Convert.ToHexString(RandomNumberGenerator.GetBytes(16));"
+        ]
+      ]
+    },
+    {
+      "id": "cs-deser",
+      "title": "Deserialize JSON instead of BinaryFormatter",
+      "file": "OrdersController.cs",
+      "removes": [
+        "CS-DESER"
+      ],
+      "explanation": "System.Text.Json builds plain data, not arbitrary object graphs.",
+      "edits": [
+        [
+          "var formatter = new BinaryFormatter();\n            return Ok(formatter.Deserialize(new MemoryStream(data)));",
+          "return Ok(System.Text.Json.JsonSerializer.Deserialize<object>(data));"
+        ]
+      ]
+    },
+    {
+      "id": "cs-path",
+      "title": "Confine downloads to the orders directory",
+      "file": "OrdersController.cs",
+      "removes": [
+        "CS-PATH"
+      ],
+      "explanation": "Only the file name is used, so '../' cannot leave the directory.",
+      "edits": [
+        [
+          "System.IO.File.ReadAllText(\"/srv/orders/\" + name)",
+          "System.IO.File.ReadAllText(Path.Combine(\"/srv/orders\", Path.GetFileName(name)))"
+        ]
+      ]
+    },
+    {
+      "id": "cs-tls",
+      "title": "Keep certificate validation on",
+      "file": "OrdersController.cs",
+      "removes": [
+        "CS-TLS"
+      ],
+      "explanation": "The always-true callback is removed, so the default validation applies.",
+      "edits": [
+        [
+          "ServicePointManager.ServerCertificateValidationCallback = (s, c, ch, e) => true;",
+          "// default certificate validation stays on"
+        ]
+      ]
+    }
+  ]
+}

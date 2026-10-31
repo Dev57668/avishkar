@@ -1,0 +1,159 @@
+{
+  "name": "PHP legacy shop",
+  "language": "PHP",
+  "kind": "vulnerable",
+  "description": "A procedural PHP script with SQL built from $_GET, shell_exec, md5 passwords, mt_rand tokens, a request-controlled include, unserialize on a cookie, reflected output, disabled TLS verification and a hard-coded password. Intentionally insecure, for education.",
+  "expected": "Findings from the PHP token scanner.",
+  "fixes": [
+    {
+      "id": "php-secret",
+      "title": "Read the password from the environment",
+      "file": "index.php",
+      "removes": [
+        "PHP-SECRET-ASSIGN"
+      ],
+      "explanation": "The password is no longer in the repository (rotate the exposed value).",
+      "edits": [
+        [
+          "$db_password = \"php-db-pass-7c31d9e2a4\";",
+          "$db_password = getenv(\"DB_PASSWORD\");"
+        ]
+      ]
+    },
+    {
+      "id": "php-sqli",
+      "title": "Use a prepared statement",
+      "file": "index.php",
+      "removes": [
+        "PHP-SQLI"
+      ],
+      "explanation": "The search term is bound as a parameter instead of being concatenated into the SQL text.",
+      "edits": [
+        [
+          "    $result = mysqli_query($conn, \"SELECT * FROM products WHERE name LIKE '%\" . $term . \"%'\");",
+          "    $stmt = mysqli_prepare($conn, \"SELECT * FROM products WHERE name LIKE ?\");\n    $like = \"%\" . $term . \"%\";\n    mysqli_stmt_bind_param($stmt, \"s\", $like);\n    mysqli_stmt_execute($stmt);\n    $result = mysqli_stmt_get_result($stmt);"
+        ]
+      ]
+    },
+    {
+      "id": "php-cmdi",
+      "title": "Escape the argument",
+      "file": "index.php",
+      "removes": [
+        "PHP-CMDI"
+      ],
+      "explanation": "escapeshellarg() quotes the value so the shell treats it as one argument.",
+      "edits": [
+        [
+          "shell_exec(\"report.sh \" . $_GET['name'])",
+          "shell_exec(\"report.sh \" . escapeshellarg($_GET['name']))"
+        ]
+      ]
+    },
+    {
+      "id": "php-hash",
+      "title": "Use password_hash",
+      "file": "index.php",
+      "removes": [
+        "PHP-WEAKHASH"
+      ],
+      "explanation": "password_hash uses a slow, salted algorithm.",
+      "edits": [
+        [
+          "return md5($password);",
+          "return password_hash($password, PASSWORD_DEFAULT);"
+        ]
+      ]
+    },
+    {
+      "id": "php-random",
+      "title": "Use random_bytes for the token",
+      "file": "index.php",
+      "removes": [
+        "PHP-RANDOM"
+      ],
+      "explanation": "random_bytes is a cryptographically secure source.",
+      "edits": [
+        [
+          "return mt_rand();",
+          "return bin2hex(random_bytes(16));"
+        ]
+      ]
+    },
+    {
+      "id": "php-include",
+      "title": "Include only pages from a fixed map",
+      "file": "index.php",
+      "removes": [
+        "PHP-INCLUDE"
+      ],
+      "explanation": "The request only selects a key of an allow-list, so no arbitrary file can be included.",
+      "edits": [
+        [
+          "    include $_GET['page'] . \".php\";",
+          "    $pages = ['home' => 'home.php', 'about' => 'about.php'];\n    include $pages[$_GET['page']] ?? 'home.php';"
+        ]
+      ]
+    },
+    {
+      "id": "php-deser",
+      "title": "Decode JSON instead of unserializing",
+      "file": "index.php",
+      "removes": [
+        "PHP-DESER"
+      ],
+      "explanation": "json_decode builds plain data, not arbitrary objects.",
+      "edits": [
+        [
+          "return unserialize($_COOKIE['cart']);",
+          "return json_decode($_COOKIE['cart'], true);"
+        ]
+      ]
+    },
+    {
+      "id": "php-xss",
+      "title": "Escape the name before output",
+      "file": "index.php",
+      "removes": [
+        "PHP-XSS-REFLECT"
+      ],
+      "explanation": "htmlspecialchars turns markup into harmless text.",
+      "edits": [
+        [
+          "echo \"<h1>Hello \" . $_GET['name'] . \"</h1>\";",
+          "echo \"<h1>Hello \" . htmlspecialchars($_GET['name'], ENT_QUOTES, 'UTF-8') . \"</h1>\";"
+        ]
+      ]
+    },
+    {
+      "id": "php-tls",
+      "title": "Verify TLS certificates",
+      "file": "index.php",
+      "removes": [
+        "PHP-TLS"
+      ],
+      "explanation": "Certificate verification is back on.",
+      "edits": [
+        [
+          "CURLOPT_SSL_VERIFYPEER, false",
+          "CURLOPT_SSL_VERIFYPEER, true"
+        ]
+      ]
+    },
+    {
+      "id": "php-path",
+      "title": "Use only the base name of the file",
+      "file": "index.php",
+      "removes": [
+        "PHP-PATH"
+      ],
+      "explanation": "basename() strips directory parts, so '../' cannot leave the uploads directory.",
+      "edits": [
+        [
+          "file_get_contents(\"/srv/uploads/\" . $_GET['file'])",
+          "file_get_contents(\"/srv/uploads/\" . basename($_GET['file']))"
+        ]
+      ]
+    }
+  ]
+}

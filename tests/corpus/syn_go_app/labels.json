@@ -1,9 +1,9 @@
 {
- "source": "independent",
+ "source": "synthetic",
  "fully_labeled": true,
  "adjudicated": false,
  "reviewers": 0,
- "note": "sample_projects/go-http-service",
+ "note": "sample_projects/go-http-service (written together with the Go scanner)",
  "vulns": [
   {
    "path": "main.go",

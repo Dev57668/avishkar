@@ -1,11 +1,19 @@
 # Calibration report - score-v1
 **NOT CALIBRATED - evidence only; the scoring owner must approve (App. P.7)**
 
-Corpus: 83 cases (5 independent), 0 adjudicated by >=2 reviewers.
+Corpus: 86 cases (4 independent), 0 adjudicated by >=2 reviewers.
 
 ## Precision by rule
 | Rule | TP | FP | Unlabeled | n | Precision | Wilson 95% lower |
 |---|---|---|---|---|---|---|
+| CS-CMDI | 1 | 0 | 0 | 1 | 1.0 | 0.207 |
+| CS-DESER | 1 | 0 | 0 | 1 | 1.0 | 0.207 |
+| CS-PATH | 1 | 0 | 0 | 1 | 1.0 | 0.207 |
+| CS-RANDOM | 1 | 0 | 0 | 1 | 1.0 | 0.207 |
+| CS-SECRET-ASSIGN | 1 | 0 | 0 | 1 | 1.0 | 0.207 |
+| CS-SQLI | 1 | 0 | 0 | 1 | 1.0 | 0.207 |
+| CS-TLS | 1 | 0 | 0 | 1 | 1.0 | 0.207 |
+| CS-WEAKHASH | 1 | 0 | 0 | 1 | 1.0 | 0.207 |
 | DEP-DJANGO-OLD | 2 | 1 | 0 | 3 | 0.667 | 0.208 |
 | DEP-LODASH | 1 | 0 | 0 | 1 | 1.0 | 0.207 |
 | DEP-MINIMIST | 1 | 0 | 0 | 1 | 1.0 | 0.207 |
@@ -20,11 +28,12 @@ Corpus: 83 cases (5 independent), 0 adjudicated by >=2 reviewers.
 | GO-TLS | 1 | 0 | 0 | 1 | 1.0 | 0.207 |
 | GO-WEAKHASH | 1 | 0 | 0 | 1 | 1.0 | 0.207 |
 | GO-XSS-REFLECT | 1 | 0 | 0 | 1 | 1.0 | 0.207 |
-| JAVA-CMDI | 1 | 0 | 0 | 1 | 1.0 | 0.207 |
-| JAVA-DESER | 1 | 0 | 0 | 1 | 1.0 | 0.207 |
-| JAVA-SECRET-ASSIGN | 2 | 0 | 0 | 2 | 1.0 | 0.342 |
-| JAVA-SQLI | 1 | 0 | 0 | 1 | 1.0 | 0.207 |
-| JAVA-WEAKHASH | 1 | 0 | 0 | 1 | 1.0 | 0.207 |
+| JAVA-CMDI | 2 | 0 | 0 | 2 | 1.0 | 0.342 |
+| JAVA-DESER | 2 | 0 | 0 | 2 | 1.0 | 0.342 |
+| JAVA-RANDOM | 1 | 0 | 0 | 1 | 1.0 | 0.207 |
+| JAVA-SECRET-ASSIGN | 3 | 0 | 0 | 3 | 1.0 | 0.438 |
+| JAVA-SQLI | 2 | 0 | 0 | 2 | 1.0 | 0.342 |
+| JAVA-WEAKHASH | 2 | 0 | 0 | 2 | 1.0 | 0.342 |
 | JAVA-XXE | 1 | 0 | 0 | 1 | 1.0 | 0.207 |
 | JS-CMDI | 4 | 0 | 0 | 4 | 1.0 | 0.51 |
 | JS-EVAL | 4 | 0 | 0 | 4 | 1.0 | 0.51 |
@@ -36,6 +45,16 @@ Corpus: 83 cases (5 independent), 0 adjudicated by >=2 reviewers.
 | JS-TLS | 2 | 0 | 0 | 2 | 1.0 | 0.342 |
 | JS-WEAKHASH | 2 | 0 | 0 | 2 | 1.0 | 0.342 |
 | JS-XSS-REFLECT | 2 | 0 | 0 | 2 | 1.0 | 0.342 |
+| PHP-CMDI | 1 | 0 | 0 | 1 | 1.0 | 0.207 |
+| PHP-DESER | 1 | 0 | 0 | 1 | 1.0 | 0.207 |
+| PHP-INCLUDE | 1 | 0 | 0 | 1 | 1.0 | 0.207 |
+| PHP-PATH | 1 | 0 | 0 | 1 | 1.0 | 0.207 |
+| PHP-RANDOM | 1 | 0 | 0 | 1 | 1.0 | 0.207 |
+| PHP-SECRET-ASSIGN | 1 | 0 | 0 | 1 | 1.0 | 0.207 |
+| PHP-SQLI | 1 | 0 | 0 | 1 | 1.0 | 0.207 |
+| PHP-TLS | 1 | 0 | 0 | 1 | 1.0 | 0.207 |
+| PHP-WEAKHASH | 1 | 0 | 0 | 1 | 1.0 | 0.207 |
+| PHP-XSS-REFLECT | 1 | 0 | 0 | 1 | 1.0 | 0.207 |
 | PY-DEBUG | 5 | 0 | 0 | 5 | 1.0 | 0.566 |
 | PY-EVAL | 3 | 0 | 0 | 3 | 1.0 | 0.438 |
 | PY-NOVERIFY | 4 | 0 | 0 | 4 | 1.0 | 0.51 |
@@ -57,6 +76,14 @@ Corpus: 83 cases (5 independent), 0 adjudicated by >=2 reviewers.
 ## Precision by rule @ detector-reported confidence (drives the confidence caps)
 | Rule@confidence | TP | FP | n | Wilson 95% lower |
 |---|---|---|---|---|
+| CS-CMDI@medium | 1 | 0 | 1 | 0.207 |
+| CS-DESER@medium | 1 | 0 | 1 | 0.207 |
+| CS-PATH@medium | 1 | 0 | 1 | 0.207 |
+| CS-RANDOM@low | 1 | 0 | 1 | 0.207 |
+| CS-SECRET-ASSIGN@medium | 1 | 0 | 1 | 0.207 |
+| CS-SQLI@medium | 1 | 0 | 1 | 0.207 |
+| CS-TLS@high | 1 | 0 | 1 | 0.207 |
+| CS-WEAKHASH@medium | 1 | 0 | 1 | 0.207 |
 | DEP-DJANGO-OLD@high | 2 | 1 | 3 | 0.208 |
 | DEP-LODASH@high | 1 | 0 | 1 | 0.207 |
 | DEP-MINIMIST@high | 1 | 0 | 1 | 0.207 |
@@ -72,10 +99,13 @@ Corpus: 83 cases (5 independent), 0 adjudicated by >=2 reviewers.
 | GO-WEAKHASH@medium | 1 | 0 | 1 | 0.207 |
 | GO-XSS-REFLECT@low | 1 | 0 | 1 | 0.207 |
 | JAVA-CMDI@low | 1 | 0 | 1 | 0.207 |
-| JAVA-DESER@medium | 1 | 0 | 1 | 0.207 |
-| JAVA-SECRET-ASSIGN@medium | 2 | 0 | 2 | 0.342 |
+| JAVA-CMDI@medium | 1 | 0 | 1 | 0.207 |
+| JAVA-DESER@medium | 2 | 0 | 2 | 0.342 |
+| JAVA-RANDOM@low | 1 | 0 | 1 | 0.207 |
+| JAVA-SECRET-ASSIGN@medium | 3 | 0 | 3 | 0.438 |
 | JAVA-SQLI@low | 1 | 0 | 1 | 0.207 |
-| JAVA-WEAKHASH@medium | 1 | 0 | 1 | 0.207 |
+| JAVA-SQLI@medium | 1 | 0 | 1 | 0.207 |
+| JAVA-WEAKHASH@medium | 2 | 0 | 2 | 0.342 |
 | JAVA-XXE@low | 1 | 0 | 1 | 0.207 |
 | JS-CMDI@medium | 4 | 0 | 4 | 0.51 |
 | JS-EVAL@medium | 4 | 0 | 4 | 0.51 |
@@ -89,6 +119,16 @@ Corpus: 83 cases (5 independent), 0 adjudicated by >=2 reviewers.
 | JS-TLS@high | 2 | 0 | 2 | 0.342 |
 | JS-WEAKHASH@medium | 2 | 0 | 2 | 0.342 |
 | JS-XSS-REFLECT@low | 2 | 0 | 2 | 0.342 |
+| PHP-CMDI@medium | 1 | 0 | 1 | 0.207 |
+| PHP-DESER@medium | 1 | 0 | 1 | 0.207 |
+| PHP-INCLUDE@medium | 1 | 0 | 1 | 0.207 |
+| PHP-PATH@medium | 1 | 0 | 1 | 0.207 |
+| PHP-RANDOM@low | 1 | 0 | 1 | 0.207 |
+| PHP-SECRET-ASSIGN@medium | 1 | 0 | 1 | 0.207 |
+| PHP-SQLI@medium | 1 | 0 | 1 | 0.207 |
+| PHP-TLS@high | 1 | 0 | 1 | 0.207 |
+| PHP-WEAKHASH@medium | 1 | 0 | 1 | 0.207 |
+| PHP-XSS-REFLECT@low | 1 | 0 | 1 | 0.207 |
 | PY-DEBUG@low | 5 | 0 | 5 | 0.566 |
 | PY-EVAL@medium | 3 | 0 | 3 | 0.438 |
 | PY-NOVERIFY@high | 4 | 0 | 4 | 0.51 |
@@ -114,28 +154,28 @@ Corpus: 83 cases (5 independent), 0 adjudicated by >=2 reviewers.
 |---|---|---|---|---|---|---|---|
 | holdout | 21 | 21 | 5 | 0.808 | 21 | 0 | 1.0 |
 | holdout-2 | 11 | 10 | 1 | 0.909 | 10 | 3 | 0.769 |
-| tuning | 50 | 86 | 2 | 0.977 | 86 | 9 | 0.905 |
+| tuning | 53 | 110 | 2 | 0.982 | 110 | 9 | 0.924 |
 
 ## Recall by vulnerability kind
 | Kind | Found | Missed | Recall |
 |---|---|---|---|
-| cmdi | 14 | 0 | 1.0 |
+| cmdi | 17 | 0 | 1.0 |
 | cors | 0 | 1 | 0.0 |
 | debug | 5 | 0 | 1.0 |
 | dependency | 10 | 0 | 1.0 |
-| deserialization | 3 | 0 | 1.0 |
+| deserialization | 6 | 0 | 1.0 |
 | eval | 7 | 0 | 1.0 |
 | info-disclosure | 0 | 2 | 0.0 |
-| noverify | 7 | 0 | 1.0 |
-| path-traversal | 7 | 1 | 0.875 |
+| noverify | 9 | 0 | 1.0 |
+| path-traversal | 10 | 1 | 0.909 |
 | pickle | 4 | 0 | 1.0 |
 | redos | 0 | 1 | 0.0 |
-| secret | 23 | 5 | 0.821 |
-| sqli | 17 | 0 | 1.0 |
+| secret | 26 | 5 | 0.839 |
+| sqli | 20 | 0 | 1.0 |
 | tempfile | 0 | 1 | 0.0 |
-| weak-random | 4 | 0 | 1.0 |
-| weakhash | 9 | 0 | 1.0 |
-| xss | 5 | 1 | 0.833 |
+| weak-random | 7 | 0 | 1.0 |
+| weakhash | 12 | 0 | 1.0 |
+| xss | 6 | 1 | 0.857 |
 | xxe | 2 | 0 | 1.0 |
 
 ## Factor sensitivity (one factor at a time)
@@ -154,37 +194,37 @@ Corpus: 83 cases (5 independent), 0 adjudicated by >=2 reviewers.
 ```json
 {
  "currentK": 20.0,
- "cases": 82,
+ "cases": 85,
  "rawUnits": {
   "min": 0.0,
   "p25": 1.5,
   "median": 3.0,
-  "p75": 4.125,
+  "p75": 5.0,
   "max": 55.75
  },
  "indexAtLandmarks": {
   "10": {
    "p25": 13.9,
    "median": 25.9,
-   "p75": 33.8,
+   "p75": 39.3,
    "max": 99.6
   },
   "20": {
    "p25": 7.2,
    "median": 13.9,
-   "p75": 18.6,
+   "p75": 22.1,
    "max": 93.8
   },
   "40": {
    "p25": 3.7,
    "median": 7.2,
-   "p75": 9.8,
+   "p75": 11.8,
    "max": 75.2
   },
   "80": {
    "p25": 1.9,
    "median": 3.7,
-   "p75": 5.0,
+   "p75": 6.1,
    "max": 50.2
   }
  }
@@ -193,5 +233,5 @@ Corpus: 83 cases (5 independent), 0 adjudicated by >=2 reviewers.
 
 ## Approval blockers
 - labels are not adjudicated by >=2 reviewers (App. P.2)
-- only 5 independent (not written by the detector author) cases; synthetic cases measure self-consistency, not real-world precision
-- 45 rule(s) have fewer than 8 labeled findings: confidence stays low
+- only 4 independent (not written by the detector author) cases; synthetic cases measure self-consistency, not real-world precision
+- 64 rule(s) have fewer than 8 labeled findings: confidence stays low

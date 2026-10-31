@@ -1,0 +1,62 @@
+{
+ "source": "synthetic",
+ "fully_labeled": true,
+ "adjudicated": false,
+ "reviewers": 0,
+ "note": "sample_projects/php-legacy-shop (written together with the PHP scanner)",
+ "vulns": [
+  {
+   "path": "index.php",
+   "line": 4,
+   "kind": "secret"
+  },
+  {
+   "path": "index.php",
+   "kind": "sqli",
+   "lines": [
+    8,
+    9
+   ]
+  },
+  {
+   "path": "index.php",
+   "line": 14,
+   "kind": "cmdi"
+  },
+  {
+   "path": "index.php",
+   "line": 19,
+   "kind": "weakhash"
+  },
+  {
+   "path": "index.php",
+   "line": 23,
+   "kind": "weak-random"
+  },
+  {
+   "path": "index.php",
+   "line": 27,
+   "kind": "path-traversal"
+  },
+  {
+   "path": "index.php",
+   "line": 31,
+   "kind": "deserialization"
+  },
+  {
+   "path": "index.php",
+   "line": 35,
+   "kind": "xss"
+  },
+  {
+   "path": "index.php",
+   "line": 40,
+   "kind": "noverify"
+  },
+  {
+   "path": "index.php",
+   "line": 45,
+   "kind": "path-traversal"
+  }
+ ]
+}

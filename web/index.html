@@ -48,7 +48,7 @@
   <h1>Second Read <span class="sub">a security-debt scorer for AI-written code</span></h1>
   <p class="lede">AI assistants write code faster than anyone reviews it. Second Read scans a repository snapshot with deterministic detectors, turns what it finds into a <span class="mono">0&ndash;100</span> security-debt index, and points at the exact lines responsible.</p>
   <ul class="facts">
-    <li><b>61</b> documented rules</li>
+    <li><b>84</b> documented rules</li>
     <li><b>3</b> required detectors</li>
     <li><b>390+</b> automated tests</li>
     <li>SARIF export</li>
@@ -86,8 +86,8 @@
       <p>An AST detector with alias resolution and same-function data flow: SQL built from strings, shell commands, <span class="mono">eval</span>, pickle and unsafe YAML, weak hashes, disabled TLS checks, debug mode, path handling.</p>
     </div>
     <div>
-      <h3>JavaScript, TypeScript, Java and Go</h3>
-      <p>Token-stream scanners for <span class="mono">eval</span>, command and SQL injection, unsanitized HTML sinks, weak hashes and ciphers, unsafe deserialization, unhardened XML parsers and disabled TLS. They are heuristic: no full parser, no cross-file flow.</p>
+      <h3>JavaScript, TypeScript, Java, Kotlin, Go, C# and PHP</h3>
+      <p>Token-stream scanners for <span class="mono">eval</span>, command and SQL injection, unsanitized HTML sinks, weak hashes and ciphers, unsafe deserialization, unhardened XML parsers and disabled TLS. They are heuristic: no full parser, no cross-file flow, and no real-world accuracy measurement for the newer languages.</p>
     </div>
     <div>
       <h3>Secrets and dependencies</h3>
@@ -95,7 +95,7 @@
     </div>
   </div>
   <table class="rules rv">
-    <caption>A sample of the 61 rules. Each one documents its CWE, impact, fix and a secure example.</caption>
+    <caption>A sample of the 84 rules. Each one documents its CWE, impact, fix and a secure example.</caption>
     <thead><tr><th>rule</th><th>what it flags</th><th>CWE</th></tr></thead>
     <tbody>
       <tr><td class="mono">PY-SQLI</td><td>SQL built by string formatting</td><td class="mono">89</td></tr>
@@ -183,7 +183,7 @@
   <div class="faq rv">
     <details open><summary>Is zero findings a pass?</summary><div class="faq-a"><p>No. Detectors only know the patterns they were written for. An empty result means nothing was detected, not that the code is secure.</p></div></details>
     <details><summary>How accurate are the detectors?</summary><div class="faq-a"><p>The calibration corpus is about 80 small labelled cases written by us, split into tuning and held-out sets, with no independent second reviewer. Held-out recall was about 0.8, so real misses exist, and nothing is calibrated or approved.</p></div></details>
-    <details><summary>Which languages are covered?</summary><div class="faq-a"><p>Python uses an AST detector; JavaScript/TypeScript, Java and Go use heuristic token-stream scanners (no full parser, no cross-file data flow). Other languages, such as Rust, are reported as not evaluated, never as clean.</p></div></details>
+    <details><summary>Which languages are covered?</summary><div class="faq-a"><p>Python uses an AST detector; JavaScript/TypeScript, Java, Kotlin, Go, C# and PHP use heuristic token-stream scanners (no full parser, no cross-file data flow). Other languages, such as Rust, are reported as not evaluated, never as clean.</p></div></details>
     <details><summary>Can the AI assistant change a result?</summary><div class="faq-a"><p>No. It is off by default and asks for consent first. You see the exact payload, secrets are redacted, and its explanations can't change severity, state or score.</p></div></details>
     <details><summary>What would we do with another week?</summary><div class="faq-a"><ul class="ticks"><li>Calibrate the weights on real, labelled repositories.</li><li>A real JS/TS parser and cross-file taint tracking.</li><li>Docker sandbox on by default (the only real isolation boundary).</li><li>Independent second-reviewer labels on real repositories.</li></ul></div></details>
   </div>

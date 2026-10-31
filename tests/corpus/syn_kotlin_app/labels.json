@@ -1,0 +1,42 @@
+{
+ "source": "synthetic",
+ "fully_labeled": true,
+ "adjudicated": false,
+ "reviewers": 0,
+ "note": "sample_projects/kotlin-notes-service (written together with the Kotlin support)",
+ "vulns": [
+  {
+   "path": "Main.kt",
+   "line": 9,
+   "kind": "secret"
+  },
+  {
+   "path": "Main.kt",
+   "kind": "sqli",
+   "lines": [
+    13,
+    14
+   ]
+  },
+  {
+   "path": "Main.kt",
+   "line": 19,
+   "kind": "cmdi"
+  },
+  {
+   "path": "Main.kt",
+   "line": 23,
+   "kind": "weakhash"
+  },
+  {
+   "path": "Main.kt",
+   "line": 28,
+   "kind": "weak-random"
+  },
+  {
+   "path": "Main.kt",
+   "line": 32,
+   "kind": "deserialization"
+  }
+ ]
+}

@@ -10,8 +10,8 @@ choosing its parameters from labeled evidence: **C** (confidence per rule, from 
 Impact, exposure and aging are not fitted from this corpus: they have no outcome data behind them.
 
 ## What was built
-* `tests/corpus/`: 83 labeled cases in three cohorts. **5 independent** (copied byte-for-byte from `sample_projects/`,
-  written separately from these detectors) and **78 synthetic**: positives in varied syntax, safe look-alikes (such as
+* `tests/corpus/`: 86 labeled cases in three cohorts. **4 independent** (copied byte-for-byte from `sample_projects/`,
+  written separately from these detectors) and **82 synthetic**: positives in varied syntax, safe look-alikes (such as
   `model.eval()`, strings/comments, placeholders, `defusedxml`, ORM calls), and deliberately hard cases. Vulnerability lines
   are located by text, so labels cannot drift from the code.
   * `tuning`: cases that existed while the rules were written (improvements here may be in-sample).
@@ -51,7 +51,7 @@ Impact, exposure and aging are not fitted from this corpus: they have no outcome
 ## Why this cannot be approved yet (the report's own blockers)
 1. Labels are not adjudicated by ≥ 2 reviewers (P.2). I authored them; the 3 independent cases were labeled by me from
    their own `VULNERABILITY` comments. That is better than self-written code, but still one reviewer.
-2. Only 3 independent cases; the other 78 are synthetic and measure self-consistency with the author's idea of a
+2. Only 4 independent cases; the other 82 are synthetic and measure self-consistency with the author's idea of a
    vulnerability, not real-world precision. Real precision needs real repositories reviewed by humans.
 3. Fewer than 8 labeled findings for most rules (22 of them in the latest report).
 

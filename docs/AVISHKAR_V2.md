@@ -66,12 +66,13 @@ translation (`adapters/db.py`).
 (`infra/semgrep-rules.yml`, never `--config auto`), Gitleaks with `--redact`. Missing binary, crash, timeout or bad output
 => the run is incomplete. A secret flagged by two detectors on one line counts once. `infra/Dockerfile.worker` installs
 both (pin the base digest and Gitleaks checksum placeholders before use). Python rules now use an AST detector
-(`workers/pyast.py`) that resolves aliases, tracks same-function flows and ignores comments/strings; JS/TS, Java and Go use heuristic
-token-stream scanners (`workers/jsscan.py`, `workers/javascan.py`, `workers/goscan.py`: no full parser, no types, no cross-file or cross-method
+(`workers/pyast.py`) that resolves aliases, tracks same-function flows and ignores comments/strings; JS/TS, Java, Kotlin, Go, C# and PHP use
+heuristic token-stream scanners (`workers/jsscan.py`, `javascan.py` (Java and Kotlin), `goscan.py`, `csscan.py`, `phpscan.py`: no full parser, no types, no cross-file or cross-method
 flow). Java has 12 rules (SQL/command injection, deserialization, weak hash/cipher/random, secrets, TLS, XXE, path, XSS,
-script eval) and Go has 9 (SQL/command injection, weak hash/cipher/random, secrets, TLS, path, XSS). Each has only one
-independent labelled case and no real-world Go code was tested, so precision and recall are essentially unmeasured. Other
-languages (Rust, PHP, C#, ...) are reported as *not evaluated*.
+script eval; Kotlin reuses them), Go has 9, C# has 12 and PHP has 11 (SQL/command injection, eval/include, deserialization,
+weak crypto, secrets, TLS, path, XSS). Each has at most one labelled case that we wrote together with the scanner, and no
+real-world code in those languages was tested, so precision and recall are essentially unmeasured. Other
+languages (Rust, Ruby, C/C++, ...) are reported as *not evaluated*.
 
 ## 8. Shared state for multiple API replicas
 Login lockout and counters are in the database (`login_failure`, `metric_counter`); job quotas and the queue already were.
@@ -105,7 +106,7 @@ Multi-statement writes use `Database.transaction()`; `SELECT`s end their transac
   CWE tags and help text. State (complete/partial/incomplete) comes from the run itself.
 * **Demo lab**: `POST /v1/demo/scan` runs the real pipeline on bundled sample projects, optionally with fix-pack edits
   applied to a copy; stages shown in the UI are the recorded stage timeline of the run. Samples: vulnerable Python,
-  Node.js, Java, Go, TypeScript and several framework apps with fix packs; secure Python and Node.js (scan clean, which
+  Node.js, Java, Kotlin, Go, C#, PHP, TypeScript and several framework apps with fix packs; secure Python and Node.js (scan clean, which
   still does not prove they are secure); and a Rust service (an unsupported language, reported incomplete).
   `web/demo_results.json` records real scan results for the landing page; a test fails
   when it goes stale (`python scripts/gen_demo_results.py` regenerates it).

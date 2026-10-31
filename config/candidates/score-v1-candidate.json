@@ -33,6 +33,14 @@
   ],
   "notes": "All numeric values are ordinal, provisional weights (spec Appendix A/P). K is not calibrated.",
   "rule_confidence": {
+    "CS-CMDI@medium": "low",
+    "CS-DESER@medium": "low",
+    "CS-PATH@medium": "low",
+    "CS-RANDOM@low": "low",
+    "CS-SECRET-ASSIGN@medium": "low",
+    "CS-SQLI@medium": "low",
+    "CS-TLS@high": "low",
+    "CS-WEAKHASH@medium": "low",
     "DEP-DJANGO-OLD@high": "low",
     "DEP-LODASH@high": "low",
     "DEP-MINIMIST@high": "low",
@@ -48,9 +56,12 @@
     "GO-WEAKHASH@medium": "low",
     "GO-XSS-REFLECT@low": "low",
     "JAVA-CMDI@low": "low",
+    "JAVA-CMDI@medium": "low",
     "JAVA-DESER@medium": "low",
+    "JAVA-RANDOM@low": "low",
     "JAVA-SECRET-ASSIGN@medium": "low",
     "JAVA-SQLI@low": "low",
+    "JAVA-SQLI@medium": "low",
     "JAVA-WEAKHASH@medium": "low",
     "JAVA-XXE@low": "low",
     "JS-CMDI@medium": "low",
@@ -65,6 +76,16 @@
     "JS-TLS@high": "low",
     "JS-WEAKHASH@medium": "low",
     "JS-XSS-REFLECT@low": "low",
+    "PHP-CMDI@medium": "low",
+    "PHP-DESER@medium": "low",
+    "PHP-INCLUDE@medium": "low",
+    "PHP-PATH@medium": "low",
+    "PHP-RANDOM@low": "low",
+    "PHP-SECRET-ASSIGN@medium": "low",
+    "PHP-SQLI@medium": "low",
+    "PHP-TLS@high": "low",
+    "PHP-WEAKHASH@medium": "low",
+    "PHP-XSS-REFLECT@low": "low",
     "PY-DEBUG@low": "low",
     "PY-EVAL@medium": "low",
     "PY-NOVERIFY@high": "low",
@@ -87,11 +108,59 @@
   "calibration": {
     "anchor": "reference case 'ind_python_app' (49.5 raw units under the capped confidences; 55.75 under the current version) reads as index 80.0",
     "anchorIsAHumanDecision": true,
-    "corpusCases": 83,
-    "independentCases": 5,
+    "corpusCases": 86,
+    "independentCases": 4,
     "adjudicatedCases": 0,
     "capSemantics": "tier can only LOWER a finding's confidence, never raise it above the detector's own; rules with < 8 labeled findings are capped at 'low' (spec P.3)",
     "ruleEvidence": {
+      "CS-CMDI@medium": {
+        "tier": "low",
+        "evidence": "insufficient evidence (n=1 < 8)",
+        "precision": 1.0,
+        "n": 1
+      },
+      "CS-DESER@medium": {
+        "tier": "low",
+        "evidence": "insufficient evidence (n=1 < 8)",
+        "precision": 1.0,
+        "n": 1
+      },
+      "CS-PATH@medium": {
+        "tier": "low",
+        "evidence": "insufficient evidence (n=1 < 8)",
+        "precision": 1.0,
+        "n": 1
+      },
+      "CS-RANDOM@low": {
+        "tier": "low",
+        "evidence": "insufficient evidence (n=1 < 8)",
+        "precision": 1.0,
+        "n": 1
+      },
+      "CS-SECRET-ASSIGN@medium": {
+        "tier": "low",
+        "evidence": "insufficient evidence (n=1 < 8)",
+        "precision": 1.0,
+        "n": 1
+      },
+      "CS-SQLI@medium": {
+        "tier": "low",
+        "evidence": "insufficient evidence (n=1 < 8)",
+        "precision": 1.0,
+        "n": 1
+      },
+      "CS-TLS@high": {
+        "tier": "low",
+        "evidence": "insufficient evidence (n=1 < 8)",
+        "precision": 1.0,
+        "n": 1
+      },
+      "CS-WEAKHASH@medium": {
+        "tier": "low",
+        "evidence": "insufficient evidence (n=1 < 8)",
+        "precision": 1.0,
+        "n": 1
+      },
       "DEP-DJANGO-OLD@high": {
         "tier": "low",
         "evidence": "insufficient evidence (n=3 < 8)",
@@ -182,7 +251,19 @@
         "precision": 1.0,
         "n": 1
       },
+      "JAVA-CMDI@medium": {
+        "tier": "low",
+        "evidence": "insufficient evidence (n=1 < 8)",
+        "precision": 1.0,
+        "n": 1
+      },
       "JAVA-DESER@medium": {
+        "tier": "low",
+        "evidence": "insufficient evidence (n=2 < 8)",
+        "precision": 1.0,
+        "n": 2
+      },
+      "JAVA-RANDOM@low": {
         "tier": "low",
         "evidence": "insufficient evidence (n=1 < 8)",
         "precision": 1.0,
@@ -190,9 +271,9 @@
       },
       "JAVA-SECRET-ASSIGN@medium": {
         "tier": "low",
-        "evidence": "insufficient evidence (n=2 < 8)",
+        "evidence": "insufficient evidence (n=3 < 8)",
         "precision": 1.0,
-        "n": 2
+        "n": 3
       },
       "JAVA-SQLI@low": {
         "tier": "low",
@@ -200,11 +281,17 @@
         "precision": 1.0,
         "n": 1
       },
-      "JAVA-WEAKHASH@medium": {
+      "JAVA-SQLI@medium": {
         "tier": "low",
         "evidence": "insufficient evidence (n=1 < 8)",
         "precision": 1.0,
         "n": 1
+      },
+      "JAVA-WEAKHASH@medium": {
+        "tier": "low",
+        "evidence": "insufficient evidence (n=2 < 8)",
+        "precision": 1.0,
+        "n": 2
       },
       "JAVA-XXE@low": {
         "tier": "low",
@@ -283,6 +370,66 @@
         "evidence": "insufficient evidence (n=2 < 8)",
         "precision": 1.0,
         "n": 2
+      },
+      "PHP-CMDI@medium": {
+        "tier": "low",
+        "evidence": "insufficient evidence (n=1 < 8)",
+        "precision": 1.0,
+        "n": 1
+      },
+      "PHP-DESER@medium": {
+        "tier": "low",
+        "evidence": "insufficient evidence (n=1 < 8)",
+        "precision": 1.0,
+        "n": 1
+      },
+      "PHP-INCLUDE@medium": {
+        "tier": "low",
+        "evidence": "insufficient evidence (n=1 < 8)",
+        "precision": 1.0,
+        "n": 1
+      },
+      "PHP-PATH@medium": {
+        "tier": "low",
+        "evidence": "insufficient evidence (n=1 < 8)",
+        "precision": 1.0,
+        "n": 1
+      },
+      "PHP-RANDOM@low": {
+        "tier": "low",
+        "evidence": "insufficient evidence (n=1 < 8)",
+        "precision": 1.0,
+        "n": 1
+      },
+      "PHP-SECRET-ASSIGN@medium": {
+        "tier": "low",
+        "evidence": "insufficient evidence (n=1 < 8)",
+        "precision": 1.0,
+        "n": 1
+      },
+      "PHP-SQLI@medium": {
+        "tier": "low",
+        "evidence": "insufficient evidence (n=1 < 8)",
+        "precision": 1.0,
+        "n": 1
+      },
+      "PHP-TLS@high": {
+        "tier": "low",
+        "evidence": "insufficient evidence (n=1 < 8)",
+        "precision": 1.0,
+        "n": 1
+      },
+      "PHP-WEAKHASH@medium": {
+        "tier": "low",
+        "evidence": "insufficient evidence (n=1 < 8)",
+        "precision": 1.0,
+        "n": 1
+      },
+      "PHP-XSS-REFLECT@low": {
+        "tier": "low",
+        "evidence": "insufficient evidence (n=1 < 8)",
+        "precision": 1.0,
+        "n": 1
       },
       "PY-DEBUG@low": {
         "tier": "low",
@@ -395,8 +542,8 @@
     },
     "approvalBlockers": [
       "labels are not adjudicated by >=2 reviewers (App. P.2)",
-      "only 5 independent (not written by the detector author) cases; synthetic cases measure self-consistency, not real-world precision",
-      "45 rule(s) have fewer than 8 labeled findings: confidence stays low"
+      "only 4 independent (not written by the detector author) cases; synthetic cases measure self-consistency, not real-world precision",
+      "64 rule(s) have fewer than 8 labeled findings: confidence stays low"
     ],
     "notes": "Generated by `avishkar calibrate --fit`. Do NOT enable policy blocking on this version."
   }

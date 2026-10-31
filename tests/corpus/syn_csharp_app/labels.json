@@ -1,0 +1,52 @@
+{
+ "source": "synthetic",
+ "fully_labeled": true,
+ "adjudicated": false,
+ "reviewers": 0,
+ "note": "sample_projects/csharp-orders-api (written together with the C# scanner)",
+ "vulns": [
+  {
+   "path": "OrdersController.cs",
+   "line": 15,
+   "kind": "secret"
+  },
+  {
+   "path": "OrdersController.cs",
+   "kind": "sqli",
+   "lines": [
+    20,
+    21
+   ]
+  },
+  {
+   "path": "OrdersController.cs",
+   "line": 26,
+   "kind": "cmdi"
+  },
+  {
+   "path": "OrdersController.cs",
+   "line": 32,
+   "kind": "weakhash"
+  },
+  {
+   "path": "OrdersController.cs",
+   "line": 38,
+   "kind": "weak-random"
+  },
+  {
+   "path": "OrdersController.cs",
+   "line": 43,
+   "kind": "deserialization"
+  },
+  {
+   "path": "OrdersController.cs",
+   "line": 49,
+   "kind": "path-traversal"
+  },
+  {
+   "path": "OrdersController.cs",
+   "line": 54,
+   "kind": "noverify"
+  }
+ ]
+}
