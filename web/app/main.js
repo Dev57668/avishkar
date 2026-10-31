@@ -121,7 +121,7 @@ function renderLogin(msg) {
     } }, 'Continue as guest (read-only)') : null,
     pub.signup ? h('button', { class: 'btn wide ghost', type: 'button', onclick: () => renderForgot() }, 'Forgot password?') : null,
     pub.signup ? h('button', { class: 'btn wide', type: 'button', onclick: () => renderSignup() }, 'Create an account') : null,
-    h('p', { class: 'mut sm' }, h('b', {}, 'First run? '), 'There is no self sign-up. The first time the server starts it prints an admin email and password in its terminal.')));
+    null));
 }
 
 function renderSignup() {
