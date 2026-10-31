@@ -60,7 +60,7 @@ function uploadPanel(view) {
       ? 'Uploading your own code is disabled for this account on this instance (it cannot sandbox untrusted code here). Run Avishkar locally with the Docker sandbox to scan your own repositories.' : 'Your role cannot upload.'));
     return;
   }
-  const repo = h('input', { id: 'up-repo', required: true, pattern: '[\\w.\\-/]{1,100}', placeholder: 'org/name', 'aria-label': 'Repository name' });
+  const repo = h('input', { id: 'up-repo', required: true, maxlength: '100', placeholder: 'my-project or org/name', 'aria-label': 'Repository name' });
   const file = h('input', { id: 'up-file', type: 'file', accept: '.zip', required: true, 'aria-label': 'Zip archive' });
   const out = h('div', { 'aria-live': 'polite' });
   const btn = h('button', { class: 'btn primary' }, 'Analyze');
@@ -69,10 +69,15 @@ function uploadPanel(view) {
       e.preventDefault();
       const f = file.files[0];
       if (!f) return;
-      if (f.size > 50 * 1024 * 1024) { toast('That file is larger than the 50 MB upload limit.', 'warn'); return; }
+      const maxMb = session.has('admin') ? 25 : 2;
+      if (f.size > maxMb * 1024 * 1024) { toast(`That file is larger than the ${maxMb} MB upload limit for your account.`, 'warn'); return; }
+      // Names may only contain letters, digits, . _ - and /: turn spaces into dashes and drop anything else.
+      const name = repo.value.trim().replace(/\s+/g, '-').replace(/[^\w.\-/]/g, '').slice(0, 100);
+      if (!name) { clear(out).append(errorState(new Error('Enter a repository name using letters, numbers, dashes or slashes.'))); return; }
+      if (name !== repo.value) { repo.value = name; toast(`Repository name adjusted to "${name}"`, 'info', 3500); }
       btn.disabled = true; clear(out).append(skeleton(2));
       try {
-        const fd = new FormData(); fd.append('repository', repo.value); fd.append('archive', f);
+        const fd = new FormData(); fd.append('repository', name); fd.append('archive', f);
         const q = await api('/v1/analyses', { method: 'POST', form: fd, timeout: 120000 });
         const run = await watchRun(q.statusUrl, (r) => { out.textContent = `Analysis ${r.status}${r.stages && r.stages.current ? ' · ' + r.stages.current : ''}…`; });
         toast(`Analysis ${run.status}`, run.status === 'complete' ? 'ok' : 'warn');
