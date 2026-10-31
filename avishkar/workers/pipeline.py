@@ -23,7 +23,7 @@ from .detectors import DETECTORS, SUPPORT_MATRIX
 
 MAX_FILES = 5000
 MAX_FILE_BYTES = 1_000_000
-MAX_TOTAL_BYTES = 50_000_000
+MAX_TOTAL_BYTES = 100_000_000  # uncompressed total across all files; per-file (1 MB) and file-count (5000) limits still apply
 # Source languages we recognise but have no detector for. They are reported as NOT EVALUATED so a repo that is
 # mostly e.g. Java can never look "clean" just because nothing analysed it (spec §2: never silently treated as clean).
 UNSUPPORTED_SOURCE = {".java", ".kt", ".kts", ".go", ".rb", ".php", ".cs", ".c", ".cc", ".cpp", ".h", ".hpp", ".rs",

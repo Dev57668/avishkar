@@ -35,7 +35,7 @@ from .security import (ROLES, LoginThrottle, Principal, TokenService, hash_api_k
                        verify_password)
 
 WEB_DIR = Path(__file__).resolve().parents[2] / "web"
-MAX_UPLOAD = int(os.environ.get("AVISHKAR_MAX_UPLOAD_MB", "50")) * 1_000_000  # admin zip size cap; the unpacker still enforces file-count and uncompressed-size limits
+MAX_UPLOAD = int(os.environ.get("AVISHKAR_MAX_UPLOAD_MB", "100")) * 1_000_000  # admin zip size cap; the unpacker still enforces file-count and uncompressed-size limits
 LIMITED = {"zip_bytes": 2_000_000, "files": 300, "declared_bytes": 10_000_000, "per_hour": 3}  # non-admin uploads in "limited" mode
 MAX_WEBHOOK_BODY = 5_000_000
 
