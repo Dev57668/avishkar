@@ -33,7 +33,7 @@ python -m pytest -q                                         # test suite
 ```
 
 More: [RUN_LOCALLY.md](RUN_LOCALLY.md) (step by step), [docs/AVISHKAR_V2.md](docs/AVISHKAR_V2.md) (architecture, security model, configuration),
-[docs/DEPLOY_ONLINE.md](docs/DEPLOY_ONLINE.md) (Vercel + Render), [docs/CALIBRATION.md](docs/CALIBRATION.md) (what the score evidence does and does not show),
+[docs/DEPLOY_ONLINE.md](docs/DEPLOY_ONLINE.md) (Vercel + Render), [docs/SELF_HOSTING.md](docs/SELF_HOSTING.md) (Docker sandbox host for public uploads, untested layout), [docs/CALIBRATION.md](docs/CALIBRATION.md) (what the score evidence does and does not show),
 [docs/Avishkar_Features_and_Roadmap.docx](docs/Avishkar_Features_and_Roadmap.docx) (features, pending work, roadmap) and the [demo video](docs/demo/Avishkar_Demo.webm) (1:43, recorded on the live site).
 
 ## Honest limitations
