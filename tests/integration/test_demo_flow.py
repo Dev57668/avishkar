@@ -23,7 +23,7 @@ def scan_variant(sid, fixes, tmp_path):
 
 
 # ------------------------------------------------------------------ the fix packs are real and verified
-@pytest.mark.parametrize("sid", ["vulnerable-python", "vulnerable-javascript"])
+@pytest.mark.parametrize("sid", [k for k, v in samples.SAMPLES.items() if v.fixes])
 def test_every_fix_removes_its_findings_and_adds_none(sid, tmp_path):
     base = scan_variant(sid, [], tmp_path)
     base_fp = {f.fingerprint for f in base["findings"]}

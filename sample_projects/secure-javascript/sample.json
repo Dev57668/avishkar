@@ -1,0 +1,8 @@
+{
+  "name": "Secure Node.js app",
+  "language": "JavaScript",
+  "kind": "secure",
+  "description": "The same kind of API written with safe patterns. Expected: no findings. That is not proof of security.",
+  "expected": "No findings, complete analysis, index 0.",
+  "fixes": []
+}

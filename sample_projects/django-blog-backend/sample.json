@@ -1,0 +1,113 @@
+{
+  "name": "Django blog backend",
+  "language": "Python",
+  "kind": "vulnerable",
+  "description": "Django settings and views with debug on, a hard-coded secret key and database password, MD5 password hashing, SQL built by string formatting, weak random tokens and a shell command. Intentionally insecure, for education.",
+  "expected": "Findings across two files, including settings that look like configuration but are real secrets.",
+  "fixes": [
+    {
+      "id": "dj-secrets",
+      "title": "Read secrets from the environment",
+      "file": "settings.py",
+      "removes": [
+        "PY-SECRET-ASSIGN"
+      ],
+      "explanation": "The Django secret key and the database password come from environment variables (rotate the exposed values).",
+      "edits": [
+        [
+          "SECRET_KEY = \"django-insecure-blog-0123456789abcdef\"",
+          "SECRET_KEY = os.environ[\"DJANGO_SECRET_KEY\"]"
+        ],
+        [
+          "DB_PASSWORD = \"blog-db-pass-2026\"",
+          "DB_PASSWORD = os.environ[\"BLOG_DB_PASSWORD\"]"
+        ]
+      ],
+      "imports": [
+        "import os"
+      ]
+    },
+    {
+      "id": "dj-debug",
+      "title": "Turn DEBUG off",
+      "file": "settings.py",
+      "removes": [
+        "PY-DEBUG"
+      ],
+      "explanation": "DEBUG must be off in production.",
+      "edits": [
+        [
+          "DEBUG = True",
+          "DEBUG = False"
+        ]
+      ]
+    },
+    {
+      "id": "dj-hash",
+      "title": "Hash passwords with salted scrypt",
+      "file": "settings.py",
+      "removes": [
+        "PY-WEAKHASH"
+      ],
+      "explanation": "A salted, memory-hard hash replaces unsalted MD5.",
+      "edits": [
+        [
+          "    return hashlib.md5(raw.encode()).hexdigest()",
+          "    salt = os.urandom(16)\n    return salt.hex() + \":\" + hashlib.scrypt(raw.encode(), salt=salt, n=2**14, r=8, p=1).hex()"
+        ]
+      ],
+      "imports": [
+        "import os"
+      ]
+    },
+    {
+      "id": "dj-sqli",
+      "title": "Bind the author as a query parameter",
+      "file": "views.py",
+      "removes": [
+        "PY-SQLI"
+      ],
+      "explanation": "The driver substitutes the value safely.",
+      "edits": [
+        [
+          "        cur.execute(\"SELECT * FROM posts WHERE author = '%s'\" % author)",
+          "        cur.execute(\"SELECT * FROM posts WHERE author = %s\", [author])"
+        ]
+      ]
+    },
+    {
+      "id": "dj-random",
+      "title": "Use the secrets module for tokens",
+      "file": "views.py",
+      "removes": [
+        "PY-RANDOM"
+      ],
+      "explanation": "secrets draws from the operating system's cryptographic generator.",
+      "edits": [
+        [
+          "import random\n",
+          "import secrets\n"
+        ],
+        [
+          "    return HttpResponse(str(random.randint(100000, 999999)))",
+          "    return HttpResponse(str(100000 + secrets.randbelow(900000)))"
+        ]
+      ]
+    },
+    {
+      "id": "dj-shell",
+      "title": "Call convert with an argument list",
+      "file": "views.py",
+      "removes": [
+        "PY-SHELL"
+      ],
+      "explanation": "No shell is involved, so the file name cannot inject commands.",
+      "edits": [
+        [
+          "    subprocess.run(\"convert \" + name + \" -resize 128x128 out.png\", shell=True)",
+          "    subprocess.run([\"convert\", name, \"-resize\", \"128x128\", \"out.png\"], check=False)"
+        ]
+      ]
+    }
+  ]
+}

@@ -1,0 +1,73 @@
+{
+  "name": "Express todo API",
+  "language": "JavaScript",
+  "kind": "vulnerable",
+  "description": "An Express API with a shell command built from input, eval on a query parameter, SHA-1 password hashing and a hard-coded session secret. Intentionally insecure, for education.",
+  "expected": "Findings from the JavaScript token scanner. The SQL string in /todos is only built, not executed, so it is not flagged.",
+  "fixes": [
+    {
+      "id": "ex-secret",
+      "title": "Read the session secret from the environment",
+      "file": "server.js",
+      "removes": [
+        "JS-SECRET-ASSIGN"
+      ],
+      "explanation": "The secret is no longer in the repository.",
+      "edits": [
+        [
+          "const SESSION_SECRET = 'todo-session-secret-7d21a9c4e1';",
+          "const SESSION_SECRET = process.env.SESSION_SECRET;"
+        ]
+      ]
+    },
+    {
+      "id": "ex-cmdi",
+      "title": "Use execFile with an argument array",
+      "file": "server.js",
+      "removes": [
+        "JS-CMDI"
+      ],
+      "explanation": "No shell parses the directory name.",
+      "edits": [
+        [
+          "const { exec } = require('child_process');",
+          "const { execFile } = require('child_process');"
+        ],
+        [
+          "  exec(`ls ${req.query.dir}`, (err, out) => res.send(out));",
+          "  execFile('ls', [String(req.query.dir)], (err, out) => res.send(out));"
+        ]
+      ]
+    },
+    {
+      "id": "ex-eval",
+      "title": "Parse JSON instead of eval",
+      "file": "server.js",
+      "removes": [
+        "JS-EVAL"
+      ],
+      "explanation": "JSON.parse reads data and cannot execute code.",
+      "edits": [
+        [
+          "  res.send(String(eval(req.query.expr)));",
+          "  res.send(String(JSON.parse(req.query.expr)));"
+        ]
+      ]
+    },
+    {
+      "id": "ex-hash",
+      "title": "Hash passwords with scrypt and a salt",
+      "file": "server.js",
+      "removes": [
+        "JS-WEAKHASH"
+      ],
+      "explanation": "A random salt and a memory-hard hash replace unsalted SHA-1.",
+      "edits": [
+        [
+          "  const hash = crypto.createHash('sha1').update(req.body.password).digest('hex');\n  res.json({ hash });",
+          "  const salt = crypto.randomBytes(16);\n  const hash = crypto.scryptSync(req.body.password, salt, 64).toString('hex');\n  res.json({ hash, salt: salt.toString('hex') });"
+        ]
+      ]
+    }
+  ]
+}

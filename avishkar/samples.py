@@ -188,13 +188,40 @@ class SampleError(ValueError):
     pass
 
 
+def _discover() -> None:
+    """Add every `sample_projects/<id>/sample.json` folder to SAMPLES, so a new demo sample needs no code change.
+
+    Manifest: {"name","language","kind": vulnerable|secure|unsupported,"description","expected",
+               "fixes":[{"id","title","file","explanation","removes":[rule ids],"edits":[[old,new],...]}]}
+    Built-in samples above take precedence. A malformed manifest is skipped (never half-loaded); the tests load every one.
+    """
+    import json
+
+    for mf in sorted(SAMPLES_DIR.glob("*/sample.json")):
+        sid = mf.parent.name
+        if sid in SAMPLES or not re.fullmatch(r"[a-z0-9][a-z0-9\-]{0,40}", sid):
+            continue
+        try:
+            m = json.loads(mf.read_text(encoding="utf8"))
+            fixes = tuple(Fix(f["id"], f["title"], f["file"], tuple(f.get("removes", ())), f["explanation"],
+                              tuple((e[0], e[1]) for e in f.get("edits", ())), tuple(f.get("imports", ())))
+                          for f in m.get("fixes", ()))
+            if m["kind"] not in ("vulnerable", "secure", "unsupported") or len({f.id for f in fixes}) != len(fixes):
+                continue
+            if any(not re.fullmatch(r"[a-z0-9\-]{1,60}", f.id) for f in fixes):
+                continue
+            SAMPLES[sid] = Sample(sid, m["name"], m["language"], m["kind"], sid, m["description"], m["expected"], fixes)
+        except (OSError, ValueError, KeyError, IndexError, TypeError):
+            continue
+
+
 def _read(sample: Sample) -> dict[str, str]:
     root = SAMPLES_DIR / sample.folder
     if not root.is_dir():
         raise SampleError(f"sample folder missing: {sample.folder}")
     out = {}
     for p in sorted(root.rglob("*")):
-        if p.is_file() and p.suffix.lower() in (".py", ".js", ".java", ".md", ".json", ".txt") and "__pycache__" not in p.parts:
+        if p.is_file() and p.suffix.lower() in (".py", ".js", ".ts", ".tsx", ".jsx", ".java", ".md", ".json", ".txt", ".yml", ".yaml") and p.name != "sample.json" and "__pycache__" not in p.parts:
             out[p.relative_to(root).as_posix()] = p.read_text(encoding="utf8", errors="replace")
     return out
 
@@ -221,7 +248,7 @@ def variant_files(sample_id: str, fix_ids: list[str] | tuple[str, ...] = ()) -> 
                 raise SampleError(f"fix {fix.id}: expected exactly one match for edit, found {text.count(old)}")
             text = text.replace(old, new)
         for line in fix.imports:
-            text = _ensure_import(text, line, js=sample.language == "JavaScript")
+            text = _ensure_import(text, line, js=sample.language in ("JavaScript", "TypeScript"))
         files[fix.file] = text
     return files
 
@@ -251,3 +278,6 @@ def write_variant(sample_id: str, fix_ids, dest: Path) -> None:
         t = dest / rel
         t.parent.mkdir(parents=True, exist_ok=True)
         t.write_text(text, encoding="utf8", newline="\n")
+
+
+_discover()

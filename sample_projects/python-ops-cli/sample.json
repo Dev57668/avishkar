@@ -1,0 +1,124 @@
+{
+  "name": "Python ops CLI",
+  "language": "Python",
+  "kind": "vulnerable",
+  "description": "An operations helper with disabled TLS verification, a shell ping, weak random and SHA-1, an insecure temp file, eval and a hard-coded token. Intentionally insecure, for education.",
+  "expected": "Many findings from one small file across high, medium and low severities.",
+  "fixes": [
+    {
+      "id": "op-secret",
+      "title": "Read the token from the environment",
+      "file": "ops.py",
+      "removes": [
+        "PY-SECRET-ASSIGN"
+      ],
+      "explanation": "The token is no longer in the repository.",
+      "edits": [
+        [
+          "TOKEN = \"ops-service-token-33aa91c2e4d7\"",
+          "TOKEN = os.environ[\"OPS_TOKEN\"]"
+        ]
+      ],
+      "imports": [
+        "import os"
+      ]
+    },
+    {
+      "id": "op-verify",
+      "title": "Verify TLS certificates",
+      "file": "ops.py",
+      "removes": [
+        "PY-NOVERIFY"
+      ],
+      "explanation": "Certificate verification is back on (the default).",
+      "edits": [
+        [
+          "requests.get(url, verify=False, timeout=5)",
+          "requests.get(url, timeout=5)"
+        ]
+      ]
+    },
+    {
+      "id": "op-shell",
+      "title": "Run ping with an argument list",
+      "file": "ops.py",
+      "removes": [
+        "PY-SHELL"
+      ],
+      "explanation": "No shell parses the host.",
+      "edits": [
+        [
+          "    return subprocess.call(\"ping -c 1 \" + host, shell=True)",
+          "    return subprocess.call([\"ping\", \"-c\", \"1\", host])"
+        ]
+      ]
+    },
+    {
+      "id": "op-random",
+      "title": "Use secrets for the session id",
+      "file": "ops.py",
+      "removes": [
+        "PY-RANDOM"
+      ],
+      "explanation": "secrets draws from the OS cryptographic generator.",
+      "edits": [
+        [
+          "import random\n",
+          "import secrets\n"
+        ],
+        [
+          "    return str(random.random())",
+          "    return secrets.token_hex(16)"
+        ]
+      ]
+    },
+    {
+      "id": "op-hash",
+      "title": "Use SHA-256 instead of SHA-1",
+      "file": "ops.py",
+      "removes": [
+        "PY-WEAKHASH"
+      ],
+      "explanation": "SHA-1 is broken for security purposes.",
+      "edits": [
+        [
+          "hashlib.sha1(",
+          "hashlib.sha256("
+        ]
+      ]
+    },
+    {
+      "id": "op-tempfile",
+      "title": "Create the temp file securely",
+      "file": "ops.py",
+      "removes": [
+        "PY-TEMPFILE"
+      ],
+      "explanation": "mkstemp creates the file atomically with safe permissions.",
+      "edits": [
+        [
+          "    return tempfile.mktemp()",
+          "    return tempfile.mkstemp()[1]"
+        ]
+      ]
+    },
+    {
+      "id": "op-eval",
+      "title": "Parse literals instead of eval",
+      "file": "ops.py",
+      "removes": [
+        "PY-EVAL"
+      ],
+      "explanation": "ast.literal_eval accepts only literals and cannot run code.",
+      "edits": [
+        [
+          "    return eval(expr)",
+          "    return ast.literal_eval(expr)"
+        ]
+      ],
+      "imports": [
+        "import ast"
+      ]
+    }
+  ]
+}

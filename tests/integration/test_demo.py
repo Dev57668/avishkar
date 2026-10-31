@@ -81,7 +81,8 @@ def test_seed_is_idempotent_and_real(tmp_path):
     assert again == {"viewer": False, "repos": []}  # nothing duplicated
     v = e.login("demo@avishkar.dev", "demo-view-only-1")
     repos = {r["name"]: r for r in e.client.get("/v1/repositories", headers=v).json()["items"]}
-    assert set(repos) == {"demo/vulnerable-python", "demo/vulnerable-javascript", "demo/secure-python", "demo/vulnerable-java"}
+    from avishkar import samples
+    assert set(repos) == {f"demo/{sid}" for sid in samples.SAMPLES}  # every bundled sample, including manifest-defined ones
     py = repos["demo/vulnerable-python"]
     assert py["runs"] == 2 and py["latestIndex"] == 0.0  # the all-fixes run is the latest, not the first
     assert repos["demo/secure-python"]["runs"] == 1 and repos["demo/secure-python"]["latestIndex"] == 0.0

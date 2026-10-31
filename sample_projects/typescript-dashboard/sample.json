@@ -1,0 +1,54 @@
+{
+  "name": "TypeScript dashboard",
+  "language": "TypeScript",
+  "kind": "vulnerable",
+  "description": "A small TypeScript widget module with an unsanitized innerHTML sink, disabled TLS verification and a hard-coded API key. Intentionally insecure, for education.",
+  "expected": "Findings from the JavaScript/TypeScript token scanner.",
+  "fixes": [
+    {
+      "id": "ts-secret",
+      "title": "Read the API key from the environment",
+      "file": "dashboard.ts",
+      "removes": [
+        "JS-SECRET-ASSIGN"
+      ],
+      "explanation": "The key is no longer in the repository (rotate the exposed one).",
+      "edits": [
+        [
+          "const API_KEY = 'dash-api-key-91c7e3a5d2b8f046';",
+          "const API_KEY = process.env.DASH_API_KEY ?? '';"
+        ]
+      ]
+    },
+    {
+      "id": "ts-xss",
+      "title": "Write text instead of HTML",
+      "file": "dashboard.ts",
+      "removes": [
+        "JS-INNERHTML"
+      ],
+      "explanation": "textContent never interprets markup, so the comment cannot inject script.",
+      "edits": [
+        [
+          "  container.innerHTML = `<p>${comment}</p>`;",
+          "  container.textContent = comment;"
+        ]
+      ]
+    },
+    {
+      "id": "ts-tls",
+      "title": "Verify TLS certificates",
+      "file": "dashboard.ts",
+      "removes": [
+        "JS-TLS"
+      ],
+      "explanation": "Certificate verification is back on.",
+      "edits": [
+        [
+          "rejectUnauthorized: false",
+          "rejectUnauthorized: true"
+        ]
+      ]
+    }
+  ]
+}

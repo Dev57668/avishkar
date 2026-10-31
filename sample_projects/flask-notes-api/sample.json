@@ -1,0 +1,109 @@
+{
+  "name": "Flask notes API",
+  "language": "Python",
+  "kind": "vulnerable",
+  "description": "A notes API with SQL built from input, pickle and unsafe YAML loading, a shell backup command, debug mode and a hard-coded token. Intentionally insecure, for education.",
+  "expected": "Several high and medium findings in one file; the file-path read in /export is not flagged by the scanner (a known miss).",
+  "fixes": [
+    {
+      "id": "fn-secret",
+      "title": "Read the admin token from the environment",
+      "file": "app.py",
+      "removes": [
+        "PY-SECRET-ASSIGN"
+      ],
+      "explanation": "The token is no longer in the repository (rotate the exposed value).",
+      "edits": [
+        [
+          "SECRET_TOKEN = \"notes-admin-token-4f9a1c7e2b\"",
+          "SECRET_TOKEN = os.environ[\"NOTES_ADMIN_TOKEN\"]"
+        ]
+      ]
+    },
+    {
+      "id": "fn-debug",
+      "title": "Turn debug mode off",
+      "file": "app.py",
+      "removes": [
+        "PY-DEBUG"
+      ],
+      "explanation": "Debug mode exposes an interactive debugger and stack traces.",
+      "edits": [
+        [
+          "app.config[\"DEBUG\"] = True",
+          "app.config[\"DEBUG\"] = False"
+        ]
+      ]
+    },
+    {
+      "id": "fn-sqli",
+      "title": "Parameterize the search query",
+      "file": "app.py",
+      "removes": [
+        "PY-SQLI-FLOW"
+      ],
+      "explanation": "The search term is passed as a bound parameter instead of being formatted into the SQL text.",
+      "edits": [
+        [
+          "    query = f\"SELECT id, title FROM notes WHERE title LIKE '%{term}%'\"\n    cur.execute(query)",
+          "    cur.execute(\"SELECT id, title FROM notes WHERE title LIKE ?\", (f\"%{term}%\",))"
+        ]
+      ]
+    },
+    {
+      "id": "fn-pickle",
+      "title": "Parse JSON instead of unpickling",
+      "file": "app.py",
+      "removes": [
+        "PY-PICKLE"
+      ],
+      "explanation": "pickle.loads can execute code embedded in the data; JSON cannot.",
+      "edits": [
+        [
+          "import pickle\n",
+          ""
+        ],
+        [
+          "    return jsonify(pickle.loads(blob))",
+          "    return jsonify(json.loads(blob))"
+        ]
+      ],
+      "imports": [
+        "import json"
+      ]
+    },
+    {
+      "id": "fn-yaml",
+      "title": "Use yaml.safe_load",
+      "file": "app.py",
+      "removes": [
+        "PY-YAML"
+      ],
+      "explanation": "safe_load builds only plain data types.",
+      "edits": [
+        [
+          "    return jsonify(yaml.load(request.get_data(), Loader=yaml.Loader))",
+          "    return jsonify(yaml.safe_load(request.get_data()))"
+        ]
+      ]
+    },
+    {
+      "id": "fn-shell",
+      "title": "Run tar with an argument list",
+      "file": "app.py",
+      "removes": [
+        "PY-SHELL"
+      ],
+      "explanation": "No shell parses the input, so metacharacters in the target are not interpreted.",
+      "edits": [
+        [
+          "    os.system(\"tar czf /tmp/backup.tgz \" + target)",
+          "    subprocess.run([\"tar\", \"czf\", \"/tmp/backup.tgz\", target], check=False)"
+        ]
+      ],
+      "imports": [
+        "import subprocess"
+      ]
+    }
+  ]
+}
