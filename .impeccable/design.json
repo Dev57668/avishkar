@@ -1,0 +1,527 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-31T13:46:14.000Z",
+  "title": "Design System: Second Read",
+  "extensions": {
+    "colorMeta": {
+      "cobalt": {
+        "role": "primary",
+        "displayName": "Cobalt",
+        "canonical": "#2457ff",
+        "tonalRamp": [
+          "oklch(18% 0.116 265)",
+          "oklch(28% 0.181 265)",
+          "oklch(38% 0.245 265)",
+          "oklch(50% 0.253 265)",
+          "oklch(62% 0.253 265)",
+          "oklch(74% 0.232 265)",
+          "oklch(85% 0.161 265)",
+          "oklch(95% 0.097 265)"
+        ]
+      },
+      "cyan-signal": {
+        "role": "secondary",
+        "displayName": "Cyan Signal",
+        "canonical": "#22d3ee",
+        "tonalRamp": [
+          "oklch(18% 0.061 212)",
+          "oklch(28% 0.095 212)",
+          "oklch(38% 0.130 212)",
+          "oklch(50% 0.134 212)",
+          "oklch(62% 0.134 212)",
+          "oklch(74% 0.123 212)",
+          "oklch(85% 0.085 212)",
+          "oklch(95% 0.051 212)"
+        ]
+      },
+      "teal-highlight": {
+        "role": "tertiary",
+        "displayName": "Teal Highlight",
+        "canonical": "#086e8b",
+        "tonalRamp": [
+          "oklch(18% 0.042 225)",
+          "oklch(28% 0.066 225)",
+          "oklch(38% 0.090 225)",
+          "oklch(50% 0.093 225)",
+          "oklch(62% 0.093 225)",
+          "oklch(74% 0.085 225)",
+          "oklch(85% 0.059 225)",
+          "oklch(95% 0.035 225)"
+        ]
+      },
+      "signal-violet": {
+        "role": "tertiary",
+        "displayName": "Signal Violet",
+        "canonical": "#6b3fd4",
+        "tonalRamp": [
+          "oklch(18% 0.098 290)",
+          "oklch(28% 0.153 290)",
+          "oklch(38% 0.207 290)",
+          "oklch(50% 0.214 290)",
+          "oklch(62% 0.214 290)",
+          "oklch(74% 0.196 290)",
+          "oklch(85% 0.136 290)",
+          "oklch(95% 0.082 290)"
+        ]
+      },
+      "ink-amber": {
+        "role": "tertiary",
+        "displayName": "Ink Amber",
+        "canonical": "#b26a00",
+        "tonalRamp": [
+          "oklch(18% 0.061 65)",
+          "oklch(28% 0.094 65)",
+          "oklch(38% 0.128 65)",
+          "oklch(50% 0.132 65)",
+          "oklch(62% 0.132 65)",
+          "oklch(74% 0.121 65)",
+          "oklch(85% 0.084 65)",
+          "oklch(95% 0.051 65)"
+        ]
+      },
+      "ink-red": {
+        "role": "tertiary",
+        "displayName": "Ink Red",
+        "canonical": "#cf2f3f",
+        "tonalRamp": [
+          "oklch(18% 0.089 21)",
+          "oklch(28% 0.139 21)",
+          "oklch(38% 0.189 21)",
+          "oklch(50% 0.195 21)",
+          "oklch(62% 0.195 21)",
+          "oklch(74% 0.179 21)",
+          "oklch(85% 0.124 21)",
+          "oklch(95% 0.074 21)"
+        ]
+      },
+      "ink-green": {
+        "role": "tertiary",
+        "displayName": "Ink Green",
+        "canonical": "#2a7d34",
+        "tonalRamp": [
+          "oklch(18% 0.062 145)",
+          "oklch(28% 0.096 145)",
+          "oklch(38% 0.130 145)",
+          "oklch(50% 0.135 145)",
+          "oklch(62% 0.135 145)",
+          "oklch(74% 0.123 145)",
+          "oklch(85% 0.086 145)",
+          "oklch(95% 0.051 145)"
+        ]
+      },
+      "paper-bg": {
+        "role": "neutral",
+        "displayName": "Paper",
+        "canonical": "#f4f1e8",
+        "tonalRamp": [
+          "oklch(18% 0.006 92)",
+          "oklch(28% 0.009 92)",
+          "oklch(38% 0.012 92)",
+          "oklch(50% 0.012 92)",
+          "oklch(62% 0.012 92)",
+          "oklch(74% 0.011 92)",
+          "oklch(85% 0.008 92)",
+          "oklch(95% 0.005 92)"
+        ]
+      },
+      "paper-panel": {
+        "role": "neutral",
+        "displayName": "Panel",
+        "canonical": "#fffdf6",
+        "tonalRamp": [
+          "oklch(18% 0.004 94)",
+          "oklch(28% 0.007 94)",
+          "oklch(38% 0.009 94)",
+          "oklch(50% 0.009 94)",
+          "oklch(62% 0.009 94)",
+          "oklch(74% 0.009 94)",
+          "oklch(85% 0.006 94)",
+          "oklch(95% 0.004 94)"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Ink",
+        "canonical": "#151b28",
+        "tonalRamp": [
+          "oklch(18% 0.012 265)",
+          "oklch(28% 0.019 265)",
+          "oklch(38% 0.026 265)",
+          "oklch(50% 0.027 265)",
+          "oklch(62% 0.027 265)",
+          "oklch(74% 0.025 265)",
+          "oklch(85% 0.017 265)",
+          "oklch(95% 0.010 265)"
+        ]
+      },
+      "pen": {
+        "role": "neutral",
+        "displayName": "Pen",
+        "canonical": "#2343c9",
+        "tonalRamp": [
+          "oklch(18% 0.096 267)",
+          "oklch(28% 0.149 267)",
+          "oklch(38% 0.203 267)",
+          "oklch(50% 0.210 267)",
+          "oklch(62% 0.210 267)",
+          "oklch(74% 0.192 267)",
+          "oklch(85% 0.133 267)",
+          "oklch(95% 0.080 267)"
+        ]
+      },
+      "screen-bg": {
+        "role": "neutral",
+        "displayName": "Screen",
+        "canonical": "#0b1220",
+        "tonalRamp": [
+          "oklch(18% 0.014 263)",
+          "oklch(28% 0.022 263)",
+          "oklch(38% 0.030 263)",
+          "oklch(50% 0.031 263)",
+          "oklch(62% 0.031 263)",
+          "oklch(74% 0.028 263)",
+          "oklch(85% 0.020 263)",
+          "oklch(95% 0.012 263)"
+        ]
+      },
+      "crit": {
+        "role": "status",
+        "displayName": "Critical",
+        "canonical": "#ff4d5e",
+        "tonalRamp": [
+          "oklch(18% 0.098 20)",
+          "oklch(28% 0.152 20)",
+          "oklch(38% 0.206 20)",
+          "oklch(50% 0.213 20)",
+          "oklch(62% 0.213 20)",
+          "oklch(74% 0.195 20)",
+          "oklch(85% 0.136 20)",
+          "oklch(95% 0.081 20)"
+        ]
+      },
+      "high": {
+        "role": "status",
+        "displayName": "High",
+        "canonical": "#ff8a4d",
+        "tonalRamp": [
+          "oklch(18% 0.074 46)",
+          "oklch(28% 0.114 46)",
+          "oklch(38% 0.155 46)",
+          "oklch(50% 0.161 46)",
+          "oklch(62% 0.161 46)",
+          "oklch(74% 0.147 46)",
+          "oklch(85% 0.102 46)",
+          "oklch(95% 0.061 46)"
+        ]
+      },
+      "warn": {
+        "role": "status",
+        "displayName": "Medium / Warn",
+        "canonical": "#ffb547",
+        "tonalRamp": [
+          "oklch(18% 0.068 73)",
+          "oklch(28% 0.106 73)",
+          "oklch(38% 0.144 73)",
+          "oklch(50% 0.149 73)",
+          "oklch(62% 0.149 73)",
+          "oklch(74% 0.136 73)",
+          "oklch(85% 0.095 73)",
+          "oklch(95% 0.057 73)"
+        ]
+      },
+      "ok": {
+        "role": "status",
+        "displayName": "Ok / Pass",
+        "canonical": "#34d399",
+        "tonalRamp": [
+          "oklch(18% 0.070 163)",
+          "oklch(28% 0.109 163)",
+          "oklch(38% 0.148 163)",
+          "oklch(50% 0.153 163)",
+          "oklch(62% 0.153 163)",
+          "oklch(74% 0.141 163)",
+          "oklch(85% 0.098 163)",
+          "oklch(95% 0.059 163)"
+        ]
+      },
+      "low": {
+        "role": "status",
+        "displayName": "Low",
+        "canonical": "#7cb4ff",
+        "tonalRamp": [
+          "oklch(18% 0.057 256)",
+          "oklch(28% 0.088 256)",
+          "oklch(38% 0.119 256)",
+          "oklch(50% 0.124 256)",
+          "oklch(62% 0.124 256)",
+          "oklch(74% 0.113 256)",
+          "oklch(85% 0.079 256)",
+          "oklch(95% 0.047 256)"
+        ]
+      },
+      "info": {
+        "role": "status",
+        "displayName": "Informational",
+        "canonical": "#9aa7b8",
+        "tonalRamp": [
+          "oklch(18% 0.013 255)",
+          "oklch(28% 0.020 255)",
+          "oklch(38% 0.028 255)",
+          "oklch(50% 0.029 255)",
+          "oklch(62% 0.029 255)",
+          "oklch(74% 0.026 255)",
+          "oklch(85% 0.018 255)",
+          "oklch(95% 0.011 255)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "The landing page h1 only; final word in Cobalt."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Section titles, weight 700, one phrase in the section ink."
+      },
+      "step-title": {
+        "displayName": "Step title",
+        "purpose": "The tour step list; ink and underlined in the step ink when open."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Card and sub-section headings in both registers."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Running prose; lede at 17px."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Mono instrument readouts: table headers, pills, legends, KPI labels."
+      },
+      "hand": {
+        "displayName": "Hand",
+        "purpose": "Margin doodle layer only."
+      }
+    },
+    "shadows": [
+      {
+        "name": "tour-panel",
+        "value": "0 24px 64px -28px rgba(21,27,40,.35)",
+        "purpose": "The pinned tour panel, which stays put while the paper scrolls under it."
+      },
+      {
+        "name": "toast-float",
+        "value": "0 6px 20px rgba(0,0,0,.5)",
+        "purpose": "Toasts floating above the console."
+      },
+      {
+        "name": "reach-pulse",
+        "value": "0 0 0 0 to 0 0 0 14px, step ink at 45% fading to transparent, .7s once",
+        "purpose": "Transient ring when a tour step is reached; not elevation."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease-standard",
+        "value": "cubic-bezier(0.22,1,0.36,1)",
+        "purpose": "Default easing for nav show/hide, the nav underline, scene cross-fades, the step rail and reveals."
+      },
+      {
+        "name": "tiles-land",
+        "value": "transform .55s + opacity .35s, delay n x 40ms; translateY(8px) scale(.5) to none",
+        "purpose": "Findings strip tiles landing once, in order, on first view."
+      },
+      {
+        "name": "rail-fill",
+        "value": "height .35s ease-standard, driven by scroll position",
+        "purpose": "Tour progress rail growing between step dots."
+      },
+      {
+        "name": "scene-crossfade",
+        "value": "opacity + translateY(12px) .45s ease-standard",
+        "purpose": "Swapping the tour panel scene."
+      },
+      {
+        "name": "beam-sweep",
+        "value": "about 1.8s linear scan of the code figure",
+        "purpose": "Annotated code scan when tour step 5 opens."
+      },
+      {
+        "name": "step-pulse",
+        "value": "box-shadow 0 0 0 5px rgba(34,225,255,.2) over 1s infinite",
+        "purpose": "Marks the currently-active stage in the console stepper."
+      },
+      {
+        "name": "reveal-rise",
+        "value": "opacity .7s, transform .7s ease-standard; translateY(16px) to none",
+        "purpose": "Entrance for the limitations block; disabled under reduced motion and without JS."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "mobile",
+        "value": "760px"
+      },
+      {
+        "name": "nav",
+        "value": "860px"
+      },
+      {
+        "name": "columns-and-tour-tabs",
+        "value": "900px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Paper Button — Solid",
+      "kind": "button",
+      "refersTo": "button-primary-solid",
+      "description": "Primary call-to-action on the paper landing page; ink-filled pill that flips to Cobalt on hover.",
+      "html": "<button class=\"ds-btn-paper-solid\">Open the console</button>",
+      "css": ".ds-btn-paper-solid{display:inline-flex;align-items:center;gap:8px;font:500 14px/1 Geist,ui-sans-serif,system-ui,sans-serif;padding:11px 18px;border-radius:999px;border:1px solid #151b28;background:#151b28;color:#fffdf6;cursor:pointer;text-decoration:none;transition:background .2s,border-color .2s}.ds-btn-paper-solid:hover{background:#2457ff;border-color:#2457ff}.ds-btn-paper-solid:focus-visible{outline:2px solid #2457ff;outline-offset:3px;border-radius:4px}"
+    },
+    {
+      "name": "Paper Button — Outline",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Secondary action on the paper landing page; transparent with a hairline border that darkens on hover.",
+      "html": "<button class=\"ds-btn-paper-outline\">How it works</button>",
+      "css": ".ds-btn-paper-outline{display:inline-flex;align-items:center;gap:8px;font:500 14px/1 Geist,ui-sans-serif,system-ui,sans-serif;padding:11px 18px;border-radius:999px;border:1px solid rgba(28,52,110,.28);background:transparent;color:#151b28;cursor:pointer;text-decoration:none;transition:border-color .2s}.ds-btn-paper-outline:hover{border-color:#151b28}.ds-btn-paper-outline:focus-visible{outline:2px solid #2457ff;outline-offset:3px;border-radius:4px}"
+    },
+    {
+      "name": "Console Button — Primary",
+      "kind": "button",
+      "refersTo": "console-button-primary",
+      "description": "Primary action inside the dark console; Cobalt fill, brightens on hover, Cyan Signal focus ring.",
+      "html": "<button class=\"ds-btn-console-primary\">Run scan</button>",
+      "css": ".ds-btn-console-primary{display:inline-flex;align-items:center;gap:6px;background:#2457ff;color:#fff;border:1px solid #2457ff;border-radius:999px;padding:8px 14px;font:600 14px/1 Geist,ui-sans-serif,system-ui,sans-serif;cursor:pointer;transition:background .2s,border-color .2s}.ds-btn-console-primary:hover{background:#3d6bff;border-color:#3d6bff}.ds-btn-console-primary:focus-visible{outline:2px solid #22d3ee;outline-offset:2px;border-radius:4px}.ds-btn-console-primary:disabled{opacity:.5;cursor:not-allowed}"
+    },
+    {
+      "name": "Severity Pill",
+      "kind": "chip",
+      "refersTo": "pill-severity-critical",
+      "description": "Solid-filled pill marking a finding's severity; the fill color is the semantic signal, never decorative.",
+      "html": "<span class=\"ds-pill-severity ds-sev-critical\">Critical</span>",
+      "css": ".ds-pill-severity{display:inline-block;padding:1px 9px;border-radius:999px;font:700 12px/1.6 Geist,ui-sans-serif,system-ui,sans-serif;border:1px solid transparent;white-space:nowrap}.ds-sev-critical{background:#ff4d5e;color:#2a0006;border-color:#ff4d5e}.ds-sev-high{background:#ff8a4d;color:#2b1100;border-color:#ff8a4d}.ds-sev-medium{background:#ffb547;color:#2b1d00;border-color:#ffb547}.ds-sev-low{background:#7cb4ff;color:#021a38;border-color:#7cb4ff}.ds-sev-informational{background:#9aa7b8;color:#0e1520;border-color:#9aa7b8}"
+    },
+    {
+      "name": "Status Pill",
+      "kind": "chip",
+      "refersTo": "pill-severity-medium",
+      "description": "Outline-only pill marking a decision or health state (pass/warn/block); kept visually distinct from the solid severity pill family.",
+      "html": "<span class=\"ds-pill-status ds-st-ok\">Pass</span>",
+      "css": ".ds-pill-status{display:inline-block;padding:1px 9px;border-radius:999px;font:600 12px/1.6 Geist,ui-sans-serif,system-ui,sans-serif;border:1px solid currentColor;background:transparent}.ds-st-ok{color:#34d399}.ds-st-warn{color:#ffb547}.ds-st-bad{color:#ff5468}.ds-st-mut{color:#a4adbd}"
+    },
+    {
+      "name": "KPI Card",
+      "kind": "card",
+      "refersTo": "kpi-card",
+      "description": "Console dashboard tile: a muted label, a large tabular-numeral value, and an optional muted sub-line.",
+      "html": "<div class=\"ds-kpi\"><div class=\"ds-kpi-l\">Open findings</div><div class=\"ds-kpi-v\">14</div><div class=\"ds-kpi-s\">across all repositories</div></div>",
+      "css": ".ds-kpi{background:#111a2c;border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:16px;font-family:Geist,ui-sans-serif,system-ui,sans-serif;color:#edf1f7}.ds-kpi-l{color:#a4adbd;font-size:13px}.ds-kpi-v{font-size:30px;font-weight:600;letter-spacing:-.03em;line-height:1.2;font-variant-numeric:tabular-nums}.ds-kpi-s{font-size:12px;color:#a4adbd}"
+    },
+    {
+      "name": "Scan Stepper",
+      "kind": "custom",
+      "refersTo": "kpi-card",
+      "description": "Horizontal stage tracker reflecting a scan's actual recorded timeline; done stages fill green with a check, the active stage pulses cyan, a failed run turns the final stage red.",
+      "html": "<ol class=\"ds-stepper\"><li class=\"ds-step ds-step-done\"><span class=\"ds-step-dot\"><svg viewBox=\"0 0 24 24\" width=\"10\" height=\"10\" fill=\"none\" stroke=\"#04101a\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M5 12l5 5 9-10\"/></svg></span>Queued</li><li class=\"ds-step ds-step-active\"><span class=\"ds-step-dot\"></span>Scanning</li><li class=\"ds-step\"><span class=\"ds-step-dot\"></span>Done</li></ol>",
+      "css": ".ds-stepper{display:flex;list-style:none;padding:0;margin:0;gap:6px;flex-wrap:wrap;font-family:Geist,ui-sans-serif,system-ui,sans-serif}.ds-step{display:flex;align-items:center;gap:6px;padding:6px 10px;border:1px solid rgba(255,255,255,.08);border-radius:8px;color:#a4adbd;font-size:13px}.ds-step-dot{width:16px;height:16px;border-radius:50%;border:2px solid rgba(255,255,255,.08);display:inline-flex;align-items:center;justify-content:center}.ds-step-done{color:#edf1f7;border-color:#34d399}.ds-step-done .ds-step-dot{background:#34d399;border-color:#34d399}.ds-step-active{color:#edf1f7;border-color:#22d3ee}.ds-step-active .ds-step-dot{border-color:#22d3ee;animation:ds-cpulse 1s infinite}@keyframes ds-cpulse{50%{box-shadow:0 0 0 5px rgba(34,225,255,.2)}}"
+    },
+    {
+      "name": "Security Debt Gauge",
+      "kind": "custom",
+      "refersTo": "kpi-card",
+      "description": "Half-circle 0–100 dial unique to the console and the embedded demo HUD; the gradient fill is a position cue only, not a risk-band encoding, and reads 'n/a — not calculated' with no arc when the value is unknown.",
+      "html": "<div class=\"ds-gauge\" role=\"img\" aria-label=\"Security debt index: 42 out of 100\"><svg viewBox=\"0 0 220 144\" width=\"100%\"><defs><linearGradient id=\"dsGaugeGrad\" x1=\"0\" x2=\"1\" y1=\"0\" y2=\"0\"><stop offset=\"0%\" stop-color=\"#22e1ff\"/><stop offset=\"55%\" stop-color=\"#ffb547\"/><stop offset=\"100%\" stop-color=\"#ff4d5e\"/></linearGradient></defs><path d=\"M24 120 A86 86 0 0 1 196 120\" fill=\"none\" stroke=\"rgba(140,200,255,.14)\" stroke-width=\"16\" stroke-linecap=\"round\"/><path d=\"M24 120 A86 86 0 0 1 196 120\" fill=\"none\" stroke=\"url(#dsGaugeGrad)\" stroke-width=\"16\" stroke-linecap=\"round\" stroke-dasharray=\"113 270\"/><text x=\"110\" y=\"102\" text-anchor=\"middle\" font-size=\"40\" font-weight=\"700\" fill=\"#edf1f7\">42</text><text x=\"110\" y=\"124\" text-anchor=\"middle\" font-size=\"11\" fill=\"#a4adbd\">out of 100</text></svg></div>",
+      "css": ".ds-gauge{max-width:260px;margin:0 auto;font-family:Geist,ui-sans-serif,system-ui,sans-serif}"
+    },
+    {
+      "name": "Tour Step List",
+      "kind": "custom",
+      "refersTo": "tour-panel",
+      "description": "Numbered dots on a colour rail; the open step is ringed and underlined in its ink.",
+      "html": "<ol class=\"ds-steps\"><li class=\"ds-step done\" style=\"--c:#086e8b\"><span class=\"ds-dot\">1</span><b>Three detectors, one pass</b></li><li class=\"ds-step on\" style=\"--c:#2457ff\"><span class=\"ds-dot\">2</span><b>40 rules, each with a CWE</b></li><li class=\"ds-step\" style=\"--c:#6b3fd4\"><span class=\"ds-dot\">3</span><b>Upload to decision in five steps</b></li></ol>",
+      "css": ".ds-steps{list-style:none;margin:0;padding:0 0 0 46px;position:relative;background:#f4f1e8}.ds-steps::before{content:\"\";position:absolute;left:14.5px;top:15px;bottom:15px;width:3px;border-radius:3px;background:linear-gradient(#086e8b,#2457ff 60%,rgba(28,52,110,.28) 60%)}.ds-step{position:relative;padding:8px 0}.ds-dot{position:absolute;left:-46px;top:6px;width:30px;height:30px;box-sizing:border-box;display:grid;place-items:center;border-radius:50%;border:2.5px solid rgba(28,52,110,.28);background:#f4f1e8;font:600 12px \"Geist Mono\",monospace;color:#656e80;z-index:1}.ds-step b{font:700 22px/1.3 Geist,system-ui,sans-serif;letter-spacing:-.02em;color:#656e80}.ds-step.done .ds-dot{background:var(--c);border-color:var(--c);color:#fffdf6}.ds-step.done b{color:#4a5466}.ds-step.on .ds-dot{border-color:var(--c);color:var(--c);transform:scale(1.15)}.ds-step.on b{color:#151b28;background:linear-gradient(var(--c),var(--c)) 0 100%/100% 3px no-repeat}"
+    },
+    {
+      "name": "Findings Strip",
+      "kind": "custom",
+      "refersTo": "findings-strip",
+      "description": "Index numeral, one severity tile per recorded finding grouped by file, and a legend.",
+      "html": "<figure class=\"ds-strip\"><div class=\"ds-idx\"><b>93.8</b><span>/ 100</span></div><div><div class=\"ds-row\"><span>app.py</span><i class=\"h\"></i><i class=\"h\"></i><i class=\"m\"></i><i class=\"l\"></i></div><div class=\"ds-row\"><span>config.py</span><i class=\"c\"></i><i class=\"h\"></i><i class=\"m\"></i></div></div></figure>",
+      "css": ".ds-strip{margin:0;display:flex;gap:28px;align-items:center;padding:22px 26px;border-radius:8px;background:#0b1220;color:#eef3f8}.ds-idx{display:flex;align-items:baseline;gap:6px;padding-right:28px;border-right:1px solid rgba(140,200,255,.24)}.ds-idx b{font:500 48px/1 \"Geist Mono\",monospace;letter-spacing:-.04em;color:#ff4d5e}.ds-idx span{font:13px \"Geist Mono\",monospace;color:#677c93}.ds-row{display:flex;gap:6px;align-items:center;padding:4px 0}.ds-row span{width:76px;font:12px \"Geist Mono\",monospace;color:#9fb0c3}.ds-row i{width:24px;height:24px;border-radius:4px;background:#b7c3d1}.ds-row i.c{background:#ff4d5e}.ds-row i.h{background:#ff8a4d}.ds-row i.m{background:#ffb547}"
+    },
+    {
+      "name": "Closing Band",
+      "kind": "card",
+      "refersTo": "closing-band",
+      "description": "Solid ink sheet with one bold line and the on-ink button.",
+      "html": "<div class=\"ds-band\"><p>Still the most transparent read you’ll get on your AI-written code.</p><a class=\"ds-btn-ink\" href=\"#\">Open the console</a></div>",
+      "css": ".ds-band{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:30px 32px;border-radius:8px;background:#151b28}.ds-band p{margin:0;max-width:30ch;font:700 24px/1.25 Geist,system-ui,sans-serif;letter-spacing:-.02em;color:#fffdf6}.ds-btn-ink{display:inline-flex;font:500 14px/1 Geist,system-ui,sans-serif;padding:11px 18px;border-radius:999px;background:#fffdf6;color:#151b28;text-decoration:none;transition:background .2s,color .2s}.ds-btn-ink:hover{background:#2457ff;color:#fffdf6}.ds-btn-ink:focus-visible{outline:2px solid #fffdf6;outline-offset:3px}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Annotated Lab Notebook",
+    "overview": "Second Read presents itself as a researcher's field notebook, not a product brochure. The landing page is warm paper (`#f4f1e8`) ruled with a faint blueprint grid, drifting watercolor washes, and hand-drawn margin doodles in a pen-blue (`#2343c9`) that annotate the text the way a reviewer scribbles on a printout — a stray `{ }`, an `eval() ?!`, a `TODO: fix L46`. Set into that paper, wherever the product needs to show something real — the recorded findings of a sample scan, an annotated code excerpt, a diff, the console itself — the page switches to an actual dark \"screen\": `#0b1220`–`#060a11` glass with a cyan/cobalt/amber/red data vocabulary. The paper never pretends to be a terminal, and the screens never pretend to be paper; the contrast between the two registers *is* the idea — a human, hand-annotated read of a machine process.\n\nThe paper register is now confident rather than whispered: bold display and section headings, one phrase per heading set in that section's own ink colour, and a six-colour ink set (teal, cobalt, violet, amber, red, green) that colour-codes the six steps of the tour. Colour is still never decoration: on paper it marks *which step or section you are in*; on screens it marks *severity and state*. The console (the real dashboard under `#app`) lives permanently in the dark-screen register and shares the screens' palette, so the page's screens and the real product are visually the same place.\n\nMotion is sparing and authored: the findings strip's tiles land once, the tour's progress rail fills as you scroll and each step's dot pulses once on arrival, and the code figure's scan line sweeps when its step opens. There is no ambient 3D or looping hero animation.",
+    "keyCharacteristics": [
+      "Two coherent registers, strictly separated: warm hand-annotated paper for narrative, and a dark cyan/cobalt/amber/red \"screen\" vocabulary for anything that shows live or recorded machine output.",
+      "Bold, colour-keyed headings: weight 700, one coloured phrase per heading, no eyebrow labels or number badges above them.",
+      "A pinned, six-step tour replaces long scrolling for the explanatory middle of the page; each step owns one ink colour.",
+      "Pill-shaped (`999px`) buttons and status indicators everywhere; rectangular, modestly rounded containers for everything else.",
+      "Severity and completeness states are a first-class visual vocabulary (critical/high/medium/low/informational, plus an explicit \"not evaluated\"/\"incomplete\" state) because the product's honesty claim depends on never drawing an unscored or unevaluated item as if it were clean."
+    ],
+    "rules": [
+      {
+        "name": "The Screen Rule",
+        "body": "Cyan Signal, and the deep `#060a11`/`#0b1220` backgrounds, exist only inside something the user would recognize as a screen (console, findings strip, code figure, diff, dialog, toast). The paper register never borrows them; its accents are the six step inks.",
+        "section": "colors"
+      },
+      {
+        "name": "The One Ink Per Place Rule",
+        "body": "On paper, each step or section owns exactly one ink, and everything that marks \"you are here\" in it — the heading's coloured phrase, the step's dot and underline, the tour panel's top band and label — uses that ink. Never mix two step inks inside one element.",
+        "section": "colors"
+      },
+      {
+        "name": "The Honest State Rule",
+        "body": "An incomplete, not-evaluated, or not-yet-scored item is never drawn as zero, clean, or green. It gets its own label (`n/a`, `not calculated`, `not evaluated`) and, where a gauge or chart would otherwise show a value, a gap or an explicit muted state instead.",
+        "section": "colors"
+      },
+      {
+        "name": "The No Eyebrow Rule",
+        "body": "Nothing sits above a heading: no kicker, no \"STEP 1 · …\" label, no section-number badge. Sequence that matters is carried by a numbered dot (the tour) or by order alone.",
+        "section": "typography"
+      },
+      {
+        "name": "The One Indulgent Font Rule",
+        "body": "Caveat appears nowhere but the fixed-position doodle layer. If a UI element needs emphasis or personality, reach for Geist weight or a step ink, never the hand font.",
+        "section": "typography"
+      },
+      {
+        "name": "The Flat Paper Rule",
+        "body": "Nothing laid *on* the paper casts a shadow — figures, tables, the findings strip, the closing band. Only an element that stays put while the paper moves under it (the pinned tour panel) or floats above the page (toasts, dialogs) may.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "**Do** keep Cyan Signal and the two dark backgrounds confined to literal screens (console, findings strip, code figure, diff, dialog, toast) — The Screen Rule.",
+      "**Do** set headings at weight 700 and colour exactly one phrase per heading in that section's ink — The One Ink Per Place Rule.",
+      "**Do** carry sequence with a numbered dot or plain order, never a label above the heading — The No Eyebrow Rule.",
+      "**Do** render every pill-shaped element at `999px` radius; reserve 4–16px rounding for rectangular containers only.",
+      "**Do** show an incomplete, not-evaluated, or uncalculated state with its own explicit label or gap — never as zero, clean, or green — The Honest State Rule.",
+      "**Do** keep severity pills solid-filled and decision/status pills outline-only.",
+      "**Do** source every number on the landing page from the recorded scan data, and hide the element rather than show a placeholder number when that data is missing."
+    ],
+    "donts": [
+      "**Don't** add a box-shadow to anything laid on the paper (figures, tables, strip, closing band); only the pinned tour panel and floating toasts/dialogs carry one.",
+      "**Don't** put a thick coloured border on a rounded container; draw the colour as a band inside it.",
+      "**Don't** introduce a severity or status color outside the fixed Critical/High/Medium/Low/Informational and Ok/Warn/Bad mapping, or a seventh step ink.",
+      "**Don't** add looping or ambient hero animation; motion is one authored moment per element (tiles land, rail fills, beam sweeps).",
+      "**Don't** let the blueprint grid, watercolor wash, or doodle layer appear inside the console or any dark screen.",
+      "**Don't** use the active-nav underline treatment in the console, or the console's filled-pill treatment on the paper nav."
+    ]
+  }
+}

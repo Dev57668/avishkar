@@ -6,7 +6,7 @@ import { repoView } from './repo.js';
 import { demoView } from './demo.js';
 import { adminView } from './admin.js';
 import { githubView } from './github.js';
-import { watchRun, canUpload } from './shared.js';
+import { watchRun, canUpload, openGlossary } from './shared.js';
 import { gauge } from './charts.js';
 
 const mount = document.getElementById('console');
@@ -21,6 +21,7 @@ function shell() {
   const burger = h('button', { class: 'btn burger', type: 'button', 'aria-label': 'Menu', 'aria-expanded': 'false', 'aria-controls': 'cnav',
     onclick: (e) => { const open = nav.classList.toggle('open'); e.currentTarget.setAttribute('aria-expanded', String(open)); } }, icon('menu'));
   const who = h('div', { class: 'who' }, h('span', { class: 'mut sm' }, session.me ? `${session.me.email || session.me.id} · ${session.me.role}` : ''),
+    h('button', { class: 'btn sm ghost', type: 'button', 'aria-label': 'Glossary: what do these terms mean?', title: 'Glossary', onclick: openGlossary }, '?'),
     h('button', { class: 'btn sm', type: 'button', onclick: signOut }, 'Sign out'));
   const view = h('div', { class: 'cview', id: 'cview', tabindex: '-1' });
   clear(mount).append(h('div', { class: 'cbar' }, burger, nav, who), banner(), view);

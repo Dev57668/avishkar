@@ -1,6 +1,12 @@
 /* Console theme. Scoped to .console so the landing page styles are untouched. Dark by design; contrast checked against AA. */
-.console{--bg:#0b1220;--panel:#111a2c;--panel2:#162032;--line:rgba(255,255,255,.08);--txt:#edf1f7;--mut:#a4adbd;--acc:#22d3ee;--good:#34d399;--bad:#ff5468;--warn:#ffb547;
-  position:relative;color:var(--txt);background:var(--bg);border:1px solid rgba(140,200,255,.16);border-radius:12px;padding:20px;font:15px/1.55 var(--sans,system-ui,sans-serif);text-align:left;min-height:240px;}
+.console{--bg:#0b1220;--panel:#111a2c;--panel2:#162032;--line:rgba(255,255,255,.08);--txt:#edf1f7;--mut:#a4adbd;--acc:#22d3ee;--good:#34d399;--bad:#ff5468;--warn:#ffb547;--high:#ff8a4d;
+  --cobalt:#2457ff;--teal:#097695;
+  position:relative;color:var(--txt);background-color:var(--bg);
+  /* The same blueprint grid the landing page is built on, re-tuned for the dark register — one visual thread
+     running under both surfaces instead of two unrelated looks that happen to share a few colors. */
+  background-image:linear-gradient(rgba(140,200,255,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(140,200,255,.035) 1px,transparent 1px);
+  background-size:24px 24px;
+  border:1px solid rgba(140,200,255,.16);border-radius:12px;padding:20px;font:15px/1.55 var(--sans,system-ui,sans-serif);text-align:left;min-height:240px;}
 .console *{box-sizing:border-box}
 .console h2,.console h3{margin:0 0 10px;font-family:inherit;font-weight:650;color:var(--txt)}
 .console h2{font-size:20px}.console h3{font-size:16px}
@@ -11,17 +17,30 @@
 .console :focus-visible{outline:2px solid var(--acc);outline-offset:2px;border-radius:4px}
 .console .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}.console .row.between{justify-content:space-between}
 .console .grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin:14px 0}
-.console .card,.console .cs{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px;margin:14px 0}
+.console .card,.console .cs{position:relative;overflow:hidden;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px;margin:14px 0}
+/* Every card gets a trace of the same corner wash the admin cards already carry — one card language for the
+   whole console instead of the admin tabs feeling like a different product from the dashboard. */
+.console .card::before,.console .cs::before{content:"";position:absolute;inset:0;background:radial-gradient(130% 100% at 0% 0%,rgba(34,211,238,.055),transparent 55%);pointer-events:none}
 .console .grid2 .cs,.console .grid2 .card{margin:0}
 .console .cs-h{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px}
-.console .btn{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.04);color:var(--txt);border:1px solid rgba(255,255,255,.12);border-radius:999px;transition:background .2s,border-color .2s,transform .15s;padding:8px 14px;font:inherit;cursor:pointer;text-decoration:none;min-height:36px}
-.console .btn:hover:not(:disabled){border-color:var(--acc)}
+/* Supporting detail (compare, activity, the score arithmetic) reads as secondary to the explorer and the
+   breakdown — same real <h2> for a correct document outline, just visually quieter. */
+.console .cs-secondary .cs-h h2{font-size:15px;font-weight:600;color:var(--mut)}
+/* Findings breakdown: severity leads full-width as the primary signal; category and top files are a secondary pair. */
+.console .fb-sev{margin-bottom:18px}
+.console .fb-sev h3,.console .fb-split h3{margin:0 0 8px;font-size:12px;font-weight:650;color:var(--mut);text-transform:uppercase;letter-spacing:.05em}
+.console .fb-split{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}
+@media (max-width:760px){.console .fb-split{grid-template-columns:1fr}}
+.console .btn{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.04);color:var(--txt);border:1px solid rgba(255,255,255,.12);border-radius:999px;transition:background .2s,border-color .2s,transform .15s cubic-bezier(0.16,1,0.3,1);padding:8px 14px;font:inherit;cursor:pointer;text-decoration:none;min-height:36px}
+.console .btn:hover:not(:disabled){border-color:var(--acc);transform:translateY(-1px)}
+.console .btn:active:not(:disabled){transform:translateY(0) scale(.97)}
 .console .btn:disabled{opacity:.5;cursor:not-allowed}
-.console .btn.primary{background:#2457ff;color:#fff;border-color:#2457ff;font-weight:600}.console .btn.primary:hover:not(:disabled){background:#3d6bff;border-color:#3d6bff}
+.console .btn.primary{background:linear-gradient(135deg,#3f72ff,var(--cobalt));color:#fff;border-color:var(--cobalt);font-weight:600}.console .btn.primary:hover:not(:disabled){background:linear-gradient(135deg,#5a84ff,#3d6bff);border-color:#3d6bff}
 .console .btn.danger{border-color:var(--bad);color:var(--bad)}
 .console .btn.sm{padding:4px 10px;min-height:28px;font-size:13px}.console .btn.ghost{background:transparent}.console .btn.wide{width:100%;justify-content:center}
 .console .btn.done{border-color:var(--good)}
 .console input,.console select,.console textarea{background:rgba(0,0,0,.35);color:var(--txt);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font:inherit;max-width:100%}
+.console input::placeholder,.console textarea::placeholder{color:var(--mut);opacity:1}
 .console textarea{width:100%;resize:vertical}
 .console label.field{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--mut)}
 .console .aform{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;margin:10px 0}
@@ -44,19 +63,32 @@
 .console .empty{text-align:center;padding:26px 12px}.console .empty-t{font-weight:650;font-size:17px}
 .console .logincard{max-width:460px;margin:10px auto}.console .loginform{display:grid;gap:12px;margin:12px 0}
 .console .repo-head{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:flex-start}
-.console .repo-name{font-size:24px;margin:4px 0 8px}.console .crumb{font-size:13px;text-decoration:none}
+.console .repo-name{font-size:28px;letter-spacing:-.01em;margin:4px 0 8px}.console .crumb{font-size:13px;text-decoration:none}
 /* KPIs */
-.console .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:12px 0}.console .kpis.tight{grid-template-columns:repeat(2,1fr);margin:0}
+.console .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:12px 0}
+/* Three tiles stacked beside the gauge reads cleaner than a lopsided 2+1 wrap in a half-width column. */
+.console .kpis.tight{grid-template-columns:1fr;gap:10px;margin:0}
 .console .kpi{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px}
-.console .kpi-l{color:var(--mut);font-size:13px}.console .kpi-v{font-size:30px;font-weight:600;letter-spacing:-.03em;line-height:1.2;font-variant-numeric:tabular-nums}.console .kpi-s{font-size:12px}
+.console .kpis.tight .kpi{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:2px 12px;padding:12px 16px}
+.console .kpis.tight .kpi-v{font-size:22px}.console .kpis.tight .kpi-s{flex-basis:100%;text-align:right}
+.console .kpi-l{color:var(--mut);font-size:13px}.console .kpi-v{font-size:34px;font-weight:600;letter-spacing:-.03em;line-height:1.2;font-variant-numeric:tabular-nums}.console .kpi-s{font-size:12px}
+/* The one KPI that's an actual security signal gets the same tinted-border+wash language the console already
+   uses elsewhere (admin cards) — not a new visual idiom, just reused for a KPI that outranks its neighbors. */
+.console .kpi.kpi-crit{border-color:color-mix(in srgb,var(--bad) 45%,var(--line));background:linear-gradient(135deg,color-mix(in srgb,var(--bad) 12%,var(--panel)),var(--panel))}
+.console .kpi.kpi-high{border-color:color-mix(in srgb,var(--high) 45%,var(--line));background:linear-gradient(135deg,color-mix(in srgb,var(--high) 12%,var(--panel)),var(--panel))}
 /* tables */
 .console .tablewrap{overflow-x:auto}.console .tbl{width:100%;border-collapse:collapse;font-size:14px}
 .console .tbl th{text-align:left;color:var(--mut);font-weight:600;padding:8px;border-bottom:1px solid var(--line);white-space:nowrap}
 .console .tbl td{padding:8px;border-bottom:1px solid rgba(140,200,255,.08);vertical-align:top}
+/* Scoped to admin's own tables only, so the accent/hover tint doesn't bleed into the repo/overview tables elsewhere. */
+.admin-card .tbl th{font-weight:650;letter-spacing:.02em;padding:10px 12px;border-bottom:2px solid var(--accent,var(--line))}
+.admin-card .tbl td{padding:10px 12px}
+.admin-card .tbl tbody tr{transition:background .15s}
+.admin-card .tbl tbody tr:hover{background:color-mix(in srgb,var(--accent,var(--acc)) 9%,transparent)}
 .console .clickrow{cursor:pointer}.console .clickrow:hover,.console .clickrow:focus-visible{background:var(--panel2)}
 .console .minisev i{display:inline-block;min-width:20px;text-align:center;font-style:normal;font-size:11px;font-weight:700;color:#04101a;border-radius:4px;margin-left:3px;padding:0 4px}
 /* charts */
-.console .gauge{max-width:260px;margin:0 auto}.console .gauge-n{font-size:40px;font-weight:700;fill:var(--txt)}.console .gauge-l,.console .gauge-t,.console .ax{font-size:11px;fill:var(--mut)}
+.console .gauge{max-width:300px;margin:0 auto}.console .gauge-n{font-size:46px;font-weight:700;fill:var(--txt)}.console .gauge-l,.console .gauge-t,.console .ax{font-size:11px;fill:var(--mut)}
 .console .gauge-arc{transition:stroke-dasharray .8s ease}
 .console .gauge-card{display:flex;flex-direction:column;align-items:center;gap:6px}.console .gauge-meta{text-align:center}
 .console .sevbar{display:flex;height:22px;border-radius:6px;overflow:hidden;background:var(--panel2)}.console .sevbar-seg{min-width:6px}
@@ -91,29 +123,64 @@
 .console .cmp-head{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center;text-align:center}.console .cmp-n{font-size:34px;font-weight:700}.console .cmp-delta{font-size:26px;font-weight:700}
 .console .cmp-list ul{padding-left:18px}.console .plain{padding-left:18px}
 .console .activity{list-style:none;padding:0;margin:0;display:grid;gap:6px;font-size:14px}
-.console .tabs{display:flex;gap:6px;flex-wrap:wrap;border-bottom:1px solid var(--line);margin:10px 0}.console .tab{background:none;border:0;color:var(--mut);padding:8px 12px;cursor:pointer;font:inherit;border-bottom:2px solid transparent}
-.console .tab[aria-selected=true]{color:var(--txt);border-color:var(--acc)}
+.console .tabs{display:flex;gap:4px;flex-wrap:wrap;border-bottom:1px solid var(--line);margin:10px 0 0;padding-bottom:0}
+.console .tab{display:inline-flex;align-items:center;gap:7px;background:none;border:0;border-bottom:2px solid transparent;border-radius:8px 8px 0 0;color:var(--mut);padding:9px 14px;cursor:pointer;font:600 14px/1 inherit;transition:background .18s,color .18s,border-color .18s}
+.console .tab .ic{opacity:.7;transition:opacity .18s}
+.console .tab:hover{background:rgba(255,255,255,.05);color:var(--txt)}
+.console .tab:hover .ic{opacity:1}
+.console .tab[aria-selected=true]{color:var(--txt);border-color:var(--tab-accent,var(--acc));background:color-mix(in srgb,var(--tab-accent,var(--acc)) 15%,transparent)}
+.console .tab[aria-selected=true] .ic{opacity:1;color:var(--tab-accent,var(--acc))}
+/* admin: one identity color per tab (cobalt/teal/acc/warn/good — all already-confirmed tokens), a card chrome
+   with a top accent bar + subtle diagonal gradient wash, and table rows/headers tinted to match. */
+.admin-tab{margin-top:6px}
+.admin-head{display:flex;align-items:baseline;gap:10px;margin:20px 0 10px}
+.admin-head:first-child{margin-top:6px}
+.admin-head .ic{color:var(--accent);flex:none;opacity:1}
+.admin-head h3{margin:0;font-size:16px;font-weight:650}
+.admin-head .mut{margin-left:auto}
+.admin-card{position:relative;background:var(--panel);border:1px solid color-mix(in srgb,var(--accent) 35%,var(--line));border-radius:14px;padding:18px 18px 16px;margin-bottom:8px;overflow:hidden;isolation:isolate}
+.admin-card::after{content:"";position:absolute;inset:0;background:radial-gradient(140% 100% at 0% 0%,color-mix(in srgb,var(--accent) 20%,transparent),transparent 60%);pointer-events:none}
+.admin-card>*{position:relative;z-index:1}
+.admin-card .aform{margin:0}
+.admin-card.table-card{padding:0}
+.admin-card.table-card::after{display:none}
+.admin-card.table-card .tablewrap{padding:2px}
+.admin-card.table-card .tbl th{border-top:0}
 .console .chip{display:inline-block;background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:1px 8px;margin:2px;font-size:13px}
 .console .secret{display:block;background:#070c18;padding:10px;border-radius:6px;word-break:break-all;margin:8px 0}
 .console .disclaimer{margin-top:18px;border-top:1px solid var(--line);padding-top:10px}
 /* menus, dialogs, toasts, drawer */
 .console .menu{position:relative}.console .menu-list{position:absolute;right:0;top:calc(100% + 4px);list-style:none;margin:0;padding:4px;background:var(--panel2);border:1px solid var(--line);border-radius:8px;z-index:10;min-width:230px}
 .console .menu-item{width:100%;text-align:left;background:none;border:0;color:var(--txt);padding:8px 10px;border-radius:6px;cursor:pointer;font:inherit}.console .menu-item:hover,.console .menu-item:focus-visible{background:var(--panel)}
-dialog.dlg,dialog.drawer{background:#0d121b;color:#e8eef9;border:1px solid rgba(140,200,255,.25);border-radius:12px;padding:0;max-width:min(560px,94vw);font:15px/1.5 var(--sans,system-ui),sans-serif}
-dialog.dlg.wide{max-width:min(860px,94vw)}dialog::backdrop{background:rgba(2,6,14,.7)}
+/* Dialogs and toasts mount on <body>, outside .console's DOM subtree, so they can't inherit its custom
+   properties; each declares its own copy of the same console "screen" values instead of repeating raw hex. */
+dialog.dlg,dialog.drawer{--panel:#0d121b;--panel2:#16213a;--txt:#e8eef9;--mut:#9fb0c8;--line:rgba(140,200,255,.25);--acc:#22e1ff;--good:#3ddc97;--bad:#ff6b7a;--warn:#ffb547;
+  background:var(--panel);color:var(--txt);border:1px solid var(--line);border-radius:12px;padding:0;max-width:min(560px,94vw);font:15px/1.5 var(--sans,system-ui),sans-serif;
+  opacity:1;transform:none;transition:opacity .24s cubic-bezier(0.16,1,0.3,1),transform .24s cubic-bezier(0.16,1,0.3,1)}
+dialog.dlg.wide{max-width:min(860px,94vw)}
+dialog::backdrop{background:rgba(2,6,14,.7);opacity:1;transition:opacity .24s}
 dialog.drawer{margin:0 0 0 auto;height:100vh;max-height:100vh;width:min(520px,100vw);border-radius:12px 0 0 12px;overflow:auto}
-dialog .dlg-h{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid rgba(140,200,255,.16)}dialog .dlg-h h2{margin:0;font-size:18px}
-dialog .dlg-b,dialog .as-body{padding:16px;display:grid;gap:10px}dialog .dlg-f{display:flex;justify-content:flex-end;gap:8px;padding:12px 16px;border-top:1px solid rgba(140,200,255,.16)}
-dialog .x{background:none;border:0;color:#9fb0c8;cursor:pointer;padding:6px}dialog .btn{background:#16213a;color:#e8eef9;border:1px solid rgba(140,200,255,.25);border-radius:8px;padding:8px 14px;font:inherit;cursor:pointer}
-dialog .btn.primary{background:#2457ff;color:#fff;border-color:#2457ff;font-weight:600}dialog .btn.danger{border-color:#ff6b7a;color:#ff6b7a}
-dialog textarea,dialog input,dialog select{background:#0a1020;color:#e8eef9;border:1px solid rgba(140,200,255,.25);border-radius:8px;padding:8px;font:inherit;width:100%}
-dialog input[type=checkbox]{width:auto}dialog .mut{color:#9fb0c8}dialog .sm{font-size:13px}dialog code{font-family:ui-monospace,Consolas,monospace}
-dialog .as-label,dialog .warnbox{background:rgba(255,181,71,.1);border:1px solid #ffb547;border-radius:8px;padding:8px 10px}
-dialog .as-badge{font-weight:650;color:#22e1ff}dialog fieldset{border:1px solid rgba(140,200,255,.2);border-radius:8px}dialog .code{background:#070c18;border-radius:8px;overflow:hidden}dialog .code-h{display:flex;justify-content:space-between;padding:4px 10px;font-size:12px}
-dialog pre{margin:0;padding:10px;overflow:auto;font-size:13px;max-height:260px}dialog .skel{height:14px;background:#16213a;border-radius:6px;margin:6px 0}
-.toasts{position:fixed;right:16px;bottom:16px;display:grid;gap:8px;z-index:9999;max-width:min(380px,calc(100vw - 32px))}
-.toast{display:flex;gap:10px;align-items:center;justify-content:space-between;background:#16213a;color:#e8eef9;border:1px solid rgba(140,200,255,.3);border-radius:8px;padding:10px 12px;font:14px var(--sans,system-ui),sans-serif;box-shadow:0 6px 20px #0008}
-.toast.ok{border-color:#3ddc97}.toast.bad{border-color:#ff6b7a}.toast.warn{border-color:#ffb547}.toast .x{background:none;border:0;color:#9fb0c8;cursor:pointer}
+/* Arrival only: each dialog settles into place instead of popping, declared with no JS cost and no effect on
+   how it closes. Browsers without @starting-style just skip straight to the settled state above — never hidden. */
+@starting-style{
+  dialog.dlg[open]{opacity:0;transform:scale(.96) translateY(4px)}
+  dialog.drawer[open]{opacity:0;transform:translateX(28px)}
+  dialog[open]::backdrop{opacity:0}
+}
+dialog .dlg-h{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid var(--line)}dialog .dlg-h h2{margin:0;font-size:18px}
+dialog .dlg-b,dialog .as-body{padding:16px;display:grid;gap:10px}dialog .dlg-f{display:flex;justify-content:flex-end;gap:8px;padding:12px 16px;border-top:1px solid var(--line)}
+dialog .x{background:none;border:0;color:var(--mut);cursor:pointer;padding:6px}dialog .btn{background:var(--panel2);color:var(--txt);border:1px solid var(--line);border-radius:8px;padding:8px 14px;font:inherit;cursor:pointer}
+dialog .btn.primary{background:#2457ff;color:#fff;border-color:#2457ff;font-weight:600}dialog .btn.danger{border-color:var(--bad);color:var(--bad)}
+dialog textarea,dialog input,dialog select{background:#0a1020;color:var(--txt);border:1px solid var(--line);border-radius:8px;padding:8px;font:inherit;width:100%}
+dialog input[type=checkbox]{width:auto}dialog .mut{color:var(--mut)}dialog .sm{font-size:13px}dialog code{font-family:var(--mono,ui-monospace),monospace}
+dialog .glossary{margin:0}dialog .glossary dt{font-weight:650;margin-top:10px}dialog .glossary dt:first-child{margin-top:0}dialog .glossary dd{margin:2px 0 0;color:var(--mut)}
+dialog .as-label,dialog .warnbox{background:rgba(255,181,71,.1);border:1px solid var(--warn);border-radius:8px;padding:8px 10px}
+dialog .as-badge{font-weight:650;color:var(--acc)}dialog fieldset{border:1px solid rgba(140,200,255,.2);border-radius:8px}dialog .code{background:#070c18;border-radius:8px;overflow:hidden}dialog .code-h{display:flex;justify-content:space-between;padding:4px 10px;font-size:12px}
+dialog pre{margin:0;padding:10px;overflow:auto;font-size:13px;max-height:260px}dialog .skel{height:14px;background:var(--panel2);border-radius:6px;margin:6px 0}
+.toasts{--panel2:#16213a;--txt:#e8eef9;--mut:#9fb0c8;--good:#3ddc97;--bad:#ff6b7a;--warn:#ffb547;
+  position:fixed;right:16px;bottom:16px;display:grid;gap:8px;z-index:9999;max-width:min(380px,calc(100vw - 32px))}
+.toast{display:flex;gap:10px;align-items:center;justify-content:space-between;background:var(--panel2);color:var(--txt);border:1px solid rgba(140,200,255,.3);border-radius:8px;padding:10px 12px;font:14px var(--sans,system-ui),sans-serif;box-shadow:0 6px 20px #0008}
+.toast.ok{border-color:var(--good)}.toast.bad{border-color:var(--bad)}.toast.warn{border-color:var(--warn)}.toast .x{background:none;border:0;color:var(--mut);cursor:pointer}
 /* findings explorer */
 .console .ftools{display:grid;gap:10px;margin:6px 0 12px}
 .console .fsearch{display:flex;align-items:center;gap:8px;padding:0 12px;border:1px solid var(--line);border-radius:999px;background:rgba(0,0,0,.35);color:var(--mut)}
@@ -124,8 +191,8 @@ dialog pre{margin:0;padding:10px;overflow:auto;font-size:13px;max-height:260px}d
 .console .frow{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}.console .fsel{display:grid;gap:4px;font-size:12px;color:var(--mut)}
 .console .f-count{font-size:13px;margin:4px 0 8px}
 .console .flist{list-style:none;margin:0;padding:0;display:grid;gap:8px}
-.console .frow-item{border:1px solid var(--line);border-left:3px solid var(--line);border-radius:12px;background:var(--panel);overflow:hidden;transition:border-color .2s}
-.console .sev-b-critical,.console .sev-b-high{border-left-color:var(--bad)}.console .sev-b-medium{border-left-color:var(--warn)}.console .sev-b-low{border-left-color:#7cb4ff}
+.console .frow-item{border:1px solid var(--line);border-radius:12px;background:var(--panel);overflow:hidden;transition:border-color .2s}
+.console .frow-item:hover,.console .frow-item:has(.fhead[aria-expanded=true]){border-color:var(--acc)}
 .console .fhead{width:100%;display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 14px;background:none;border:0;color:var(--txt);font:inherit;text-align:left;cursor:pointer}
 .console .fhead:hover{background:rgba(255,255,255,.03)}
 .console .fhead .ic{transition:transform .25s}.console .fhead[aria-expanded=true] .ic{transform:rotate(90deg)}
@@ -143,7 +210,9 @@ dialog pre{margin:0;padding:10px;overflow:auto;font-size:13px;max-height:260px}d
 @media (max-width:860px){.console .fd-grid{grid-template-columns:1fr}.console .fd-side{border-left:0;padding-left:0;border-top:1px solid var(--line);padding-top:10px}}
 @media (max-width:760px){
   .console{padding:14px;border-radius:16px}.console .grid2{grid-template-columns:1fr}.console .kpis{grid-template-columns:repeat(2,1fr)}
-  .console .burger{display:inline-flex}.console .cnav{display:none;flex-direction:column;width:100%;order:3}.console .cnav.open{display:flex}
+  .console .burger{display:inline-flex}
+  .console .cnav{flex-direction:column;align-items:stretch;width:100%;order:3;max-height:0;overflow:hidden;transition:max-height .35s var(--ease,ease)}
+  .console .cnav.open{max-height:320px;padding-top:4px}
   .console .cmp-head{grid-template-columns:1fr}.console .who{width:100%;justify-content:space-between}
   dialog.drawer{width:100vw;border-radius:0}.console .aform{flex-direction:column;align-items:stretch}
 }

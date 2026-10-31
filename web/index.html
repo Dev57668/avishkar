@@ -34,7 +34,7 @@
       second read
     </a>
     <div class="nav-links" id="nav-links">
-      <a href="#demo">Demo</a><a href="#checks">What it checks</a><a href="#how">How it works</a><a href="#results">Results</a><a href="#faq">Limitations</a>
+      <a href="#story" data-scene="0">What it checks</a><a href="#story" data-scene="2">How it works</a><a href="#story" data-scene="5">Results</a><a href="#faq">Limitations</a>
       <span class="nav-ind" id="nav-ind" aria-hidden="true"></span>
     </div>
     <a class="btn solid sm nav-cta" href="#app">Console</a>
@@ -45,123 +45,151 @@
 <main>
 <!-- ============ INTRO ============ -->
 <section class="wrap intro anchor" id="top">
-  <h1>Second Read <span class="sub">a security-debt scorer for AI-written code</span></h1>
-  <p class="lede">AI assistants write code faster than anyone reviews it. Second Read scans a repository snapshot with deterministic detectors, turns what it finds into a <span class="mono">0&ndash;100</span> security-debt index, and points at the exact lines responsible.</p>
-  <ul class="facts">
-    <li><b>84</b> documented rules</li>
-    <li><b>3</b> required detectors</li>
-    <li><b>390+</b> automated tests</li>
-    <li>SARIF export</li>
-    <li>GitHub check runs</li>
-  </ul>
-  <div class="actions">
-    <a class="btn solid" href="#app">Open the console</a>
-    <a class="btn" href="#how">How it works</a>
+  <div class="intro-grid">
+    <div class="intro-main">
+      <h1>Second <em class="hl">Read</em> <span class="sub">a security-debt scorer for AI-written code</span></h1>
+      <p class="lede">AI assistants write code faster than anyone reviews it. Second Read scans a repository snapshot with deterministic detectors, turns what it finds into a <span class="mono">0&ndash;100</span> security-debt index, and points at the exact lines responsible.</p>
+      <ul class="tags">
+        <li>SARIF export</li>
+        <li>GitHub check runs</li>
+      </ul>
+      <div class="actions">
+        <a class="btn solid" href="#app">Open the console</a>
+        <a class="btn" href="#story" data-scene="2">How it works</a>
+      </div>
+    </div>
+    <ul class="stat-strip" aria-label="At a glance">
+      <li><b>40</b><span>documented rules</span></li>
+      <li><b>3</b><span>required detectors</span></li>
+      <li><b>390+</b><span>automated tests</span></li>
+    </ul>
   </div>
 </section>
 
-<!-- ============ FIG 1: DEMO ============ -->
-<section class="wrap anchor" id="demo">
-  <figure class="fig rv">
-    <div class="fig-body demo">
-      <div class="stage3d"><canvas id="scene" aria-hidden="true"></canvas><div class="stage-fade" aria-hidden="true"></div></div>
-      <aside class="hud" aria-label="Demo replay of a scan of the bundled sample project">
-        <div class="hud-h"><span><span class="demo-tag">Replay</span> <b>vulnerable-python/app.py</b></span><span id="hud-lines">00/66 lines</span></div>
-        <div class="hud-score"><div class="big" id="hud-idx">&mdash;</div><span class="k">security debt index <i>/ 100, higher is worse</i></span><span class="bd" id="hud-band">scoring after scan</span></div>
-        <div class="hud-bar"><i id="hud-prog"></i></div>
-        <ul id="hud-list"></ul>
-        <div class="hud-f"><span>findings <b id="hud-n">0</b></span><span>status <b id="hud-st">scanning</b></span></div>
-      </aside>
-    </div>
-    <figcaption><b>Fig 1.</b> Replay of <span class="mono">python -m avishkar scan sample_projects/vulnerable-python</span>. Each finding appears as the scan reaches its line; the index is only computed after the full pass.</figcaption>
+<!-- ============ FINDINGS STRIP: every finding of the recorded sample scan, one tile each ============ -->
+<section class="wrap strip-sec">
+  <figure class="strip" id="strip" hidden>
+    <div class="strip-idx"><b id="strip-idx"></b><span class="mono">/ 100</span></div>
+    <div class="strip-files" id="strip-files"></div>
+    <ul class="strip-legend" id="strip-legend"></ul>
   </figure>
 </section>
 
-<!-- ============ WHAT IT CHECKS ============ -->
-<section class="wrap blk anchor" id="checks">
-  <h2><span class="num">01</span> What it checks</h2>
-  <div class="cols rv">
-    <div>
-      <h3>Python</h3>
-      <p>An AST detector with alias resolution and same-function data flow: SQL built from strings, shell commands, <span class="mono">eval</span>, pickle and unsafe YAML, weak hashes, disabled TLS checks, debug mode, path handling.</p>
-    </div>
-    <div>
-      <h3>JavaScript, TypeScript, Java, Kotlin, Go, C# and PHP</h3>
-      <p>Token-stream scanners for <span class="mono">eval</span>, command and SQL injection, unsanitized HTML sinks, weak hashes and ciphers, unsafe deserialization, unhardened XML parsers and disabled TLS. They are heuristic: no full parser, no cross-file flow, and no real-world accuracy measurement for the newer languages.</p>
-    </div>
-    <div>
-      <h3>Secrets and dependencies</h3>
-      <p>AWS keys, GitHub and Slack tokens, private keys and hard-coded passwords; outdated or unpinned packages with known CVEs; wildcard CORS.</p>
-    </div>
+<!-- ============ TOUR: one pinned panel, six scenes (replaces the long What it checks / How it works / Results scroll) ============ -->
+<!-- Without JS the scenes simply stack in order; landing.js adds .js-story to pin the panel and swap scenes. -->
+<section class="blk anchor story" id="story">
+  <div class="wrap story-head">
+    <h2>How Second Read <em class="hl">reads your code</em></h2>
+    <p class="sec-sub">Six steps, one panel. Pick a step (or, on a wide screen, just keep scrolling) and the panel changes in place.</p>
   </div>
-  <table class="rules rv">
-    <caption>A sample of the 84 rules. Each one documents its CWE, impact, fix and a secure example.</caption>
-    <thead><tr><th>rule</th><th>what it flags</th><th>CWE</th></tr></thead>
-    <tbody>
-      <tr><td class="mono">PY-SQLI</td><td>SQL built by string formatting</td><td class="mono">89</td></tr>
-      <tr><td class="mono">PY-SHELL</td><td>Shell command execution</td><td class="mono">78</td></tr>
-      <tr><td class="mono">PY-PICKLE</td><td>Unsafe deserialization (pickle)</td><td class="mono">502</td></tr>
-      <tr><td class="mono">JS-INNERHTML</td><td>Unsanitized HTML sink</td><td class="mono">79</td></tr>
-      <tr><td class="mono">SEC-AWS-KEY</td><td>AWS access key id</td><td class="mono">798</td></tr>
-      <tr><td class="mono">DEP-PYYAML</td><td>PyYAML with arbitrary code execution (CVE-2020-14343)</td><td class="mono">1395</td></tr>
-    </tbody>
-  </table>
-  <p class="small">Unsupported languages, such as Rust, are reported as <i>not evaluated</i>, never as clean.</p>
-</section>
+  <div class="story-track" id="story-track">
+    <div class="story-pin">
+      <div class="wrap story-grid">
+        <ol class="steps" id="story-steps" aria-label="Tour steps">
+          <li class="step"><button type="button" data-i="0" aria-controls="scene-0"><span class="ttl">Three detectors, one pass</span></button>
+            <p>Python gets an AST detector, JavaScript/TypeScript a heuristic token scanner, and every file is checked for secrets and risky dependencies.</p></li>
+          <li class="step"><button type="button" data-i="1" aria-controls="scene-1"><span class="ttl">40 rules, each with a CWE</span></button>
+            <p>Every rule documents its CWE, impact, fix and a secure example. Languages without a detector are reported as not evaluated.</p></li>
+          <li class="step"><button type="button" data-i="2" aria-controls="scene-2"><span class="ttl">Upload to decision in five steps</span></button>
+            <p>The archive is unpacked defensively, parsed in a separate process and never executed.</p></li>
+          <li class="step"><button type="button" data-i="3" aria-controls="scene-3"><span class="ttl">Every point is traceable</span></button>
+            <p>Each finding contributes a listed amount. The weights are provisional and uncalibrated.</p></li>
+          <li class="step"><button type="button" data-i="4" aria-controls="scene-4"><span class="ttl">One finding, one line</span></button>
+            <p>Rule, location and fix come straight from the detector, not from a model.</p></li>
+          <li class="step"><button type="button" data-i="5" aria-controls="scene-5"><span class="ttl">Does fixing code move the score?</span></button>
+            <p>Recorded runs on the bundled vulnerable sample, before and after the fix pack.</p></li>
+        </ol>
 
-<!-- ============ HOW IT WORKS ============ -->
-<section class="wrap blk anchor" id="how">
-  <h2><span class="num">02</span> How it works</h2>
-  <div class="pipe-wrap">
-    <div class="pipe-line" aria-hidden="true"><i></i></div>
-    <ol class="pipe rv">
-      <li><span class="pn">1</span><b>Upload</b><span>a .zip of the repo + a name</span></li>
-      <li><span class="pn">2</span><b>Safe unpack</b><span>path traversal, symlinks and zip bombs are rejected</span></li>
-      <li><span class="pn">3</span><b>Detectors</b><span>secrets &middot; code patterns &middot; Python AST, in an isolated process</span></li>
-      <li><span class="pn">4</span><b>Score</b><span>impact &times; exposure &times; confidence (&times; age, off by default) &rarr; <span class="mono">0&ndash;100</span>. Fix effort is tracked separately, never in the score</span></li>
-      <li><span class="pn">5</span><b>Decide</b><span>pass / warn / would block, plus SARIF and a GitHub check</span></li>
-    </ol>
-  </div>
-  <div class="score-note rv">
-    <code class="formula">D = impact &times; exposure &times; confidence &times; age<br>index = 100 &middot; (1 &minus; e<sup>&minus;&Sigma;D / 20</sup>)</code>
-    <p>Each finding's contribution is listed on the dashboard and the total is recomputed as a reproducibility check. If any detector crashes or times out, the run is marked <u>incomplete</u>, never &ldquo;clean&rdquo;.</p>
-  </div>
-</section>
+        <div class="screen" aria-label="Tour panel">
+          <div class="screen-bar" aria-hidden="true"><span class="dots"><i></i><i></i><i></i></span><span class="mono">second read &middot; tour</span><span class="mono" id="story-n">step 1 of 6</span></div>
+          <div class="scenes">
 
-<!-- ============ RESULTS ============ -->
-<section class="wrap blk anchor" id="results">
-  <h2><span class="num">03</span> Does fixing code move the score?</h2>
-  <div class="two">
-    <div class="rv">
-      <figure class="fig">
-        <div class="codefig" id="code">
-          <div class="code-h">net_tools.py <span id="scrub-p">assistant-written, unreviewed</span></div>
-          <ol>
+            <section class="scene" id="scene-0" aria-label="Step 1: what it checks">
+              <h3 class="scene-k">What it checks</h3>
+              <ul class="det">
+                <li><span class="cn">1</span><div><b>Python</b><p>An AST detector with alias resolution and same-function data flow: SQL built from strings, shell commands, <span class="mono">eval</span>, pickle and unsafe YAML, weak hashes, disabled TLS checks, debug mode, path handling.</p></div></li>
+                <li><span class="cn">2</span><div><b>JavaScript / TypeScript</b><p>A token-stream scanner for <span class="mono">eval</span>, command and SQL injection, unsanitized HTML sinks, weak hashes and disabled TLS. It is heuristic: no full parser, no cross-file flow.</p></div></li>
+                <li><span class="cn">3</span><div><b>Secrets and dependencies</b><p>AWS keys, GitHub and Slack tokens, private keys and hard-coded passwords; outdated or unpinned packages with known CVEs; wildcard CORS.</p></div></li>
+              </ul>
+            </section>
+
+            <section class="scene" id="scene-1" aria-label="Step 2: the rules">
+              <h3 class="scene-k">A sample of the rules</h3>
+              <table class="rules">
+                <caption>A sample of the 40 rules. Each one documents its CWE, impact, fix and a secure example.</caption>
+                <thead><tr><th>rule</th><th>what it flags</th><th>CWE</th></tr></thead>
+                <tbody>
+                  <tr><td class="mono">PY-SQLI</td><td>SQL built by string formatting</td><td class="mono">89</td></tr>
+                  <tr><td class="mono">PY-SHELL</td><td>Shell command execution</td><td class="mono">78</td></tr>
+                  <tr><td class="mono">PY-PICKLE</td><td>Unsafe deserialization (pickle)</td><td class="mono">502</td></tr>
+                  <tr><td class="mono">JS-INNERHTML</td><td>Unsanitized HTML sink</td><td class="mono">79</td></tr>
+                  <tr><td class="mono">SEC-AWS-KEY</td><td>AWS access key id</td><td class="mono">798</td></tr>
+                  <tr><td class="mono">DEP-PYYAML</td><td>PyYAML with arbitrary code execution (CVE-2020-14343)</td><td class="mono">1395</td></tr>
+                </tbody>
+              </table>
+              <p class="small">Unsupported languages, such as Java, are reported as <i>not evaluated</i>, never as clean.</p>
+            </section>
+
+            <section class="scene" id="scene-2" aria-label="Step 3: how it works">
+              <h3 class="scene-k">How it works</h3>
+              <div class="pipe-wrap">
+                <div class="pipe-line" aria-hidden="true"><i></i></div>
+                <ol class="pipe">
+                  <li><span class="pn">1</span><b>Upload</b><span>a .zip of the repo + a name</span></li>
+                  <li><span class="pn">2</span><b>Safe unpack</b><span>path traversal, symlinks and zip bombs are rejected</span></li>
+                  <li><span class="pn">3</span><b>Detectors</b><span>secrets &middot; code patterns &middot; Python AST, in an isolated process</span></li>
+                  <li><span class="pn">4</span><b>Score</b><span>impact &times; exposure &times; confidence (&times; age, off by default) &rarr; <span class="mono">0&ndash;100</span>. Fix effort is tracked separately, never in the score</span></li>
+                  <li><span class="pn">5</span><b>Decide</b><span>pass / warn / would block, plus SARIF and a GitHub check</span></li>
+                </ol>
+              </div>
+            </section>
+
+            <section class="scene" id="scene-3" aria-label="Step 4: the score">
+              <h3 class="scene-k">The score</h3>
+              <code class="formula">D = impact &times; exposure &times; confidence &times; age<br>index = 100 &middot; (1 &minus; e<sup>&minus;&Sigma;D / 20</sup>)</code>
+              <p>Each finding's contribution is listed on the dashboard and the total is recomputed as a reproducibility check.</p>
+              <p>If any detector crashes or times out, the run is marked <u>incomplete</u>, never &ldquo;clean&rdquo;.</p>
+              <p class="small">The index is a prioritization signal, not a probability of compromise or a compliance grade.</p>
+            </section>
+
+            <section class="scene" id="scene-4" aria-label="Step 5: one finding, one line">
+              <figure class="fig-plain">
+                <div class="codefig" id="code">
+                  <div class="code-h">net_tools.py <span id="scrub-p">assistant-written, unreviewed</span></div>
+                  <ol>
 <li><span class="k">import</span> os</li>
 <li> </li>
 <li> </li>
 <li><span class="k">def</span> <span class="f">ping_host</span>(host: str) -&gt; int:</li>
 <li>    <span class="s">"""Return 0 if the host answers a single ping."""</span></li>
 <li class="target hit">    <span class="k">return</span> os.system(<span class="s">f"ping -c 1 {host}"</span>)</li>
-<li class="ann" id="annot"><div class="t"><span class="sev high">PY-SHELL &middot; high</span><span>net_tools.py:6</span></div><p><b>Shell command execution.</b> The host name goes straight into a shell.</p><p class="fx">Fix: pass an argument list with <code>shell=False</code> and validate inputs.</p></li>
+<li class="ann open" id="annot"><div class="t"><span class="sev high">PY-SHELL &middot; high</span><span>net_tools.py:6</span></div><p><b>Shell command execution.</b> The host name goes straight into a shell.</p><p class="fx">Fix: pass an argument list with <code>shell=False</code> and validate inputs.</p></li>
 <li> </li>
 <li><span class="k">def</span> <span class="f">load_settings</span>(path: str) -&gt; dict:</li>
 <li>    <span class="k">with</span> open(path) <span class="k">as</span> f:</li>
 <li>        <span class="k">return</span> dict(line.strip().split(<span class="s">"="</span>, 1) <span class="k">for</span> line <span class="k">in</span> f <span class="k">if</span> <span class="s">"="</span> <span class="k">in</span> line)</li>
-          </ol>
+                  </ol>
+                </div>
+                <figcaption><b>Fig 2.</b> One finding, one line. Rule, location and fix come straight from the detector.</figcaption>
+              </figure>
+            </section>
+
+            <section class="scene" id="scene-5" aria-label="Step 6: does fixing code move the score">
+              <div class="runs-wrap">
+                <table class="runs">
+                  <caption>Fig 3. Real runs on <span class="mono">sample_projects/vulnerable-python</span> (recorded output, regenerated by a script)</caption>
+                  <thead><tr><th>run</th><th>index</th><th>findings</th><th>raw units</th><th>decision</th></tr></thead>
+                  <tbody id="fig3-body"><tr><td colspan="5">Loading recorded scan results…</td></tr></tbody>
+                </table>
+              </div>
+              <div class="diff"><div class="dh">one of the 18 fixes &middot; app.py:46</div><div class="del">- result = os.system(f"ping {host}")</div><div class="add">+ result = subprocess.run(["ping", "-c", "1", host], check=False).returncode</div></div>
+              <p class="note-line" id="fig3-note">recorded results unavailable</p>
+              <p class="small">* Report-only mode: the policy says what it <i>would</i> block, nothing is blocked. Weights are provisional and uncalibrated.</p>
+            </section>
+
+          </div>
         </div>
-        <figcaption><b>Fig 2.</b> One finding, one line. Rule, location and fix come straight from the detector. <span class="scrub-hint">Hover the code and scroll to run the scan.</span></figcaption>
-      </figure>
-    </div>
-    <div class="rv">
-      <table class="runs">
-        <caption>Fig 3. Real runs on <span class="mono">sample_projects/vulnerable-python</span> (recorded output, regenerated by a script)</caption>
-        <thead><tr><th>run</th><th>index</th><th>findings</th><th>raw units</th><th>decision</th></tr></thead>
-        <tbody id="fig3-body"><tr><td colspan="5">Loading recorded scan results…</td></tr></tbody>
-      </table>
-      <div class="diff"><div class="dh">one of the 18 fixes &middot; app.py:46</div><div class="del">- result = os.system(f"ping {host}")</div><div class="add">+ result = subprocess.run(["ping", "-c", "1", host], check=False).returncode</div></div>
-      <p class="note-line" id="fig3-note">recorded results unavailable</p>
-      <p class="small">* Report-only mode: the policy says what it <i>would</i> block, nothing is blocked. Weights are provisional and uncalibrated.</p>
+      </div>
     </div>
   </div>
 </section>
@@ -169,7 +197,7 @@
 <!-- ============ CONSOLE ============ -->
 <section class="blk app anchor" id="app">
   <div class="wrap">
-    <h2><span class="num">04</span> The console</h2>
+    <h2>The <em class="hl">console</em></h2>
     <p class="sec-sub">Upload a snapshot or run a bundled sample, then triage findings, rescan and compare.</p>
     <noscript><p>The console needs JavaScript.</p></noscript>
     <div id="console" class="console" aria-live="polite"></div>
@@ -178,23 +206,26 @@
 
 <!-- ============ LIMITATIONS ============ -->
 <section class="wrap blk anchor" id="faq">
-  <h2><span class="num">05</span> Limitations &amp; what we'd do next</h2>
+  <h2>Limitations &amp; <em class="hl">what we'd do next</em></h2>
   <p class="sec-sub">The index is a prioritization signal from provisional, uncalibrated weights. It is not a probability of compromise, a compliance grade, or proof that code is safe.</p>
   <div class="faq rv">
     <details open><summary>Is zero findings a pass?</summary><div class="faq-a"><p>No. Detectors only know the patterns they were written for. An empty result means nothing was detected, not that the code is secure.</p></div></details>
     <details><summary>How accurate are the detectors?</summary><div class="faq-a"><p>The calibration corpus is about 80 small labelled cases written by us, split into tuning and held-out sets, with no independent second reviewer. Held-out recall was about 0.8, so real misses exist, and nothing is calibrated or approved.</p></div></details>
-    <details><summary>Which languages are covered?</summary><div class="faq-a"><p>Python uses an AST detector; JavaScript/TypeScript, Java, Kotlin, Go, C# and PHP use heuristic token-stream scanners (no full parser, no cross-file data flow). Other languages, such as Rust, are reported as not evaluated, never as clean.</p></div></details>
+    <details><summary>Which languages are covered?</summary><div class="faq-a"><p>Python uses an AST detector; JavaScript/TypeScript use a heuristic token-stream scanner (no full parser, no cross-file data flow). Other languages, such as Java, are reported as not evaluated, never as clean.</p></div></details>
     <details><summary>Can the AI assistant change a result?</summary><div class="faq-a"><p>No. It is off by default and asks for consent first. You see the exact payload, secrets are redacted, and its explanations can't change severity, state or score.</p></div></details>
     <details><summary>What would we do with another week?</summary><div class="faq-a"><ul class="ticks"><li>Calibrate the weights on real, labelled repositories.</li><li>A real JS/TS parser and cross-file taint tracking.</li><li>Docker sandbox on by default (the only real isolation boundary).</li><li>Independent second-reviewer labels on real repositories.</li></ul></div></details>
   </div>
-  <p class="stack"><span>Python</span><span>FastAPI</span><span>SQLite / PostgreSQL</span><span>Semgrep + Gitleaks (optional)</span><span>Three.js</span><span>GSAP</span></p>
+  <div class="faq-close rv">
+    <p>Still the most transparent read you&rsquo;ll get on your AI-written code.</p>
+    <a class="btn solid" href="#app">Open the console</a>
+  </div>
+  <p class="stack"><span>Python</span><span>FastAPI</span><span>SQLite / PostgreSQL</span><span>Semgrep + Gitleaks (optional)</span></p>
 </section>
 </main>
 
 <footer><div class="wrap"><span>second read &middot; built for the Avishkar Industrial-Ready Hackathon</span><span>score-v1 &middot; provisional weights</span></div></footer>
 
 <script type="module" src="/static/app/main.js"></script>
-<script src="/static/vendor/gsap.min.js"></script>
 <script type="module" src="/static/landing.js"></script>
 </body>
 </html>

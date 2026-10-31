@@ -1,7 +1,8 @@
 // Vulnerability explorer: search, filters, sorting, expandable details with CWE, explanation, impact, fix and secure example.
 import { api, qs, session } from './api.js';
-import { h, clear, icon, num, cap, pill, sevPill, tip, toast, copyBtn, dialog, confirmDialog, debounce, skeleton, emptyState, errorState, SEV, sr } from './ui.js';
+import { h, clear, icon, num, cap, pill, sevPill, tip, toast, copyBtn, dialog, confirmDialog, debounce, skeleton, emptyState, errorState, SEV, sr, staggerIn, REDUCED_MOTION, EASE_SETTLE } from './ui.js';
 import { openAssistant } from './assistant.js';
+import { canUseAssistant } from './shared.js';
 
 const STATES = ['open', 'fixed', 'accepted_risk', 'false_positive', 'duplicate', 'not_applicable'];
 const ASSURANCE = {
@@ -85,6 +86,7 @@ export function explorer({ repoId, runId, repoName, onChange }) {
     }
     for (const f of st.items) list.append(row(f));
     more.hidden = !st.next;
+    staggerIn(list, '.frow-item');
   }
 
   function row(f) {
@@ -94,6 +96,9 @@ export function explorer({ repoId, runId, repoName, onChange }) {
         const open = head.getAttribute('aria-expanded') !== 'true';
         head.setAttribute('aria-expanded', String(open)); body.hidden = !open; li.classList.toggle('open', open);
         if (open && !body.dataset.loaded) { body.dataset.loaded = '1'; await fillDetail(body, f); }
+        // Closing exits instantly (fastest possible exit); opening fades the now-settled content in,
+        // so a dense detail panel doesn't just pop — skipped under reduced motion, same as elsewhere.
+        if (open && !REDUCED_MOTION && body.animate) body.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 220, easing: EASE_SETTLE });
       } },
       icon('chevron'), sevPill(f.severity),
       h('span', { class: 'ft' }, h('b', {}, f.title), h('span', { class: 'mut mono sm' }, ` ${f.location || ''}`)),
@@ -137,7 +142,7 @@ export function explorer({ repoId, runId, repoName, onChange }) {
           h('h4', {}, 'History'), h('p', { class: 'sm' }, `State: ${cap(d.state)}`, h('br'), `Seen in ${d.instances.length} scan(s)`),
           d.dispositions && d.dispositions.length ? h('ul', { class: 'sm hist' }, d.dispositions.map((x) => h('li', {}, `${cap(x.type)} by ${x.actor}: ${x.rationale}`))) : null,
           triage(d, () => { onChange && onChange(); reload(); }),
-          h('button', { class: 'btn', type: 'button', onclick: () => openAssistant({ repoId, runId, finding: d, repoName }) }, icon('spark'), ' Ask AI about this'))));
+          canUseAssistant() ? h('button', { class: 'btn', type: 'button', onclick: () => openAssistant({ repoId, runId, finding: d, repoName }) }, icon('spark'), ' Ask AI about this') : null)));
   }
 
   function triage(d, done) {

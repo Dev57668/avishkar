@@ -22,35 +22,41 @@ export async function repoView(root, repoId, go) {
     ? h('div', { class: 'warnbox', role: 'alert' }, h('b', {}, 'The latest analysis did not complete. '), 'This is not a pass and its score is not shown. ', d.coverage && Object.keys(d.coverage.notEvaluated).length ? 'Not evaluated: ' + Object.entries(d.coverage.notEvaluated).map(([k, v]) => `${k} (${v} file${v > 1 ? 's' : ''})`).join(', ') + '.' : '')
     : null;
 
+  // Debt units and the normalized index are the same metric, pre/post transform, not two separate facts — show
+  // them together in the gauge's own detail rather than as a competing fourth KPI tile (distill: redundant numbers).
   const gaugeCard = h('div', { class: 'card gauge-card' }, gauge(sc ? sc.normalizedIndex : null),
     h('div', { class: 'gauge-meta' },
       sc && sc.delta != null ? h('div', { class: sc.delta < 0 ? 'good' : sc.delta > 0 ? 'bad' : 'mut' }, `${sc.delta > 0 ? '+' : ''}${num(sc.delta)} vs previous scan (${num(sc.previousIndex)})`) : h('div', { class: 'mut' }, sc ? 'First complete scan: nothing to compare yet' : 'No score yet'),
-      sc ? h('div', { class: 'mut sm' }, `${sc.scoreVersion} · K=${sc.k} · uncalibrated`) : null,
+      sc ? h('div', { class: 'mut sm' }, `${sc.scoreVersion} · K=${sc.k} · uncalibrated · ${num(sc.grossUnits, 2)} debt units (raw, open only: ${num(sc.rawUnits, 2)})`) : null,
       h('div', { class: 'mut sm' }, tip('What does this mean?', 'A prioritization index from provisional weights. It is not a probability of compromise or proof of safety.'))));
 
+  // Triage is the actual job this view supports, so the explorer sits right under the decision/gauge
+  // instead of after seven read-only charts (critique: console P1, "buried actionable surface").
   root.append(head, incomplete || '',
     h('div', { class: 'grid2' }, gaugeCard,
       h('div', { class: 'kpis tight' },
-        kpi('Open findings', String(d.totalFindings), `${d.severity.critical} critical · ${d.severity.high} high`),
+        kpi('Open findings', String(d.totalFindings), `${d.severity.critical} critical · ${d.severity.high} high`, null, d.severity.critical ? 'kpi-crit' : d.severity.high ? 'kpi-high' : ''),
         kpi('Files scanned', d.filesScanned == null ? 'n/a' : String(d.filesScanned), d.coverage.analyzedSourceFiles != null ? `${d.coverage.analyzedSourceFiles} source files analyzed` : ''),
-        kpi('Scans', String(d.runs), 'recorded'),
-        kpi('Debt units', sc ? num(sc.grossUnits, 2) : 'n/a', sc ? `raw (open only): ${num(sc.rawUnits, 2)}` : ''))),
-    section('sev', 'Open findings by severity', severityBar(d.severity)),
+        kpi('Scans', String(d.runs), 'recorded'))),
+    section('find', 'Vulnerability explorer', latest ? explorer({ repoId, runId: latest.status === 'complete' ? latest.runId : undefined, repoName: name, onChange: () => {} }) : emptyState('No scans yet', 'Run a scan to see findings.')),
+    // One card for every way to slice the same findings set (severity, category, file) instead of three separate
+    // card shells repeating "open findings" framing — severity leads full-width since it's the primary signal.
+    section('breakdown', 'Findings breakdown', h('div', { class: 'fb' },
+      h('div', { class: 'fb-sev' }, h('h3', {}, 'By severity'), severityBar(d.severity)),
+      h('div', { class: 'fb-split' },
+        h('div', {}, h('h3', {}, 'By category'), hbars(Object.entries(d.categories).map(([k, v]) => ({ label: cap(k), value: v })), { empty: 'No open findings.', unit: '' })),
+        h('div', {}, h('h3', {}, 'Most vulnerable files'), hbars(d.topFiles.map((f) => ({ label: f.path, value: f.debt, color: SEV_COLOR[f.worst], sub: `${f.findings} finding(s) · worst: ${f.worst}`, tip: `${f.path}: ${num(f.debt, 2)} debt units` })), { empty: 'No files with counted findings.' }))))),
     h('div', { class: 'grid2' },
       section('trend', 'Security debt index over time', trendChart(d.trend.map((t) => ({ y: t.normalizedIndex, ts: t.startedAt, status: t.status, sub: `${t.findings} counted finding(s) · ${t.commitSha || ''}` })))),
-      section('files', 'Most vulnerable files', hbars(d.topFiles.map((f) => ({ label: f.path, value: f.debt, color: SEV_COLOR[f.worst], sub: `${f.findings} finding(s) · worst: ${f.worst}`, tip: `${f.path}: ${num(f.debt, 2)} debt units` })), { empty: 'No files with counted findings.' }))),
-    h('div', { class: 'grid2' },
-      section('cats', 'Open findings by category', hbars(Object.entries(d.categories).map(([k, v]) => ({ label: cap(k), value: v })), { empty: 'No open findings.', unit: '' })),
-      section('act', 'Recent activity', activity(d.activity))));
+      section('act', 'Recent activity', activity(d.activity), null, 'secondary')));
 
   const slot = h('div', {});
-  root.append(section('score', 'Why this score', slot, null));
+  root.append(section('score', 'Why this score', slot, null, 'secondary'));
   if (latest) lazyExplain(slot, latest.runId, sc);
   const cmp = h('div', {});
-  root.append(section('cmp', 'Compare scans (before / after)', cmp));
+  root.append(section('cmp', 'Compare scans (before / after)', cmp, null, 'secondary'));
   compareView(cmp, repoId, d.runs);
-  root.append(section('find', 'Vulnerability explorer', latest ? explorer({ repoId, runId: latest.status === 'complete' ? latest.runId : undefined, repoName: name, onChange: () => {} }) : emptyState('No scans yet', 'Run a scan to see findings.')),
-    h('p', { class: 'mut sm disclaimer' }, d.disclaimer));
+  root.append(h('p', { class: 'mut sm disclaimer' }, d.disclaimer));
 }
 
 function activity(items) {

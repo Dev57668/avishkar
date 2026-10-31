@@ -28,7 +28,7 @@ export async function overviewView(root, go) {
           return h('tr', { class: 'clickrow', tabindex: '0', onclick: () => go(`#/repo/${r.id}`), onkeydown: (e) => { if (e.key === 'Enter') go(`#/repo/${r.id}`); } },
             h('td', {}, h('b', {}, r.name)),
             h('td', { class: 'mono' }, r.normalizedIndex == null ? h('span', { class: 'mut', title: 'No calculated score (no scan, or the analysis was incomplete)' }, 'n/a') : num(r.normalizedIndex)),
-            h('td', {}, String(open), ' ', h('span', { class: 'minisev' }, SEV_ORDER.filter((s) => r.severity[s]).map((s) => h('i', { style: `background:${SEV_COLOR[s]}`, title: `${r.severity[s]} ${s}` }, r.severity[s])))),
+            h('td', {}, String(open), ' ', h('span', { class: 'minisev' }, SEV_ORDER.filter((s) => r.severity[s]).map((s) => h('i', { style: `background:${SEV_COLOR[s]}`, title: `${r.severity[s]} ${s}`, 'aria-label': `${r.severity[s]} ${s}` }, r.severity[s])))),
             h('td', {}, h('span', { class: `pill health-${r.health}` }, HEALTH[r.health] || r.health)),
             h('td', { class: 'mono' }, String(r.runs)), h('td', {}, r.lastScan ? rel(r.lastScan) : '–'),
             h('td', {}, h('button', { class: 'btn sm', type: 'button', 'aria-label': `Open ${r.name}`, onclick: (e) => { e.stopPropagation(); go(`#/repo/${r.id}`); } }, 'Open')));

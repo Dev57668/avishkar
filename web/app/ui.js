@@ -1,6 +1,14 @@
 // UI primitives. Everything is built with DOM APIs (textContent / createElement): API data is never parsed as HTML,
 // so there is no injection path from scan results, file names or evidence into the page.
 
+// Shared with every console module so each JS-driven animation checks it once, the same way landing.js's own
+// REDUCED gate already works — reduced motion means less/gentler movement, not erasing state feedback entirely.
+export const REDUCED_MOTION = matchMedia('(prefers-reduced-motion: reduce)').matches;
+// One shared exponential ease-out for entrances — a prior version of this curve added a small overshoot to read
+// as "spring", but the project's own detector correctly flagged that as bounce/elastic easing ("dated and tacky").
+// A clean decelerate reads as premium without it; every exit keeps its own plain accelerate curve.
+export const EASE_SETTLE = 'cubic-bezier(0.16, 1, 0.3, 1)';
+
 export function h(tag, props = {}, ...kids) {
   const el = document.createElement(tag);
   for (const [k, v] of Object.entries(props || {})) {
@@ -53,7 +61,7 @@ export const SEV = ['critical', 'high', 'medium', 'low', 'informational'];
 
 /* ---------- small components ---------- */
 export const sevPill = (sev) => h('span', { class: `pill sev-${sev}`, title: `${cap(sev)} severity` }, cap(sev));
-export const pill = (text, cls = '', title = '') => h('span', { class: `pill ${cls}`, title: title || false }, text);
+export const pill = (text, cls = '', title = '') => h('span', { class: `pill ${cls}`, title: title || false, 'aria-label': title ? `${text}: ${title}` : false }, text);
 export const tip = (text, tipText) => h('span', { class: 'tip', tabindex: '0', 'data-tip': tipText, 'aria-label': `${text}: ${tipText}` }, text);
 export const icon = (name) => {
   const paths = {
@@ -61,6 +69,8 @@ export const icon = (name) => {
     chevron: 'M8 5l8 7-8 7', download: 'M12 4v11m0 0l-4-4m4 4l4-4M5 20h14', x: 'M6 6l12 12M18 6L6 18',
     spark: 'M12 3l2 6 6 2-6 2-2 6-2-6-6-2 6-2z', shield: 'M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z', play: 'M7 5l12 7-12 7z',
     refresh: 'M20 12a8 8 0 1 1-3-6.2M20 4v5h-5', menu: 'M4 7h16M4 12h16M4 17h16', branch: 'M6 3v12M6 21a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM18 9a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM18 9c0 5-12 3-12 6',
+    user: 'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21c0-4.4 3.6-7 8-7s8 2.6 8 7',
+    key: 'M9 16a5 5 0 1 0 0-10 5 5 0 0 0 0 10zM13 11h9m-3 0v4m-3-4v3', queue: 'M4 7h16M4 12h16M4 17h10',
   };
   return svg('svg', { class: 'ic', viewBox: '0 0 24 24', width: 16, height: 16, 'aria-hidden': 'true', fill: 'none', stroke: 'currentColor',
     'stroke-width': 2, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, svg('path', { d: paths[name] || '' }));
@@ -83,9 +93,24 @@ export function toast(message, type = 'info', ms = 4500) {
     toastHost = h('div', { class: 'toasts', role: 'status', 'aria-live': 'polite' });
     document.body.append(toastHost);
   }
-  const t = h('div', { class: `toast ${type}` }, h('span', {}, message), h('button', { class: 'x', type: 'button', 'aria-label': 'Dismiss notification', onclick: () => t.remove() }, icon('x')));
+  const dismiss = () => {
+    if (!t.isConnected) return;
+    if (REDUCED_MOTION || !t.animate) { t.remove(); return; }
+    const a = t.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateX(16px)' }], { duration: 160, easing: 'cubic-bezier(.4,0,1,1)' });
+    a.onfinish = () => t.remove();
+  };
+  const t = h('div', { class: `toast ${type}` }, h('span', {}, message), h('button', { class: 'x', type: 'button', 'aria-label': 'Dismiss notification', onclick: dismiss }, icon('x')));
   toastHost.append(t);
-  if (ms) setTimeout(() => t.remove(), ms);
+  if (!REDUCED_MOTION && t.animate) t.animate([{ opacity: 0, transform: 'translateY(8px)' }, { opacity: 1, transform: 'none' }], { duration: 240, easing: EASE_SETTLE });
+  // Pause the auto-dismiss on hover/focus so a screen-reader or slow reader isn't racing the timer.
+  let remaining = ms, timer = null, last = 0;
+  const arm = () => { if (remaining > 0) { last = Date.now(); timer = setTimeout(dismiss, remaining); } };
+  const pause = () => { if (timer) { clearTimeout(timer); timer = null; remaining -= Date.now() - last; } };
+  if (ms) {
+    arm();
+    t.addEventListener('mouseenter', pause); t.addEventListener('mouseleave', arm);
+    t.addEventListener('focusin', pause); t.addEventListener('focusout', arm);
+  }
   return t;
 }
 
@@ -130,3 +155,12 @@ export const confirmDialog = ({ title, message, confirmLabel = 'Confirm', danger
 /* ---------- misc ---------- */
 export function debounce(fn, ms = 250) { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; }
 export const sr = (text) => h('span', { class: 'sr' }, text);
+
+// A list that just appeared acknowledges itself as a list (capped, so a long table never turns into a show).
+// Skipped entirely under reduced motion, same as every other JS-driven animation in the console.
+export function staggerIn(container, selector, { max = 8, step = 18, duration = 220 } = {}) {
+  if (REDUCED_MOTION || typeof container.animate !== 'function') return;
+  const items = [...container.querySelectorAll(selector)].slice(0, max);
+  items.forEach((el, i) => el.animate([{ opacity: 0, transform: 'translateY(4px)' }, { opacity: 1, transform: 'none' }],
+    { duration, delay: i * step, easing: EASE_SETTLE, fill: 'backwards' }));
+}
