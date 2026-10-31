@@ -1,0 +1,100 @@
+{
+  "name": "Ruby notes API",
+  "language": "Ruby",
+  "kind": "vulnerable",
+  "description": "A Sinatra API with SQL injection via string interpolation, path traversal, command injection, MD5 password hashing, insecure random, XSS, disabled TLS verification and hard-coded credentials. Intentionally insecure, for education.",
+  "expected": "Findings from the Ruby token scanner.",
+  "fixes": [
+    {
+      "id": "rb-secret",
+      "title": "Read secrets from environment variables",
+      "file": "app.rb",
+      "removes": ["RB-SECRET-ASSIGN"],
+      "explanation": "Credentials are no longer in the source; rotate any that were committed.",
+      "edits": [
+        ["ADMIN_SECRET = \"ruby-admin-token-9f2c3d1a\"", "ADMIN_SECRET = ENV.fetch('ADMIN_SECRET')"],
+        ["API_KEY = \"sk-ruby-plaintext-api-key-8b4e7d2a\"", "API_KEY = ENV.fetch('API_KEY')"]
+      ]
+    },
+    {
+      "id": "rb-sqli",
+      "title": "Use parameterised SQLite queries",
+      "file": "app.rb",
+      "removes": ["RB-SQLI"],
+      "explanation": "Owner and search term are passed as bound parameters, not interpolated into the SQL text.",
+      "edits": [
+        ["DB.execute(\"SELECT id, title FROM notes WHERE owner = '#{owner}'\")",
+         "DB.execute('SELECT id, title FROM notes WHERE owner = ?', owner)"],
+        ["DB.execute(\"SELECT id, title FROM notes WHERE title LIKE '%#{term}%'\")",
+         "DB.execute('SELECT id, title FROM notes WHERE title LIKE ?', \"%#{term}%\")"]
+      ]
+    },
+    {
+      "id": "rb-path",
+      "title": "Confine file reads to the notes directory",
+      "file": "app.rb",
+      "removes": ["RB-PATH"],
+      "explanation": "expand_path and a start_with? check prevent traversal above /srv/notes.",
+      "edits": [
+        ["  content = File.read(\"/srv/notes/#{name}\")",
+         "  base = '/srv/notes'\n  safe = File.expand_path(name, base)\n  halt 400 unless safe.start_with?(base + '/')\n  content = File.read(safe)"]
+      ]
+    },
+    {
+      "id": "rb-cmdi",
+      "title": "Escape the directory argument before the shell sees it",
+      "file": "app.rb",
+      "removes": ["RB-CMDI"],
+      "explanation": "Shellwords.escape ensures the argument cannot contain shell metacharacters.",
+      "edits": [
+        ["  output = `ls -la #{cmd}`",
+         "  dir = Shellwords.escape(cmd.to_s)\n  output = `ls -la #{dir}`"]
+      ]
+    },
+    {
+      "id": "rb-hash",
+      "title": "Use bcrypt for password verification",
+      "file": "app.rb",
+      "removes": ["RB-WEAKHASH"],
+      "explanation": "bcrypt is slow by design, defeating offline dictionary attacks after a leak.",
+      "edits": [
+        ["require 'digest'", "require 'bcrypt'"],
+        ["  hash = Digest::MD5.hexdigest(pw)\n  user = DB.execute(\"SELECT id FROM users WHERE pw_hash = '#{hash}'\").first\n  user ? { ok: true }.to_json : halt(401)",
+         "  user = DB.execute('SELECT id, pw_hash FROM users WHERE name = ?', params[:name]).first\n  halt 401 unless user && BCrypt::Password.new(user[1]) == pw\n  { ok: true }.to_json"]
+      ]
+    },
+    {
+      "id": "rb-random",
+      "title": "Use SecureRandom for session tokens",
+      "file": "app.rb",
+      "removes": ["RB-RANDOM"],
+      "explanation": "SecureRandom draws from the OS entropy source and cannot be predicted.",
+      "edits": [
+        ["  token = rand(10_000_000).to_s\n  { token: token }.to_json",
+         "  token = SecureRandom.urlsafe_base64(32)\n  { token: token }.to_json"]
+      ]
+    },
+    {
+      "id": "rb-xss",
+      "title": "HTML-escape the name before reflecting it",
+      "file": "app.rb",
+      "removes": ["RB-XSS-REFLECT"],
+      "explanation": "Rack::Utils.escape_html prevents script injection.",
+      "edits": [
+        ["  \"<h1>Hello #{name}</h1>\"",
+         "  name = Rack::Utils.escape_html(name.to_s)\n  \"<h1>Hello #{name}</h1>\""]
+      ]
+    },
+    {
+      "id": "rb-tls",
+      "title": "Leave TLS verification on",
+      "file": "app.rb",
+      "removes": ["RB-TLS"],
+      "explanation": "Certificate verification is on by default; the explicit VERIFY_NONE is removed.",
+      "edits": [
+        ["  http_options = { ssl_verify_mode: OpenSSL::SSL::VERIFY_NONE }",
+         "  # TLS verification is on by default"]
+      ]
+    }
+  ]
+}

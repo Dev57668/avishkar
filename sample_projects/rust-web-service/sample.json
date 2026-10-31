@@ -1,8 +1,8 @@
 {
   "name": "Rust web service (unsupported language)",
-  "language": "Rust",
+  "language": "Swift",
   "kind": "unsupported",
-  "description": "A Rust file. Second Read has no Rust detector, so the honest result is 'not evaluated', never 'clean'.",
-  "expected": "Incomplete / not evaluated, no score.",
+  "description": "A file written in Swift. Second Read has no Swift detector, so the honest result is 'not evaluated', never 'clean'.",
+  "expected": "Status: incomplete. Decision: not_evaluated. No findings (language not supported).",
   "fixes": []
 }

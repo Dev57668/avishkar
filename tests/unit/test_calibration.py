@@ -107,16 +107,16 @@ def test_unsupported_language_case_is_not_evaluated_not_clean():
     res = assemble(CFG, POL, collect_findings(CFG.required_detectors, source_dir=CORPUS / "ind_rust_unsupported"))
     assert res["status"] == "incomplete" and res["decision"]["outcome"] == "not_evaluated"
     assert res["securityDebt"]["normalizedIndex"] is None
-    assert res["securityDebt"]["coverage"]["notEvaluated"] == {".rs": 1}
+    assert res["securityDebt"]["coverage"]["notEvaluated"] == {".swift": 1}
     assert any("NOT EVALUATED" in n for n in res["notes"])
 
 
 def test_mixed_language_repo_is_complete_but_discloses_coverage(tmp_path):
     (tmp_path / "a.py").write_text("x = 1\n")
-    (tmp_path / "B.rs").write_text("fn main() {}\n")
+    (tmp_path / "B.swift").write_text("func main() {}\n")
     res = assemble(CFG, POL, collect_findings(CFG.required_detectors, source_dir=tmp_path))
     assert res["status"] == "complete" and res["securityDebt"]["coverage"] == {
-        "analyzedSourceFiles": 1, "notEvaluated": {".rs": 1}}
+        "analyzedSourceFiles": 1, "notEvaluated": {".swift": 1}}
     assert any("NOT EVALUATED" in n for n in res["notes"])
 
 

@@ -51,6 +51,14 @@ RULE_KIND = {
     "GO-SQLI": "sqli", "GO-CMDI": "cmdi", "GO-WEAKHASH": "weakhash", "GO-WEAKCIPHER": "weak-crypto", "GO-RANDOM": "weak-random",
     "GO-SECRET-ASSIGN": "secret", "GO-TLS": "noverify", "GO-PATH": "path-traversal", "GO-XSS-REFLECT": "xss",
     "JAVA-XXE": "xxe", "JAVA-PATH": "path-traversal", "JAVA-XSS-REFLECT": "xss", "JAVA-EVAL": "eval",
+    "RB-SQLI": "sqli", "RB-CMDI": "cmdi", "RB-EVAL": "eval", "RB-DESER": "deserialization",
+    "RB-WEAKHASH": "weakhash", "RB-RANDOM": "weak-random", "RB-SECRET-ASSIGN": "secret",
+    "RB-PATH": "path-traversal", "RB-XSS-REFLECT": "xss", "RB-TLS": "noverify",
+    "C-BUFOV": "buffer-overflow", "C-FMTSTR": "format-string", "C-CMDI": "cmdi", "C-INTOV": "integer-overflow",
+    "C-UAFALL": "use-after-free", "C-WEAKHASH": "weakhash", "C-RANDOM": "weak-random",
+    "C-SECRET-ASSIGN": "secret", "C-PATH": "path-traversal",
+    "RS-CMDI": "cmdi", "RS-UNSAFE": "unsafe-code", "RS-WEAKHASH": "weakhash", "RS-RANDOM": "weak-random",
+    "RS-SECRET-ASSIGN": "secret", "RS-TLS": "noverify", "RS-PATH": "path-traversal",
 }
 # Confidence tiers proposed from measured precision (Wilson 95% lower bound, minimum sample).
 MIN_N = 8

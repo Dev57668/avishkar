@@ -22,6 +22,9 @@ SUPPORT_MATRIX = {
     "kotlin": {"status": "supported", "ext": [".kt", ".kts"]},
     "c#": {"status": "supported", "ext": [".cs"]},
     "php": {"status": "supported", "ext": [".php"]},
+    "ruby": {"status": "supported", "ext": [".rb"]},
+    "c/c++": {"status": "supported", "ext": [".c", ".cc", ".cpp", ".h", ".hpp"]},
+    "rust": {"status": "supported", "ext": [".rs"]},
     "config/iac": {"status": "experimental", "ext": [".env", ".yml", ".yaml", ".json", ".tf", ".ini", ".cfg"]},
     "dependencies": {"status": "supported", "files": ["requirements.txt", "package.json", "package-lock.json", "pom.xml", "build.gradle",
                                                        "go.mod", "*.csproj", "composer.lock", "Gemfile.lock"],
@@ -29,7 +32,8 @@ SUPPORT_MATRIX = {
     "other languages": {"status": "unsupported", "ext": []},
 }
 
-CODE_EXT = {".py", ".js", ".jsx", ".ts", ".tsx", ".mjs", ".java", ".go", ".kt", ".kts", ".cs", ".php"}
+CODE_EXT = {".py", ".js", ".jsx", ".ts", ".tsx", ".mjs", ".java", ".go", ".kt", ".kts", ".cs", ".php",
+            ".rb", ".c", ".cc", ".cpp", ".h", ".hpp", ".rs"}
 SECRET_EXT = CODE_EXT | {".env", ".yml", ".yaml", ".json", ".tf", ".ini", ".cfg", ".txt", ".sh", ".toml", ".properties"}
 
 
@@ -134,15 +138,20 @@ def _looks_minified(rel: str, text: str) -> bool:
 
 
 def detect_patterns(root: Path, files: list[Path]) -> list[RawFinding]:
-    """Python -> AST detector; JavaScript/TypeScript, Java, Kotlin, Go, C# and PHP -> token-stream detectors (alias-aware, ignore comments
-    and strings). A file the structural scanners cannot handle falls back to the legacy regex rules so it is still
-    covered. The wildcard-CORS rule is a line regex for both languages."""
+    """Python -> AST detector; JavaScript/TypeScript, Java, Kotlin, Go, C#, PHP, Ruby, C/C++ and Rust
+    -> token-stream detectors (alias-aware, ignore comments and strings). A file the structural scanners
+    cannot handle falls back to the legacy regex rules so it is still covered. The wildcard-CORS rule is a
+    line regex for all languages."""
     from .csscan import scan_csharp
     from .goscan import scan_go
     from .javascan import scan_java, scan_kotlin
     from .phpscan import scan_php
     from .jsscan import scan_js
     from .pyast import scan_python
+    from .rubyscan import scan_ruby
+    from .cscan import scan_c
+    from .rustscan import scan_rust
+    C_EXT = {".c", ".cc", ".cpp", ".h", ".hpp"}
     out = []
     for p in files:
         ext = p.suffix.lower()
@@ -168,6 +177,12 @@ def detect_patterns(root: Path, files: list[Path]) -> list[RawFinding]:
                 structural = scan_csharp(text, rel)
             elif ext == ".php":
                 structural = scan_php(text, rel)
+            elif ext == ".rb":
+                structural = scan_ruby(text, rel)
+            elif ext in C_EXT:
+                structural = scan_c(text, rel)
+            elif ext == ".rs":
+                structural = scan_rust(text, rel)
         except (SyntaxError, ValueError, RecursionError, IndexError):
             structural = None  # fall back below; never silently skip the file
         if structural is not None:

@@ -1,0 +1,77 @@
+{
+  "name": "C string utilities",
+  "language": "C/C++",
+  "kind": "vulnerable",
+  "description": "A C utility library with buffer overflows (strcpy, gets), a format-string vulnerability, command injection via system(), MD5 password hashing, an integer-overflow in malloc and hard-coded credentials. Intentionally insecure, for education.",
+  "expected": "Findings from the C/C++ token scanner.",
+  "fixes": [
+    {
+      "id": "c-secret",
+      "title": "Load credentials from environment variables",
+      "file": "utils.c",
+      "removes": ["C-SECRET-ASSIGN"],
+      "explanation": "Credentials are no longer in the source binary.",
+      "edits": [
+        ["const char *api_key = \"c-api-key-plaintext-7a3f9d2e\";",
+         "static const char *get_api_key(void)  { return getenv(\"API_KEY\"); }"],
+        ["const char *db_password = \"c-db-pass-insecure-1b5c8e4f\";",
+         "static const char *get_db_password(void) { return getenv(\"DB_PASSWORD\"); }"]
+      ]
+    },
+    {
+      "id": "c-bufov",
+      "title": "Replace strcpy and gets with safe alternatives",
+      "file": "utils.c",
+      "removes": ["C-BUFOV"],
+      "explanation": "snprintf and fgets require an explicit length.",
+      "edits": [
+        ["    strcpy(dst, src);", "    snprintf(dst, dstsz, \"%s\", src);"],
+        ["    gets(buf);", "    fgets(buf, (int)len, stdin);"]
+      ]
+    },
+    {
+      "id": "c-fmtstr",
+      "title": "Use a literal format string",
+      "file": "utils.c",
+      "removes": ["C-FMTSTR"],
+      "explanation": "printf receives \"%s\" as a literal format; the message is the argument.",
+      "edits": [
+        ["    printf(fmt);", "    printf(\"%s\", fmt);"]
+      ]
+    },
+    {
+      "id": "c-cmdi",
+      "title": "Use execv instead of system",
+      "file": "utils.c",
+      "removes": ["C-CMDI"],
+      "explanation": "No shell expands the argument; dir is a single token to /bin/ls.",
+      "edits": [
+        ["    char cmd[256];\n    snprintf(cmd, sizeof(cmd), \"ls %s\", dir);\n    system(cmd);",
+         "    char *argv[] = { \"/bin/ls\", \"--\", (char *)dir, NULL };\n    execv(\"/bin/ls\", argv);"]
+      ]
+    },
+    {
+      "id": "c-intov",
+      "title": "Use calloc to avoid integer-overflow in size calculation",
+      "file": "utils.c",
+      "removes": ["C-INTOV"],
+      "explanation": "calloc(count, size) multiplies safely and zero-initialises; malloc(n * size) can overflow silently.",
+      "edits": [
+        ["    char *buf = malloc(n * sizeof(char));",
+         "    char *buf = calloc((size_t)n, sizeof(char));"]
+      ]
+    },
+    {
+      "id": "c-hash",
+      "title": "Use SHA-256 instead of MD5",
+      "file": "utils.c",
+      "removes": ["C-WEAKHASH"],
+      "explanation": "SHA-256 is not broken. Use a password-hashing function (libsodium argon2) for password storage.",
+      "edits": [
+        ["#include <openssl/md5.h>", "#include <openssl/sha.h>"],
+        ["    MD5_CTX ctx;\n    MD5_Init(&ctx);\n    MD5_Update(&ctx, password, strlen(password));\n    MD5_Final(out, &ctx);",
+         "    SHA256_CTX ctx;\n    SHA256_Init(&ctx);\n    SHA256_Update(&ctx, password, strlen(password));\n    SHA256_Final(out, &ctx);"]
+      ]
+    }
+  ]
+}

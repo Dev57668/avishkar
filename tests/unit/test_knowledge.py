@@ -2,12 +2,13 @@ import ast
 import re
 
 from avishkar import knowledge
-from avishkar.workers import csscan, detectors, goscan, javascan, jsscan, phpscan, pyast
+from avishkar.workers import csscan, cscan, detectors, goscan, javascan, jsscan, phpscan, pyast, rubyscan, rustscan
 
 
 def emitted_rule_ids() -> set[str]:
     ids = {r[0] for r in detectors.PATTERN_RULES} | {r[0] for r in detectors.SECRET_RULES}
     ids |= set(pyast.PY_RULES) | set(jsscan.JS_RULES) | set(javascan.JAVA_RULES) | set(goscan.GO_RULES) | set(csscan.CS_RULES) | set(phpscan.PHP_RULES)
+    ids |= set(rubyscan.RUBY_RULES) | set(cscan.C_RULES) | set(rustscan.RUST_RULES)
     ids |= {row[1] for rows in detectors.ADVISORIES.values() for row in rows} | {"DEP-UNPINNED", "DEP-NOLOCK", "DEP-VULN"}
     return ids
 
@@ -49,6 +50,12 @@ def test_secure_examples_do_not_trigger_their_own_rule():
             assert rid not in {f.rule_id for f in goscan.scan_go(ex["code"], "x.go")}, rid
         if ex["language"] == "java" and rid.startswith("JAVA-"):
             assert rid not in {f.rule_id for f in javascan.scan_java(ex["code"], "X.java")}, rid
+        if ex["language"] == "ruby" and rid.startswith("RB-"):
+            assert rid not in {f.rule_id for f in rubyscan.scan_ruby(ex["code"], "x.rb")}, rid
+        if ex["language"] == "c" and rid.startswith("C-"):
+            assert rid not in {f.rule_id for f in cscan.scan_c(ex["code"], "x.c")}, rid
+        if ex["language"] == "rust" and rid.startswith("RS-"):
+            assert rid not in {f.rule_id for f in rustscan.scan_rust(ex["code"], "x.rs")}, rid
 
 
 def test_describe_returns_cwe_urls_and_honest_fallback():

@@ -1,0 +1,79 @@
+{
+  "name": "Rust CLI tool",
+  "language": "Rust",
+  "kind": "vulnerable",
+  "description": "A Rust CLI tool with command injection (Command::new(\"sh\")), path traversal, MD5 hashing, insecure random (thread_rng for a token), unsafe blocks and hard-coded credentials. Intentionally insecure, for education.",
+  "expected": "Findings from the Rust token scanner.",
+  "fixes": [
+    {
+      "id": "rs-secret",
+      "title": "Load credentials from environment variables",
+      "file": "src/main.rs",
+      "removes": ["RS-SECRET-ASSIGN"],
+      "explanation": "Secrets are read from env at runtime; rotate any that were committed.",
+      "edits": [
+        ["const API_KEY: &str = \"rust-api-key-plaintext-4c7f2a9b\";",
+         "fn api_key() -> String { std::env::var(\"API_KEY\").expect(\"API_KEY not set\") }"],
+        ["const DB_TOKEN: &str = \"rust-db-token-8e3d1f6c\";",
+         "fn db_token() -> String { std::env::var(\"DB_TOKEN\").expect(\"DB_TOKEN not set\") }"]
+      ]
+    },
+    {
+      "id": "rs-cmdi",
+      "title": "Remove the shell; pass a fixed argv to Command",
+      "file": "src/main.rs",
+      "removes": ["RS-CMDI"],
+      "explanation": "No shell expands the argument, so metacharacters cannot break out of it.",
+      "edits": [
+        ["    let output = Command::new(\"sh\")\n        .arg(\"-c\")\n        .arg(input)\n        .output()\n        .expect(\"failed\");\n    println!(\"{}\", String::from_utf8_lossy(&output.stdout));",
+         "    let out = Command::new(\"/bin/ls\").arg(\"--\").arg(input).output().expect(\"ls failed\");\n    println!(\"{}\", String::from_utf8_lossy(&out.stdout));"]
+      ]
+    },
+    {
+      "id": "rs-path",
+      "title": "Canonicalize and confine the path",
+      "file": "src/main.rs",
+      "removes": ["RS-PATH"],
+      "explanation": "canonicalize resolves symlinks and ../; starts_with confirms the result is inside the base.",
+      "edits": [
+        ["    let content = fs::read_to_string(path).unwrap_or_default();",
+         "    let base = std::path::PathBuf::from(\"/srv/data\");\n    let abs = base.join(path).canonicalize().expect(\"invalid path\");\n    assert!(abs.starts_with(&base), \"path traversal blocked\");\n    let content = fs::read_to_string(abs).unwrap_or_default();"]
+      ]
+    },
+    {
+      "id": "rs-hash",
+      "title": "Use SHA-256 instead of MD5",
+      "file": "src/main.rs",
+      "removes": ["RS-WEAKHASH"],
+      "explanation": "sha2::Sha256 is not broken. Use argon2 or bcrypt for password storage.",
+      "edits": [
+        ["use md5::Md5;", "use sha2::{Digest, Sha256};"],
+        ["    let result = Md5::digest(value.as_bytes());\n    println!(\"{:x}\", result);",
+         "    let result = Sha256::digest(value.as_bytes());\n    println!(\"{:x}\", result);"]
+      ]
+    },
+    {
+      "id": "rs-random",
+      "title": "Use OsRng instead of thread_rng",
+      "file": "src/main.rs",
+      "removes": ["RS-RANDOM"],
+      "explanation": "OsRng draws from the OS entropy source and cannot be predicted.",
+      "edits": [
+        ["use rand::Rng;", "use rand::rngs::OsRng;\nuse rand::RngCore;"],
+        ["    let token: u64 = rand::thread_rng().gen();\n    println!(\"token: {}\", token);",
+         "    let mut buf = [0u8; 32];\n    OsRng.fill_bytes(&mut buf);\n    println!(\"token: {}\", hex::encode(buf));"]
+      ]
+    },
+    {
+      "id": "rs-unsafe",
+      "title": "Replace unsafe pointer dereference with safe slice access",
+      "file": "src/main.rs",
+      "removes": ["RS-UNSAFE"],
+      "explanation": "Rust slice indexing performs bounds checking; raw pointer arithmetic skips it and can cause UB.",
+      "edits": [
+        ["// Unsafe block: raw pointer dereference\nfn unsafe_example(data: &[u8]) -> u8 {\n    unsafe {\n        let ptr = data.as_ptr();\n        *ptr.add(0)\n    }\n}",
+         "// Safe slice access\nfn unsafe_example(data: &[u8]) -> u8 {\n    data.first().copied().unwrap_or(0)\n}"]
+      ]
+    }
+  ]
+}

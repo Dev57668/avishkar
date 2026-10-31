@@ -1,1497 +1,1882 @@
 {
- "scoreVersion": "score-v1",
- "k": 20.0,
- "calibrated": false,
- "samples": {
-  "vulnerable-python": {
-   "name": "Vulnerable Python app",
-   "kind": "vulnerable",
-   "language": "Python",
-   "fixCount": 18,
-   "before": {
-    "status": "complete",
-    "decision": "would_block",
-    "fixesApplied": 0,
-    "normalizedIndex": 93.8,
-    "grossUnits": 55.75,
-    "rawUnits": 55.75,
-    "findings": 24,
-    "severity": {
-     "critical": 1,
-     "high": 12,
-     "medium": 9,
-     "low": 2,
-     "informational": 0
+  "scoreVersion": "score-v1",
+  "k": 20.0,
+  "calibrated": false,
+  "samples": {
+    "vulnerable-python": {
+      "name": "Vulnerable Python app",
+      "kind": "vulnerable",
+      "language": "Python",
+      "fixCount": 18,
+      "before": {
+        "status": "complete",
+        "decision": "would_block",
+        "fixesApplied": 0,
+        "normalizedIndex": 93.8,
+        "grossUnits": 55.75,
+        "rawUnits": 55.75,
+        "findings": 24,
+        "severity": {
+          "critical": 1,
+          "high": 12,
+          "medium": 9,
+          "low": 2,
+          "informational": 0
+        },
+        "filesScanned": 3,
+        "coverage": {
+          "analyzedSourceFiles": 3,
+          "notEvaluated": {}
+        },
+        "items": [
+          {
+            "rule": "PY-SECRET-ASSIGN",
+            "title": "Hard-coded credential in an assignment",
+            "severity": "high",
+            "confidence": "medium",
+            "path": "app.py",
+            "line": 20
+          },
+          {
+            "rule": "PY-SECRET-ASSIGN",
+            "title": "Hard-coded credential in an assignment",
+            "severity": "high",
+            "confidence": "medium",
+            "path": "app.py",
+            "line": 21
+          },
+          {
+            "rule": "PY-SECRET-ASSIGN",
+            "title": "Hard-coded credential in an assignment",
+            "severity": "high",
+            "confidence": "medium",
+            "path": "app.py",
+            "line": 22
+          },
+          {
+            "rule": "PY-SQLI-FLOW",
+            "title": "SQL string built in a variable, then executed",
+            "severity": "high",
+            "confidence": "low",
+            "path": "app.py",
+            "line": 35
+          },
+          {
+            "rule": "PY-SHELL",
+            "title": "Shell command execution",
+            "severity": "high",
+            "confidence": "medium",
+            "path": "app.py",
+            "line": 46
+          },
+          {
+            "rule": "PY-WEAKHASH",
+            "title": "Weak hash algorithm",
+            "severity": "low",
+            "confidence": "medium",
+            "path": "app.py",
+            "line": 54
+          },
+          {
+            "rule": "PY-PATH",
+            "title": "File path built from a function argument",
+            "severity": "medium",
+            "confidence": "low",
+            "path": "app.py",
+            "line": 62
+          },
+          {
+            "rule": "PY-EVAL",
+            "title": "Dynamic code execution (eval/exec)",
+            "severity": "high",
+            "confidence": "medium",
+            "path": "app.py",
+            "line": 70
+          },
+          {
+            "rule": "PY-PICKLE",
+            "title": "Unsafe deserialization (pickle)",
+            "severity": "medium",
+            "confidence": "medium",
+            "path": "app.py",
+            "line": 79
+          },
+          {
+            "rule": "PY-DEBUG",
+            "title": "Debug mode enabled",
+            "severity": "medium",
+            "confidence": "low",
+            "path": "app.py",
+            "line": 116
+          },
+          {
+            "rule": "PY-SECRET-ASSIGN",
+            "title": "Hard-coded credential in an assignment",
+            "severity": "high",
+            "confidence": "medium",
+            "path": "config.py",
+            "line": 12
+          },
+          {
+            "rule": "PY-SECRET-ASSIGN",
+            "title": "Hard-coded credential in an assignment",
+            "severity": "high",
+            "confidence": "low",
+            "path": "config.py",
+            "line": 17
+          },
+          {
+            "rule": "PY-SECRET-ASSIGN",
+            "title": "Hard-coded credential in an assignment",
+            "severity": "high",
+            "confidence": "low",
+            "path": "config.py",
+            "line": 18
+          },
+          {
+            "rule": "SEC-GH-TOKEN",
+            "title": "GitHub token",
+            "severity": "critical",
+            "confidence": "high",
+            "path": "config.py",
+            "line": 21
+          },
+          {
+            "rule": "PY-WEAKHASH",
+            "title": "Weak hash algorithm",
+            "severity": "low",
+            "confidence": "medium",
+            "path": "config.py",
+            "line": 31
+          },
+          {
+            "rule": "PY-RANDOM",
+            "title": "Non-cryptographic random used for a security value",
+            "severity": "medium",
+            "confidence": "low",
+            "path": "config.py",
+            "line": 39
+          },
+          {
+            "rule": "PY-NOVERIFY",
+            "title": "TLS certificate verification disabled",
+            "severity": "medium",
+            "confidence": "high",
+            "path": "config.py",
+            "line": 47
+          },
+          {
+            "rule": "PY-DEBUG",
+            "title": "Debug mode enabled",
+            "severity": "medium",
+            "confidence": "low",
+            "path": "config.py",
+            "line": 52
+          },
+          {
+            "rule": "PY-SECRET-ASSIGN",
+            "title": "Hard-coded credential in an assignment",
+            "severity": "high",
+            "confidence": "medium",
+            "path": "config.py",
+            "line": 53
+          },
+          {
+            "rule": "PY-PATH",
+            "title": "File path built from a function argument",
+            "severity": "medium",
+            "confidence": "low",
+            "path": "utils.py",
+            "line": 14
+          },
+          {
+            "rule": "PY-SHELL",
+            "title": "Shell command execution",
+            "severity": "high",
+            "confidence": "medium",
+            "path": "utils.py",
+            "line": 22
+          },
+          {
+            "rule": "PY-XML-PARSE",
+            "title": "XML parsed with a standard-library parser",
+            "severity": "medium",
+            "confidence": "low",
+            "path": "utils.py",
+            "line": 29
+          },
+          {
+            "rule": "PY-SQLI-FLOW",
+            "title": "SQL string built in a variable, then executed",
+            "severity": "high",
+            "confidence": "low",
+            "path": "utils.py",
+            "line": 41
+          },
+          {
+            "rule": "PY-PATH",
+            "title": "File path built from a function argument",
+            "severity": "medium",
+            "confidence": "low",
+            "path": "utils.py",
+            "line": 50
+          }
+        ]
+      },
+      "after": {
+        "status": "complete",
+        "decision": "pass",
+        "fixesApplied": 18,
+        "normalizedIndex": 0.0,
+        "grossUnits": 0.0,
+        "rawUnits": 0.0,
+        "findings": 0,
+        "severity": {
+          "critical": 0,
+          "high": 0,
+          "medium": 0,
+          "low": 0,
+          "informational": 0
+        },
+        "filesScanned": 3,
+        "coverage": {
+          "analyzedSourceFiles": 3,
+          "notEvaluated": {}
+        },
+        "items": []
+      }
     },
-    "filesScanned": 3,
-    "coverage": {
-     "analyzedSourceFiles": 3,
-     "notEvaluated": {}
+    "vulnerable-javascript": {
+      "name": "Vulnerable Node.js app",
+      "kind": "vulnerable",
+      "language": "JavaScript",
+      "fixCount": 7,
+      "before": {
+        "status": "complete",
+        "decision": "pass",
+        "fixesApplied": 0,
+        "normalizedIndex": 64.1,
+        "grossUnits": 20.5,
+        "rawUnits": 20.5,
+        "findings": 9,
+        "severity": {
+          "critical": 0,
+          "high": 6,
+          "medium": 2,
+          "low": 1,
+          "informational": 0
+        },
+        "filesScanned": 1,
+        "coverage": {
+          "analyzedSourceFiles": 1,
+          "notEvaluated": {}
+        },
+        "items": [
+          {
+            "rule": "JS-SECRET-ASSIGN",
+            "title": "Hard-coded credential in an assignment",
+            "severity": "high",
+            "confidence": "low",
+            "path": "app.js",
+            "line": 10
+          },
+          {
+            "rule": "JS-SECRET-ASSIGN",
+            "title": "Hard-coded credential in an assignment",
+            "severity": "high",
+            "confidence": "medium",
+            "path": "app.js",
+            "line": 11
+          },
+          {
+            "rule": "JS-SQLI",
+            "title": "SQL built from a template literal or concatenation",
+            "severity": "high",
+            "confidence": "low",
+            "path": "app.js",
+            "line": 21
+          },
+          {
+            "rule": "JS-CMDI",
+            "title": "Shell command built from a non-literal",
+            "severity": "high",
+            "confidence": "medium",
+            "path": "app.js",
+            "line": 33
+          },
+          {
+            "rule": "JS-EVAL",
+            "title": "Dynamic code execution (eval / new Function)",
+            "severity": "high",
+            "confidence": "medium",
+            "path": "app.js",
+            "line": 41
+          },
+          {
+            "rule": "JS-WEAKHASH",
+            "title": "Weak hash algorithm",
+            "severity": "low",
+            "confidence": "medium",
+            "path": "app.js",
+            "line": 49
+          },
+          {
+            "rule": "JS-PATH",
+            "title": "File path built from a template literal",
+            "severity": "medium",
+            "confidence": "low",
+            "path": "app.js",
+            "line": 58
+          },
+          {
+            "rule": "JS-XSS-REFLECT",
+            "title": "HTML response built from a template literal",
+            "severity": "medium",
+            "confidence": "low",
+            "path": "app.js",
+            "line": 65
+          },
+          {
+            "rule": "JS-SECRET-ASSIGN",
+            "title": "Hard-coded credential in an assignment",
+            "severity": "high",
+            "confidence": "medium",
+            "path": "app.js",
+            "line": 70
+          }
+        ]
+      },
+      "after": {
+        "status": "complete",
+        "decision": "pass",
+        "fixesApplied": 7,
+        "normalizedIndex": 0.0,
+        "grossUnits": 0.0,
+        "rawUnits": 0.0,
+        "findings": 0,
+        "severity": {
+          "critical": 0,
+          "high": 0,
+          "medium": 0,
+          "low": 0,
+          "informational": 0
+        },
+        "filesScanned": 1,
+        "coverage": {
+          "analyzedSourceFiles": 1,
+          "notEvaluated": {}
+        },
+        "items": []
+      }
     },
-    "items": [
-     {
-      "rule": "PY-SECRET-ASSIGN",
-      "title": "Hard-coded credential in an assignment",
-      "severity": "high",
-      "confidence": "medium",
-      "path": "app.py",
-      "line": 20
-     },
-     {
-      "rule": "PY-SECRET-ASSIGN",
-      "title": "Hard-coded credential in an assignment",
-      "severity": "high",
-      "confidence": "medium",
-      "path": "app.py",
-      "line": 21
-     },
-     {
-      "rule": "PY-SECRET-ASSIGN",
-      "title": "Hard-coded credential in an assignment",
-      "severity": "high",
-      "confidence": "medium",
-      "path": "app.py",
-      "line": 22
-     },
-     {
-      "rule": "PY-SQLI-FLOW",
-      "title": "SQL string built in a variable, then executed",
-      "severity": "high",
-      "confidence": "low",
-      "path": "app.py",
-      "line": 35
-     },
-     {
-      "rule": "PY-SHELL",
-      "title": "Shell command execution",
-      "severity": "high",
-      "confidence": "medium",
-      "path": "app.py",
-      "line": 46
-     },
-     {
-      "rule": "PY-WEAKHASH",
-      "title": "Weak hash algorithm",
-      "severity": "low",
-      "confidence": "medium",
-      "path": "app.py",
-      "line": 54
-     },
-     {
-      "rule": "PY-PATH",
-      "title": "File path built from a function argument",
-      "severity": "medium",
-      "confidence": "low",
-      "path": "app.py",
-      "line": 62
-     },
-     {
-      "rule": "PY-EVAL",
-      "title": "Dynamic code execution (eval/exec)",
-      "severity": "high",
-      "confidence": "medium",
-      "path": "app.py",
-      "line": 70
-     },
-     {
-      "rule": "PY-PICKLE",
-      "title": "Unsafe deserialization (pickle)",
-      "severity": "medium",
-      "confidence": "medium",
-      "path": "app.py",
-      "line": 79
-     },
-     {
-      "rule": "PY-DEBUG",
-      "title": "Debug mode enabled",
-      "severity": "medium",
-      "confidence": "low",
-      "path": "app.py",
-      "line": 116
-     },
-     {
-      "rule": "PY-SECRET-ASSIGN",
-      "title": "Hard-coded credential in an assignment",
-      "severity": "high",
-      "confidence": "medium",
-      "path": "config.py",
-      "line": 12
-     },
-     {
-      "rule": "PY-SECRET-ASSIGN",
-      "title": "Hard-coded credential in an assignment",
-      "severity": "high",
-      "confidence": "low",
-      "path": "config.py",
-      "line": 17
-     },
-     {
-      "rule": "PY-SECRET-ASSIGN",
-      "title": "Hard-coded credential in an assignment",
-      "severity": "high",
-      "confidence": "low",
-      "path": "config.py",
-      "line": 18
-     },
-     {
-      "rule": "SEC-GH-TOKEN",
-      "title": "GitHub token",
-      "severity": "critical",
-      "confidence": "high",
-      "path": "config.py",
-      "line": 21
-     },
-     {
-      "rule": "PY-WEAKHASH",
-      "title": "Weak hash algorithm",
-      "severity": "low",
-      "confidence": "medium",
-      "path": "config.py",
-      "line": 31
-     },
-     {
-      "rule": "PY-RANDOM",
-      "title": "Non-cryptographic random used for a security value",
-      "severity": "medium",
-      "confidence": "low",
-      "path": "config.py",
-      "line": 39
-     },
-     {
-      "rule": "PY-NOVERIFY",
-      "title": "TLS certificate verification disabled",
-      "severity": "medium",
-      "confidence": "high",
-      "path": "config.py",
-      "line": 47
-     },
-     {
-      "rule": "PY-DEBUG",
-      "title": "Debug mode enabled",
-      "severity": "medium",
-      "confidence": "low",
-      "path": "config.py",
-      "line": 52
-     },
-     {
-      "rule": "PY-SECRET-ASSIGN",
-      "title": "Hard-coded credential in an assignment",
-      "severity": "high",
-      "confidence": "medium",
-      "path": "config.py",
-      "line": 53
-     },
-     {
-      "rule": "PY-PATH",
-      "title": "File path built from a function argument",
-      "severity": "medium",
-      "confidence": "low",
-      "path": "utils.py",
-      "line": 14
-     },
-     {
-      "rule": "PY-SHELL",
-      "title": "Shell command execution",
-      "severity": "high",
-      "confidence": "medium",
-      "path": "utils.py",
-      "line": 22
-     },
-     {
-      "rule": "PY-XML-PARSE",
-      "title": "XML parsed with a standard-library parser",
-      "severity": "medium",
-      "confidence": "low",
-      "path": "utils.py",
-      "line": 29
-     },
-     {
-      "rule": "PY-SQLI-FLOW",
-      "title": "SQL string built in a variable, then executed",
-      "severity": "high",
-      "confidence": "low",
-      "path": "utils.py",
-      "line": 41
-     },
-     {
-      "rule": "PY-PATH",
-      "title": "File path built from a function argument",
-      "severity": "medium",
-      "confidence": "low",
-      "path": "utils.py",
-      "line": 50
-     }
-    ]
-   },
-   "after": {
-    "status": "complete",
-    "decision": "pass",
-    "fixesApplied": 18,
-    "normalizedIndex": 0.0,
-    "grossUnits": 0.0,
-    "rawUnits": 0.0,
-    "findings": 0,
-    "severity": {
-     "critical": 0,
-     "high": 0,
-     "medium": 0,
-     "low": 0,
-     "informational": 0
+    "secure-python": {
+      "name": "Secure Python app",
+      "kind": "secure",
+      "language": "Python",
+      "fixCount": 0,
+      "before": {
+        "status": "complete",
+        "decision": "pass",
+        "fixesApplied": 0,
+        "normalizedIndex": 0.0,
+        "grossUnits": 0.0,
+        "rawUnits": 0.0,
+        "findings": 0,
+        "severity": {
+          "critical": 0,
+          "high": 0,
+          "medium": 0,
+          "low": 0,
+          "informational": 0
+        },
+        "filesScanned": 3,
+        "coverage": {
+          "analyzedSourceFiles": 3,
+          "notEvaluated": {}
+        },
+        "items": []
+      }
     },
-    "filesScanned": 3,
-    "coverage": {
-     "analyzedSourceFiles": 3,
-     "notEvaluated": {}
+    "c-string-utils": {
+      "name": "C string utilities",
+      "kind": "vulnerable",
+      "language": "C/C++",
+      "fixCount": 6,
+      "before": {
+        "status": "complete",
+        "decision": "pass",
+        "fixesApplied": 0,
+        "normalizedIndex": 69.9,
+        "grossUnits": 24.0,
+        "rawUnits": 24.0,
+        "findings": 10,
+        "severity": {
+          "critical": 0,
+          "high": 6,
+          "medium": 1,
+          "low": 3,
+          "informational": 0
+        },
+        "filesScanned": 2,
+        "coverage": {
+          "analyzedSourceFiles": 2,
+          "notEvaluated": {}
+        },
+        "items": [
+          {
+            "rule": "C-SECRET-ASSIGN",
+            "title": "Hard-coded credential in C/C++",
+            "severity": "high",
+            "confidence": "medium",
+            "path": "utils.c",
+            "line": 8
+          },
+          {
+            "rule": "C-SECRET-ASSIGN",
+            "title": "Hard-coded credential in C/C++",
+            "severity": "high",
+            "confidence": "medium",
+            "path": "utils.c",
+            "line": 9
+          },
+          {
+            "rule": "C-BUFOV",
+            "title": "Unsafe buffer function in C/C++",
+            "severity": "high",
+            "confidence": "medium",
+            "path": "utils.c",
+            "line": 13
+          },
+          {
+            "rule": "C-FMTSTR",
+            "title": "Format-string vulnerability in C/C++",
+            "severity": "high",
+            "confidence": "medium",
+            "path": "utils.c",
+            "line": 18
+          },
+          {
+            "rule": "C-CMDI",
+            "title": "OS command built from non-literal input in C/C++",
+            "severity": "high",
+            "confidence": "medium",
+            "path": "utils.c",
+            "line": 25
+          },
+          {
+            "rule": "C-WEAKHASH",
+            "title": "Weak hash algorithm in C/C++",
+            "severity": "low",
+            "confidence": "medium",
+            "path": "utils.c",
+            "line": 31
+          },
+          {
+            "rule": "C-WEAKHASH",
+            "title": "Weak hash algorithm in C/C++",
+            "severity": "low",
+            "confidence": "medium",
+            "path": "utils.c",
+            "line": 32
+          },
+          {
+            "rule": "C-WEAKHASH",
+            "title": "Weak hash algorithm in C/C++",
+            "severity": "low",
+            "confidence": "medium",
+            "path": "utils.c",
+            "line": 33
+          },
+          {
+            "rule": "C-INTOV",
+            "title": "Integer value used directly as malloc/new size",
+            "severity": "medium",
+            "confidence": "low",
+            "path": "utils.c",
+            "line": 38
+          },
+          {
+            "rule": "C-BUFOV",
+            "title": "Unsafe buffer function in C/C++",
+            "severity": "high",
+            "confidence": "medium",
+            "path": "utils.c",
+            "line": 49
+          }
+        ]
+      },
+      "after": {
+        "status": "complete",
+        "decision": "pass",
+        "fixesApplied": 6,
+        "normalizedIndex": 0.0,
+        "grossUnits": 0.0,
+        "rawUnits": 0.0,
+        "findings": 0,
+        "severity": {
+          "critical": 0,
+          "high": 0,
+          "medium": 0,
+          "low": 0,
+          "informational": 0
+        },
+        "filesScanned": 2,
+        "coverage": {
+          "analyzedSourceFiles": 2,
+          "notEvaluated": {}
+        },
+        "items": []
+      }
     },
-    "items": []
-   }
-  },
-  "vulnerable-javascript": {
-   "name": "Vulnerable Node.js app",
-   "kind": "vulnerable",
-   "language": "JavaScript",
-   "fixCount": 7,
-   "before": {
-    "status": "complete",
-    "decision": "pass",
-    "fixesApplied": 0,
-    "normalizedIndex": 64.1,
-    "grossUnits": 20.5,
-    "rawUnits": 20.5,
-    "findings": 9,
-    "severity": {
-     "critical": 0,
-     "high": 6,
-     "medium": 2,
-     "low": 1,
-     "informational": 0
+    "csharp-orders-api": {
+      "name": "C# orders API",
+      "kind": "vulnerable",
+      "language": "C#",
+      "fixCount": 8,
+      "before": {
+        "status": "complete",
+        "decision": "pass",
+        "fixesApplied": 0,
+        "normalizedIndex": 63.7,
+        "grossUnits": 20.25,
+        "rawUnits": 20.25,
+        "findings": 8,
+        "severity": {
+          "critical": 0,
+          "high": 4,
+          "medium": 3,
+          "low": 1,
+          "informational": 0
+        },
+        "filesScanned": 1,
+        "coverage": {
+          "analyzedSourceFiles": 1,
+          "notEvaluated": {}
+        },
+        "items": [
+          {
+            "rule": "CS-SECRET-ASSIGN",
+            "title": "Hard-coded credential in C#",
+            "severity": "high",
+            "confidence": "medium",
+            "path": "OrdersController.cs",
+            "line": 15
+          },
+          {
+            "rule": "CS-SQLI",
+            "title": "SQL built by concatenation or interpolation in C#",
+            "severity": "high",
+            "confidence": "medium",
+            "path": "OrdersController.cs",
+            "line": 20
+          },
+          {
+            "rule": "CS-CMDI",
+            "title": "OS command built from non-literal input in C#",
+            "severity": "high",
+            "confidence": "medium",
+            "path": "OrdersController.cs",
+            "line": 26
+          },
+          {
+            "rule": "CS-WEAKHASH",
+            "title": "Weak hash algorithm in C#",
+            "severity": "low",
+            "confidence": "medium",
+            "path": "OrdersController.cs",
+            "line": 32
+          },
+          {
+            "rule": "CS-RANDOM",
+            "title": "System.Random used for a security value",
+            "severity": "medium",
+            "confidence": "low",
+            "path": "OrdersController.cs",
+            "line": 38
+          },
+          {
+            "rule": "CS-DESER",
+            "title": "Unsafe deserialization in C#",
+            "severity": "high",
+            "confidence": "medium",
+            "path": "OrdersController.cs",
+            "line": 43
+          },
+          {
+            "rule": "CS-PATH",
+            "title": "File path built from request data in C#",
+            "severity": "medium",
+            "confidence": "medium",
+            "path": "OrdersController.cs",
+            "line": 49
+          },
+          {
+            "rule": "CS-TLS",
+            "title": "TLS certificate validation disabled in C#",
+            "severity": "medium",
+            "confidence": "high",
+            "path": "OrdersController.cs",
+            "line": 54
+          }
+        ]
+      },
+      "after": {
+        "status": "complete",
+        "decision": "pass",
+        "fixesApplied": 8,
+        "normalizedIndex": 0.0,
+        "grossUnits": 0.0,
+        "rawUnits": 0.0,
+        "findings": 0,
+        "severity": {
+          "critical": 0,
+          "high": 0,
+          "medium": 0,
+          "low": 0,
+          "informational": 0
+        },
+        "filesScanned": 1,
+        "coverage": {
+          "analyzedSourceFiles": 1,
+          "notEvaluated": {}
+        },
+        "items": []
+      }
     },
-    "filesScanned": 1,
-    "coverage": {
-     "analyzedSourceFiles": 1,
-     "notEvaluated": {}
+    "django-blog-backend": {
+      "name": "Django blog backend",
+      "kind": "vulnerable",
+      "language": "Python",
+      "fixCount": 6,
+      "before": {
+        "status": "complete",
+        "decision": "pass",
+        "fixesApplied": 0,
+        "normalizedIndex": 56.2,
+        "grossUnits": 16.5,
+        "rawUnits": 16.5,
+        "findings": 7,
+        "severity": {
+          "critical": 0,
+          "high": 4,
+          "medium": 2,
+          "low": 1,
+          "informational": 0
+        },
+        "filesScanned": 2,
+        "coverage": {
+          "analyzedSourceFiles": 2,
+          "notEvaluated": {}
+        },
+        "items": [
+          {
+            "rule": "PY-DEBUG",
+            "title": "Debug mode enabled",
+            "severity": "medium",
+            "confidence": "low",
+            "path": "settings.py",
+            "line": 4
+          },
+          {
+            "rule": "PY-SECRET-ASSIGN",
+            "title": "Hard-coded credential in an assignment",
+            "severity": "high",
+            "confidence": "medium",
+            "path": "settings.py",
+            "line": 5
+          },
+          {
+            "rule": "PY-SECRET-ASSIGN",
+            "title": "Hard-coded credential in an assignment",
+            "severity": "high",
+            "confidence": "medium",
+            "path": "settings.py",
+            "line": 7
+          },
+          {
+            "rule": "PY-WEAKHASH",
+            "title": "Weak hash algorithm",
+            "severity": "low",
+            "confidence": "medium",
+            "path": "settings.py",
+            "line": 11
+          },
+          {
+            "rule": "PY-SQLI",
+            "title": "SQL built by string formatting",
+            "severity": "high",
+            "confidence": "medium",
+            "path": "views.py",
+            "line": 12
+          },
+          {
+            "rule": "PY-RANDOM",
+            "title": "Non-cryptographic random used for a security value",
+            "severity": "medium",
+            "confidence": "low",
+            "path": "views.py",
+            "line": 18
+          },
+          {
+            "rule": "PY-SHELL",
+            "title": "Shell command execution",
+            "severity": "high",
+            "confidence": "medium",
+            "path": "views.py",
+            "line": 23
+          }
+        ]
+      },
+      "after": {
+        "status": "complete",
+        "decision": "pass",
+        "fixesApplied": 6,
+        "normalizedIndex": 0.0,
+        "grossUnits": 0.0,
+        "rawUnits": 0.0,
+        "findings": 0,
+        "severity": {
+          "critical": 0,
+          "high": 0,
+          "medium": 0,
+          "low": 0,
+          "informational": 0
+        },
+        "filesScanned": 2,
+        "coverage": {
+          "analyzedSourceFiles": 2,
+          "notEvaluated": {}
+        },
+        "items": []
+      }
     },
-    "items": [
-     {
-      "rule": "JS-SECRET-ASSIGN",
-      "title": "Hard-coded credential in an assignment",
-      "severity": "high",
-      "confidence": "low",
-      "path": "app.js",
-      "line": 10
-     },
-     {
-      "rule": "JS-SECRET-ASSIGN",
-      "title": "Hard-coded credential in an assignment",
-      "severity": "high",
-      "confidence": "medium",
-      "path": "app.js",
-      "line": 11
-     },
-     {
-      "rule": "JS-SQLI",
-      "title": "SQL built from a template literal or concatenation",
-      "severity": "high",
-      "confidence": "low",
-      "path": "app.js",
-      "line": 21
-     },
-     {
-      "rule": "JS-CMDI",
-      "title": "Shell command built from a non-literal",
-      "severity": "high",
-      "confidence": "medium",
-      "path": "app.js",
-      "line": 33
-     },
-     {
-      "rule": "JS-EVAL",
-      "title": "Dynamic code execution (eval / new Function)",
-      "severity": "high",
-      "confidence": "medium",
-      "path": "app.js",
-      "line": 41
-     },
-     {
-      "rule": "JS-WEAKHASH",
-      "title": "Weak hash algorithm",
-      "severity": "low",
-      "confidence": "medium",
-      "path": "app.js",
-      "line": 49
-     },
-     {
-      "rule": "JS-PATH",
-      "title": "File path built from a template literal",
-      "severity": "medium",
-      "confidence": "low",
-      "path": "app.js",
-      "line": 58
-     },
-     {
-      "rule": "JS-XSS-REFLECT",
-      "title": "HTML response built from a template literal",
-      "severity": "medium",
-      "confidence": "low",
-      "path": "app.js",
-      "line": 65
-     },
-     {
-      "rule": "JS-SECRET-ASSIGN",
-      "title": "Hard-coded credential in an assignment",
-      "severity": "high",
-      "confidence": "medium",
-      "path": "app.js",
-      "line": 70
-     }
-    ]
-   },
-   "after": {
-    "status": "complete",
-    "decision": "pass",
-    "fixesApplied": 7,
-    "normalizedIndex": 0.0,
-    "grossUnits": 0.0,
-    "rawUnits": 0.0,
-    "findings": 0,
-    "severity": {
-     "critical": 0,
-     "high": 0,
-     "medium": 0,
-     "low": 0,
-     "informational": 0
+    "express-todo-api": {
+      "name": "Express todo API",
+      "kind": "vulnerable",
+      "language": "JavaScript",
+      "fixCount": 4,
+      "before": {
+        "status": "complete",
+        "decision": "pass",
+        "fixesApplied": 0,
+        "normalizedIndex": 37.8,
+        "grossUnits": 9.5,
+        "rawUnits": 9.5,
+        "findings": 4,
+        "severity": {
+          "critical": 0,
+          "high": 3,
+          "medium": 0,
+          "low": 1,
+          "informational": 0
+        },
+        "filesScanned": 1,
+        "coverage": {
+          "analyzedSourceFiles": 1,
+          "notEvaluated": {}
+        },
+        "items": [
+          {
+            "rule": "JS-SECRET-ASSIGN",
+            "title": "Hard-coded credential in an assignment",
+            "severity": "high",
+            "confidence": "low",
+            "path": "server.js",
+            "line": 7
+          },
+          {
+            "rule": "JS-CMDI",
+            "title": "Shell command built from a non-literal",
+            "severity": "high",
+            "confidence": "medium",
+            "path": "server.js",
+            "line": 16
+          },
+          {
+            "rule": "JS-EVAL",
+            "title": "Dynamic code execution (eval / new Function)",
+            "severity": "high",
+            "confidence": "medium",
+            "path": "server.js",
+            "line": 20
+          },
+          {
+            "rule": "JS-WEAKHASH",
+            "title": "Weak hash algorithm",
+            "severity": "low",
+            "confidence": "medium",
+            "path": "server.js",
+            "line": 24
+          }
+        ]
+      },
+      "after": {
+        "status": "complete",
+        "decision": "pass",
+        "fixesApplied": 4,
+        "normalizedIndex": 0.0,
+        "grossUnits": 0.0,
+        "rawUnits": 0.0,
+        "findings": 0,
+        "severity": {
+          "critical": 0,
+          "high": 0,
+          "medium": 0,
+          "low": 0,
+          "informational": 0
+        },
+        "filesScanned": 1,
+        "coverage": {
+          "analyzedSourceFiles": 1,
+          "notEvaluated": {}
+        },
+        "items": []
+      }
     },
-    "filesScanned": 1,
-    "coverage": {
-     "analyzedSourceFiles": 1,
-     "notEvaluated": {}
+    "flask-notes-api": {
+      "name": "Flask notes API",
+      "kind": "vulnerable",
+      "language": "Python",
+      "fixCount": 6,
+      "before": {
+        "status": "complete",
+        "decision": "pass",
+        "fixesApplied": 0,
+        "normalizedIndex": 50.3,
+        "grossUnits": 14.0,
+        "rawUnits": 14.0,
+        "findings": 6,
+        "severity": {
+          "critical": 0,
+          "high": 3,
+          "medium": 3,
+          "low": 0,
+          "informational": 0
+        },
+        "filesScanned": 1,
+        "coverage": {
+          "analyzedSourceFiles": 1,
+          "notEvaluated": {}
+        },
+        "items": [
+          {
+            "rule": "PY-DEBUG",
+            "title": "Debug mode enabled",
+            "severity": "medium",
+            "confidence": "low",
+            "path": "app.py",
+            "line": 10
+          },
+          {
+            "rule": "PY-SECRET-ASSIGN",
+            "title": "Hard-coded credential in an assignment",
+            "severity": "high",
+            "confidence": "medium",
+            "path": "app.py",
+            "line": 11
+          },
+          {
+            "rule": "PY-SQLI-FLOW",
+            "title": "SQL string built in a variable, then executed",
+            "severity": "high",
+            "confidence": "low",
+            "path": "app.py",
+            "line": 23
+          },
+          {
+            "rule": "PY-PICKLE",
+            "title": "Unsafe deserialization (pickle)",
+            "severity": "medium",
+            "confidence": "medium",
+            "path": "app.py",
+            "line": 37
+          },
+          {
+            "rule": "PY-YAML",
+            "title": "yaml.load without SafeLoader",
+            "severity": "medium",
+            "confidence": "medium",
+            "path": "app.py",
+            "line": 42
+          },
+          {
+            "rule": "PY-SHELL",
+            "title": "Shell command execution",
+            "severity": "high",
+            "confidence": "medium",
+            "path": "app.py",
+            "line": 48
+          }
+        ]
+      },
+      "after": {
+        "status": "complete",
+        "decision": "pass",
+        "fixesApplied": 6,
+        "normalizedIndex": 0.0,
+        "grossUnits": 0.0,
+        "rawUnits": 0.0,
+        "findings": 0,
+        "severity": {
+          "critical": 0,
+          "high": 0,
+          "medium": 0,
+          "low": 0,
+          "informational": 0
+        },
+        "filesScanned": 1,
+        "coverage": {
+          "analyzedSourceFiles": 1,
+          "notEvaluated": {}
+        },
+        "items": []
+      }
     },
-    "items": []
-   }
-  },
-  "secure-python": {
-   "name": "Secure Python app",
-   "kind": "secure",
-   "language": "Python",
-   "fixCount": 0,
-   "before": {
-    "status": "complete",
-    "decision": "pass",
-    "fixesApplied": 0,
-    "normalizedIndex": 0.0,
-    "grossUnits": 0.0,
-    "rawUnits": 0.0,
-    "findings": 0,
-    "severity": {
-     "critical": 0,
-     "high": 0,
-     "medium": 0,
-     "low": 0,
-     "informational": 0
+    "go-http-service": {
+      "name": "Go notes service",
+      "kind": "vulnerable",
+      "language": "Go",
+      "fixCount": 8,
+      "before": {
+        "status": "complete",
+        "decision": "pass",
+        "fixesApplied": 0,
+        "normalizedIndex": 58.8,
+        "grossUnits": 17.75,
+        "rawUnits": 17.75,
+        "findings": 8,
+        "severity": {
+          "critical": 0,
+          "high": 3,
+          "medium": 4,
+          "low": 1,
+          "informational": 0
+        },
+        "filesScanned": 1,
+        "coverage": {
+          "analyzedSourceFiles": 1,
+          "notEvaluated": {}
+        },
+        "items": [
+          {
+            "rule": "GO-SECRET-ASSIGN",
+            "title": "Hard-coded credential in Go",
+            "severity": "high",
+            "confidence": "medium",
+            "path": "main.go",
+            "line": 16
+          },
+          {
+            "rule": "GO-SQLI",
+            "title": "SQL built by formatting or concatenation in Go",
+            "severity": "high",
+            "confidence": "low",
+            "path": "main.go",
+            "line": 21
+          },
+          {
+            "rule": "GO-CMDI",
+            "title": "OS command built from non-literal input in Go",
+            "severity": "high",
+            "confidence": "medium",
+            "path": "main.go",
+            "line": 26
+          },
+          {
+            "rule": "GO-WEAKHASH",
+            "title": "Weak hash algorithm in Go",
+            "severity": "low",
+            "confidence": "medium",
+            "path": "main.go",
+            "line": 31
+          },
+          {
+            "rule": "GO-RANDOM",
+            "title": "math/rand used for a security value",
+            "severity": "medium",
+            "confidence": "low",
+            "path": "main.go",
+            "line": 36
+          },
+          {
+            "rule": "GO-PATH",
+            "title": "File path built from request data",
+            "severity": "medium",
+            "confidence": "medium",
+            "path": "main.go",
+            "line": 40
+          },
+          {
+            "rule": "GO-XSS-REFLECT",
+            "title": "Request data written to the response unescaped",
+            "severity": "medium",
+            "confidence": "low",
+            "path": "main.go",
+            "line": 45
+          },
+          {
+            "rule": "GO-TLS",
+            "title": "TLS verification disabled in Go",
+            "severity": "medium",
+            "confidence": "high",
+            "path": "main.go",
+            "line": 49
+          }
+        ]
+      },
+      "after": {
+        "status": "complete",
+        "decision": "pass",
+        "fixesApplied": 8,
+        "normalizedIndex": 0.0,
+        "grossUnits": 0.0,
+        "rawUnits": 0.0,
+        "findings": 0,
+        "severity": {
+          "critical": 0,
+          "high": 0,
+          "medium": 0,
+          "low": 0,
+          "informational": 0
+        },
+        "filesScanned": 1,
+        "coverage": {
+          "analyzedSourceFiles": 1,
+          "notEvaluated": {}
+        },
+        "items": []
+      }
     },
-    "filesScanned": 3,
-    "coverage": {
-     "analyzedSourceFiles": 3,
-     "notEvaluated": {}
+    "kotlin-notes-service": {
+      "name": "Kotlin notes service",
+      "kind": "vulnerable",
+      "language": "Kotlin",
+      "fixCount": 6,
+      "before": {
+        "status": "complete",
+        "decision": "pass",
+        "fixesApplied": 0,
+        "normalizedIndex": 51.0,
+        "grossUnits": 14.25,
+        "rawUnits": 14.25,
+        "findings": 6,
+        "severity": {
+          "critical": 0,
+          "high": 3,
+          "medium": 2,
+          "low": 1,
+          "informational": 0
+        },
+        "filesScanned": 1,
+        "coverage": {
+          "analyzedSourceFiles": 1,
+          "notEvaluated": {}
+        },
+        "items": [
+          {
+            "rule": "JAVA-SECRET-ASSIGN",
+            "title": "Hard-coded credential in Java/Kotlin",
+            "severity": "high",
+            "confidence": "medium",
+            "path": "Main.kt",
+            "line": 9
+          },
+          {
+            "rule": "JAVA-SQLI",
+            "title": "SQL built by concatenation in Java/Kotlin",
+            "severity": "high",
+            "confidence": "medium",
+            "path": "Main.kt",
+            "line": 14
+          },
+          {
+            "rule": "JAVA-CMDI",
+            "title": "OS command built from non-literal input in Java/Kotlin",
+            "severity": "high",
+            "confidence": "medium",
+            "path": "Main.kt",
+            "line": 19
+          },
+          {
+            "rule": "JAVA-WEAKHASH",
+            "title": "Weak hash algorithm in Java/Kotlin",
+            "severity": "low",
+            "confidence": "medium",
+            "path": "Main.kt",
+            "line": 23
+          },
+          {
+            "rule": "JAVA-RANDOM",
+            "title": "java.util.Random / Math.random for a security value",
+            "severity": "medium",
+            "confidence": "low",
+            "path": "Main.kt",
+            "line": 28
+          },
+          {
+            "rule": "JAVA-DESER",
+            "title": "Unsafe deserialization in Java/Kotlin",
+            "severity": "medium",
+            "confidence": "medium",
+            "path": "Main.kt",
+            "line": 32
+          }
+        ]
+      },
+      "after": {
+        "status": "complete",
+        "decision": "pass",
+        "fixesApplied": 6,
+        "normalizedIndex": 0.0,
+        "grossUnits": 0.0,
+        "rawUnits": 0.0,
+        "findings": 0,
+        "severity": {
+          "critical": 0,
+          "high": 0,
+          "medium": 0,
+          "low": 0,
+          "informational": 0
+        },
+        "filesScanned": 1,
+        "coverage": {
+          "analyzedSourceFiles": 1,
+          "notEvaluated": {}
+        },
+        "items": []
+      }
     },
-    "items": []
-   }
-  },
-  "csharp-orders-api": {
-   "name": "C# orders API",
-   "kind": "vulnerable",
-   "language": "C#",
-   "fixCount": 8,
-   "before": {
-    "status": "complete",
-    "decision": "pass",
-    "fixesApplied": 0,
-    "normalizedIndex": 63.7,
-    "grossUnits": 20.25,
-    "rawUnits": 20.25,
-    "findings": 8,
-    "severity": {
-     "critical": 0,
-     "high": 4,
-     "medium": 3,
-     "low": 1,
-     "informational": 0
+    "php-legacy-shop": {
+      "name": "PHP legacy shop",
+      "kind": "vulnerable",
+      "language": "PHP",
+      "fixCount": 10,
+      "before": {
+        "status": "complete",
+        "decision": "pass",
+        "fixesApplied": 0,
+        "normalizedIndex": 71.0,
+        "grossUnits": 24.75,
+        "rawUnits": 24.75,
+        "findings": 10,
+        "severity": {
+          "critical": 0,
+          "high": 5,
+          "medium": 4,
+          "low": 1,
+          "informational": 0
+        },
+        "filesScanned": 1,
+        "coverage": {
+          "analyzedSourceFiles": 1,
+          "notEvaluated": {}
+        },
+        "items": [
+          {
+            "rule": "PHP-SECRET-ASSIGN",
+            "title": "Hard-coded credential in PHP",
+            "severity": "high",
+            "confidence": "medium",
+            "path": "index.php",
+            "line": 4
+          },
+          {
+            "rule": "PHP-SQLI",
+            "title": "SQL built by concatenation or interpolation in PHP",
+            "severity": "high",
+            "confidence": "medium",
+            "path": "index.php",
+            "line": 9
+          },
+          {
+            "rule": "PHP-CMDI",
+            "title": "OS command built from non-literal input in PHP",
+            "severity": "high",
+            "confidence": "medium",
+            "path": "index.php",
+            "line": 14
+          },
+          {
+            "rule": "PHP-WEAKHASH",
+            "title": "md5/sha1/crypt used for a password or token in PHP",
+            "severity": "low",
+            "confidence": "medium",
+            "path": "index.php",
+            "line": 19
+          },
+          {
+            "rule": "PHP-RANDOM",
+            "title": "rand/mt_rand/uniqid used for a security value in PHP",
+            "severity": "medium",
+            "confidence": "low",
+            "path": "index.php",
+            "line": 23
+          },
+          {
+            "rule": "PHP-INCLUDE",
+            "title": "File include built from request data in PHP",
+            "severity": "high",
+            "confidence": "medium",
+            "path": "index.php",
+            "line": 27
+          },
+          {
+            "rule": "PHP-DESER",
+            "title": "Unsafe deserialization in PHP",
+            "severity": "high",
+            "confidence": "medium",
+            "path": "index.php",
+            "line": 31
+          },
+          {
+            "rule": "PHP-XSS-REFLECT",
+            "title": "Request data echoed unescaped in PHP",
+            "severity": "medium",
+            "confidence": "low",
+            "path": "index.php",
+            "line": 35
+          },
+          {
+            "rule": "PHP-TLS",
+            "title": "TLS verification disabled in PHP",
+            "severity": "medium",
+            "confidence": "high",
+            "path": "index.php",
+            "line": 40
+          },
+          {
+            "rule": "PHP-PATH",
+            "title": "File path built from request data in PHP",
+            "severity": "medium",
+            "confidence": "medium",
+            "path": "index.php",
+            "line": 45
+          }
+        ]
+      },
+      "after": {
+        "status": "complete",
+        "decision": "pass",
+        "fixesApplied": 10,
+        "normalizedIndex": 0.0,
+        "grossUnits": 0.0,
+        "rawUnits": 0.0,
+        "findings": 0,
+        "severity": {
+          "critical": 0,
+          "high": 0,
+          "medium": 0,
+          "low": 0,
+          "informational": 0
+        },
+        "filesScanned": 1,
+        "coverage": {
+          "analyzedSourceFiles": 1,
+          "notEvaluated": {}
+        },
+        "items": []
+      }
     },
-    "filesScanned": 1,
-    "coverage": {
-     "analyzedSourceFiles": 1,
-     "notEvaluated": {}
+    "python-ops-cli": {
+      "name": "Python ops CLI",
+      "kind": "vulnerable",
+      "language": "Python",
+      "fixCount": 7,
+      "before": {
+        "status": "complete",
+        "decision": "pass",
+        "fixesApplied": 0,
+        "normalizedIndex": 57.8,
+        "grossUnits": 17.25,
+        "rawUnits": 17.25,
+        "findings": 7,
+        "severity": {
+          "critical": 0,
+          "high": 3,
+          "medium": 3,
+          "low": 1,
+          "informational": 0
+        },
+        "filesScanned": 1,
+        "coverage": {
+          "analyzedSourceFiles": 1,
+          "notEvaluated": {}
+        },
+        "items": [
+          {
+            "rule": "PY-SECRET-ASSIGN",
+            "title": "Hard-coded credential in an assignment",
+            "severity": "high",
+            "confidence": "medium",
+            "path": "ops.py",
+            "line": 9
+          },
+          {
+            "rule": "PY-NOVERIFY",
+            "title": "TLS certificate verification disabled",
+            "severity": "medium",
+            "confidence": "high",
+            "path": "ops.py",
+            "line": 13
+          },
+          {
+            "rule": "PY-SHELL",
+            "title": "Shell command execution",
+            "severity": "high",
+            "confidence": "medium",
+            "path": "ops.py",
+            "line": 17
+          },
+          {
+            "rule": "PY-RANDOM",
+            "title": "Non-cryptographic random used for a security value",
+            "severity": "medium",
+            "confidence": "low",
+            "path": "ops.py",
+            "line": 21
+          },
+          {
+            "rule": "PY-WEAKHASH",
+            "title": "Weak hash algorithm",
+            "severity": "low",
+            "confidence": "medium",
+            "path": "ops.py",
+            "line": 25
+          },
+          {
+            "rule": "PY-TEMPFILE",
+            "title": "Insecure temporary file",
+            "severity": "medium",
+            "confidence": "medium",
+            "path": "ops.py",
+            "line": 29
+          },
+          {
+            "rule": "PY-EVAL",
+            "title": "Dynamic code execution (eval/exec)",
+            "severity": "high",
+            "confidence": "medium",
+            "path": "ops.py",
+            "line": 33
+          }
+        ]
+      },
+      "after": {
+        "status": "complete",
+        "decision": "pass",
+        "fixesApplied": 7,
+        "normalizedIndex": 0.0,
+        "grossUnits": 0.0,
+        "rawUnits": 0.0,
+        "findings": 0,
+        "severity": {
+          "critical": 0,
+          "high": 0,
+          "medium": 0,
+          "low": 0,
+          "informational": 0
+        },
+        "filesScanned": 1,
+        "coverage": {
+          "analyzedSourceFiles": 1,
+          "notEvaluated": {}
+        },
+        "items": []
+      }
     },
-    "items": [
-     {
-      "rule": "CS-SECRET-ASSIGN",
-      "title": "Hard-coded credential in C#",
-      "severity": "high",
-      "confidence": "medium",
-      "path": "OrdersController.cs",
-      "line": 15
-     },
-     {
-      "rule": "CS-SQLI",
-      "title": "SQL built by concatenation or interpolation in C#",
-      "severity": "high",
-      "confidence": "medium",
-      "path": "OrdersController.cs",
-      "line": 20
-     },
-     {
-      "rule": "CS-CMDI",
-      "title": "OS command built from non-literal input in C#",
-      "severity": "high",
-      "confidence": "medium",
-      "path": "OrdersController.cs",
-      "line": 26
-     },
-     {
-      "rule": "CS-WEAKHASH",
-      "title": "Weak hash algorithm in C#",
-      "severity": "low",
-      "confidence": "medium",
-      "path": "OrdersController.cs",
-      "line": 32
-     },
-     {
-      "rule": "CS-RANDOM",
-      "title": "System.Random used for a security value",
-      "severity": "medium",
-      "confidence": "low",
-      "path": "OrdersController.cs",
-      "line": 38
-     },
-     {
-      "rule": "CS-DESER",
-      "title": "Unsafe deserialization in C#",
-      "severity": "high",
-      "confidence": "medium",
-      "path": "OrdersController.cs",
-      "line": 43
-     },
-     {
-      "rule": "CS-PATH",
-      "title": "File path built from request data in C#",
-      "severity": "medium",
-      "confidence": "medium",
-      "path": "OrdersController.cs",
-      "line": 49
-     },
-     {
-      "rule": "CS-TLS",
-      "title": "TLS certificate validation disabled in C#",
-      "severity": "medium",
-      "confidence": "high",
-      "path": "OrdersController.cs",
-      "line": 54
-     }
-    ]
-   },
-   "after": {
-    "status": "complete",
-    "decision": "pass",
-    "fixesApplied": 8,
-    "normalizedIndex": 0.0,
-    "grossUnits": 0.0,
-    "rawUnits": 0.0,
-    "findings": 0,
-    "severity": {
-     "critical": 0,
-     "high": 0,
-     "medium": 0,
-     "low": 0,
-     "informational": 0
+    "ruby-notes-api": {
+      "name": "Ruby notes API",
+      "kind": "vulnerable",
+      "language": "Ruby",
+      "fixCount": 8,
+      "before": {
+        "status": "complete",
+        "decision": "pass",
+        "fixesApplied": 0,
+        "normalizedIndex": 74.1,
+        "grossUnits": 27.0,
+        "rawUnits": 27.0,
+        "findings": 11,
+        "severity": {
+          "critical": 0,
+          "high": 6,
+          "medium": 4,
+          "low": 1,
+          "informational": 0
+        },
+        "filesScanned": 2,
+        "coverage": {
+          "analyzedSourceFiles": 2,
+          "notEvaluated": {}
+        },
+        "items": [
+          {
+            "rule": "RB-SECRET-ASSIGN",
+            "title": "Hard-coded credential in Ruby",
+            "severity": "high",
+            "confidence": "medium",
+            "path": "app.rb",
+            "line": 13
+          },
+          {
+            "rule": "RB-SECRET-ASSIGN",
+            "title": "Hard-coded credential in Ruby",
+            "severity": "high",
+            "confidence": "medium",
+            "path": "app.rb",
+            "line": 14
+          },
+          {
+            "rule": "RB-SQLI",
+            "title": "SQL built by string interpolation in Ruby",
+            "severity": "high",
+            "confidence": "medium",
+            "path": "app.rb",
+            "line": 20
+          },
+          {
+            "rule": "RB-SQLI",
+            "title": "SQL built by string interpolation in Ruby",
+            "severity": "high",
+            "confidence": "medium",
+            "path": "app.rb",
+            "line": 28
+          },
+          {
+            "rule": "RB-PATH",
+            "title": "File path built from request data in Ruby",
+            "severity": "medium",
+            "confidence": "low",
+            "path": "app.rb",
+            "line": 35
+          },
+          {
+            "rule": "RB-CMDI",
+            "title": "OS command built from non-literal input in Ruby",
+            "severity": "high",
+            "confidence": "medium",
+            "path": "app.rb",
+            "line": 42
+          },
+          {
+            "rule": "RB-WEAKHASH",
+            "title": "Weak hash algorithm in Ruby",
+            "severity": "low",
+            "confidence": "medium",
+            "path": "app.rb",
+            "line": 49
+          },
+          {
+            "rule": "RB-SQLI",
+            "title": "SQL built by string interpolation in Ruby",
+            "severity": "high",
+            "confidence": "medium",
+            "path": "app.rb",
+            "line": 50
+          },
+          {
+            "rule": "RB-RANDOM",
+            "title": "Insecure random used for a security value",
+            "severity": "medium",
+            "confidence": "low",
+            "path": "app.rb",
+            "line": 56
+          },
+          {
+            "rule": "RB-XSS-REFLECT",
+            "title": "Request data written to the response unescaped",
+            "severity": "medium",
+            "confidence": "low",
+            "path": "app.rb",
+            "line": 63
+          },
+          {
+            "rule": "RB-TLS",
+            "title": "TLS verification disabled in Ruby",
+            "severity": "medium",
+            "confidence": "high",
+            "path": "app.rb",
+            "line": 68
+          }
+        ]
+      },
+      "after": {
+        "status": "complete",
+        "decision": "pass",
+        "fixesApplied": 8,
+        "normalizedIndex": 0.0,
+        "grossUnits": 0.0,
+        "rawUnits": 0.0,
+        "findings": 0,
+        "severity": {
+          "critical": 0,
+          "high": 0,
+          "medium": 0,
+          "low": 0,
+          "informational": 0
+        },
+        "filesScanned": 2,
+        "coverage": {
+          "analyzedSourceFiles": 2,
+          "notEvaluated": {}
+        },
+        "items": []
+      }
     },
-    "filesScanned": 1,
-    "coverage": {
-     "analyzedSourceFiles": 1,
-     "notEvaluated": {}
+    "rust-cli-tool": {
+      "name": "Rust CLI tool",
+      "kind": "vulnerable",
+      "language": "Rust",
+      "fixCount": 6,
+      "before": {
+        "status": "complete",
+        "decision": "pass",
+        "fixesApplied": 0,
+        "normalizedIndex": 56.2,
+        "grossUnits": 16.5,
+        "rawUnits": 16.5,
+        "findings": 8,
+        "severity": {
+          "critical": 0,
+          "high": 3,
+          "medium": 3,
+          "low": 2,
+          "informational": 0
+        },
+        "filesScanned": 2,
+        "coverage": {
+          "analyzedSourceFiles": 2,
+          "notEvaluated": {}
+        },
+        "items": [
+          {
+            "rule": "RS-WEAKHASH",
+            "title": "Weak hash algorithm in Rust",
+            "severity": "low",
+            "confidence": "medium",
+            "path": "src/main.rs",
+            "line": 6
+          },
+          {
+            "rule": "RS-SECRET-ASSIGN",
+            "title": "Hard-coded credential in Rust",
+            "severity": "high",
+            "confidence": "medium",
+            "path": "src/main.rs",
+            "line": 11
+          },
+          {
+            "rule": "RS-SECRET-ASSIGN",
+            "title": "Hard-coded credential in Rust",
+            "severity": "high",
+            "confidence": "medium",
+            "path": "src/main.rs",
+            "line": 12
+          },
+          {
+            "rule": "RS-CMDI",
+            "title": "OS command built from non-literal input in Rust",
+            "severity": "high",
+            "confidence": "medium",
+            "path": "src/main.rs",
+            "line": 34
+          },
+          {
+            "rule": "RS-PATH",
+            "title": "File path built from request data in Rust",
+            "severity": "medium",
+            "confidence": "low",
+            "path": "src/main.rs",
+            "line": 44
+          },
+          {
+            "rule": "RS-WEAKHASH",
+            "title": "Weak hash algorithm in Rust",
+            "severity": "low",
+            "confidence": "medium",
+            "path": "src/main.rs",
+            "line": 50
+          },
+          {
+            "rule": "RS-RANDOM",
+            "title": "Insecure random used in a security context",
+            "severity": "medium",
+            "confidence": "low",
+            "path": "src/main.rs",
+            "line": 56
+          },
+          {
+            "rule": "RS-UNSAFE",
+            "title": "Unsafe Rust block",
+            "severity": "medium",
+            "confidence": "low",
+            "path": "src/main.rs",
+            "line": 62
+          }
+        ]
+      },
+      "after": {
+        "status": "complete",
+        "decision": "pass",
+        "fixesApplied": 6,
+        "normalizedIndex": 0.0,
+        "grossUnits": 0.0,
+        "rawUnits": 0.0,
+        "findings": 0,
+        "severity": {
+          "critical": 0,
+          "high": 0,
+          "medium": 0,
+          "low": 0,
+          "informational": 0
+        },
+        "filesScanned": 2,
+        "coverage": {
+          "analyzedSourceFiles": 2,
+          "notEvaluated": {}
+        },
+        "items": []
+      }
     },
-    "items": []
-   }
-  },
-  "django-blog-backend": {
-   "name": "Django blog backend",
-   "kind": "vulnerable",
-   "language": "Python",
-   "fixCount": 6,
-   "before": {
-    "status": "complete",
-    "decision": "pass",
-    "fixesApplied": 0,
-    "normalizedIndex": 56.2,
-    "grossUnits": 16.5,
-    "rawUnits": 16.5,
-    "findings": 7,
-    "severity": {
-     "critical": 0,
-     "high": 4,
-     "medium": 2,
-     "low": 1,
-     "informational": 0
+    "rust-web-service": {
+      "name": "Rust web service (unsupported language)",
+      "kind": "unsupported",
+      "language": "Swift",
+      "fixCount": 0,
+      "before": {
+        "status": "incomplete",
+        "decision": "not_evaluated",
+        "fixesApplied": 0,
+        "normalizedIndex": null,
+        "grossUnits": null,
+        "rawUnits": null,
+        "findings": 0,
+        "severity": {
+          "critical": 0,
+          "high": 0,
+          "medium": 0,
+          "low": 0,
+          "informational": 0
+        },
+        "filesScanned": 1,
+        "coverage": {
+          "analyzedSourceFiles": 0,
+          "notEvaluated": {
+            ".swift": 1
+          }
+        },
+        "items": []
+      }
     },
-    "filesScanned": 2,
-    "coverage": {
-     "analyzedSourceFiles": 2,
-     "notEvaluated": {}
+    "secure-javascript": {
+      "name": "Secure Node.js app",
+      "kind": "secure",
+      "language": "JavaScript",
+      "fixCount": 0,
+      "before": {
+        "status": "complete",
+        "decision": "pass",
+        "fixesApplied": 0,
+        "normalizedIndex": 0.0,
+        "grossUnits": 0.0,
+        "rawUnits": 0.0,
+        "findings": 0,
+        "severity": {
+          "critical": 0,
+          "high": 0,
+          "medium": 0,
+          "low": 0,
+          "informational": 0
+        },
+        "filesScanned": 1,
+        "coverage": {
+          "analyzedSourceFiles": 1,
+          "notEvaluated": {}
+        },
+        "items": []
+      }
     },
-    "items": [
-     {
-      "rule": "PY-DEBUG",
-      "title": "Debug mode enabled",
-      "severity": "medium",
-      "confidence": "low",
-      "path": "settings.py",
-      "line": 4
-     },
-     {
-      "rule": "PY-SECRET-ASSIGN",
-      "title": "Hard-coded credential in an assignment",
-      "severity": "high",
-      "confidence": "medium",
-      "path": "settings.py",
-      "line": 5
-     },
-     {
-      "rule": "PY-SECRET-ASSIGN",
-      "title": "Hard-coded credential in an assignment",
-      "severity": "high",
-      "confidence": "medium",
-      "path": "settings.py",
-      "line": 7
-     },
-     {
-      "rule": "PY-WEAKHASH",
-      "title": "Weak hash algorithm",
-      "severity": "low",
-      "confidence": "medium",
-      "path": "settings.py",
-      "line": 11
-     },
-     {
-      "rule": "PY-SQLI",
-      "title": "SQL built by string formatting",
-      "severity": "high",
-      "confidence": "medium",
-      "path": "views.py",
-      "line": 12
-     },
-     {
-      "rule": "PY-RANDOM",
-      "title": "Non-cryptographic random used for a security value",
-      "severity": "medium",
-      "confidence": "low",
-      "path": "views.py",
-      "line": 18
-     },
-     {
-      "rule": "PY-SHELL",
-      "title": "Shell command execution",
-      "severity": "high",
-      "confidence": "medium",
-      "path": "views.py",
-      "line": 23
-     }
-    ]
-   },
-   "after": {
-    "status": "complete",
-    "decision": "pass",
-    "fixesApplied": 6,
-    "normalizedIndex": 0.0,
-    "grossUnits": 0.0,
-    "rawUnits": 0.0,
-    "findings": 0,
-    "severity": {
-     "critical": 0,
-     "high": 0,
-     "medium": 0,
-     "low": 0,
-     "informational": 0
+    "typescript-dashboard": {
+      "name": "TypeScript dashboard",
+      "kind": "vulnerable",
+      "language": "TypeScript",
+      "fixCount": 3,
+      "before": {
+        "status": "complete",
+        "decision": "pass",
+        "fixesApplied": 0,
+        "normalizedIndex": 33.8,
+        "grossUnits": 8.25,
+        "rawUnits": 8.25,
+        "findings": 3,
+        "severity": {
+          "critical": 0,
+          "high": 1,
+          "medium": 2,
+          "low": 0,
+          "informational": 0
+        },
+        "filesScanned": 1,
+        "coverage": {
+          "analyzedSourceFiles": 1,
+          "notEvaluated": {}
+        },
+        "items": [
+          {
+            "rule": "JS-SECRET-ASSIGN",
+            "title": "Hard-coded credential in an assignment",
+            "severity": "high",
+            "confidence": "medium",
+            "path": "dashboard.ts",
+            "line": 4
+          },
+          {
+            "rule": "JS-INNERHTML",
+            "title": "Unsanitized HTML sink",
+            "severity": "medium",
+            "confidence": "medium",
+            "path": "dashboard.ts",
+            "line": 7
+          },
+          {
+            "rule": "JS-TLS",
+            "title": "TLS certificate verification disabled",
+            "severity": "medium",
+            "confidence": "high",
+            "path": "dashboard.ts",
+            "line": 11
+          }
+        ]
+      },
+      "after": {
+        "status": "complete",
+        "decision": "pass",
+        "fixesApplied": 3,
+        "normalizedIndex": 0.0,
+        "grossUnits": 0.0,
+        "rawUnits": 0.0,
+        "findings": 0,
+        "severity": {
+          "critical": 0,
+          "high": 0,
+          "medium": 0,
+          "low": 0,
+          "informational": 0
+        },
+        "filesScanned": 1,
+        "coverage": {
+          "analyzedSourceFiles": 1,
+          "notEvaluated": {}
+        },
+        "items": []
+      }
     },
-    "filesScanned": 2,
-    "coverage": {
-     "analyzedSourceFiles": 2,
-     "notEvaluated": {}
-    },
-    "items": []
-   }
-  },
-  "express-todo-api": {
-   "name": "Express todo API",
-   "kind": "vulnerable",
-   "language": "JavaScript",
-   "fixCount": 4,
-   "before": {
-    "status": "complete",
-    "decision": "pass",
-    "fixesApplied": 0,
-    "normalizedIndex": 37.8,
-    "grossUnits": 9.5,
-    "rawUnits": 9.5,
-    "findings": 4,
-    "severity": {
-     "critical": 0,
-     "high": 3,
-     "medium": 0,
-     "low": 1,
-     "informational": 0
-    },
-    "filesScanned": 1,
-    "coverage": {
-     "analyzedSourceFiles": 1,
-     "notEvaluated": {}
-    },
-    "items": [
-     {
-      "rule": "JS-SECRET-ASSIGN",
-      "title": "Hard-coded credential in an assignment",
-      "severity": "high",
-      "confidence": "low",
-      "path": "server.js",
-      "line": 7
-     },
-     {
-      "rule": "JS-CMDI",
-      "title": "Shell command built from a non-literal",
-      "severity": "high",
-      "confidence": "medium",
-      "path": "server.js",
-      "line": 16
-     },
-     {
-      "rule": "JS-EVAL",
-      "title": "Dynamic code execution (eval / new Function)",
-      "severity": "high",
-      "confidence": "medium",
-      "path": "server.js",
-      "line": 20
-     },
-     {
-      "rule": "JS-WEAKHASH",
-      "title": "Weak hash algorithm",
-      "severity": "low",
-      "confidence": "medium",
-      "path": "server.js",
-      "line": 24
-     }
-    ]
-   },
-   "after": {
-    "status": "complete",
-    "decision": "pass",
-    "fixesApplied": 4,
-    "normalizedIndex": 0.0,
-    "grossUnits": 0.0,
-    "rawUnits": 0.0,
-    "findings": 0,
-    "severity": {
-     "critical": 0,
-     "high": 0,
-     "medium": 0,
-     "low": 0,
-     "informational": 0
-    },
-    "filesScanned": 1,
-    "coverage": {
-     "analyzedSourceFiles": 1,
-     "notEvaluated": {}
-    },
-    "items": []
-   }
-  },
-  "flask-notes-api": {
-   "name": "Flask notes API",
-   "kind": "vulnerable",
-   "language": "Python",
-   "fixCount": 6,
-   "before": {
-    "status": "complete",
-    "decision": "pass",
-    "fixesApplied": 0,
-    "normalizedIndex": 50.3,
-    "grossUnits": 14.0,
-    "rawUnits": 14.0,
-    "findings": 6,
-    "severity": {
-     "critical": 0,
-     "high": 3,
-     "medium": 3,
-     "low": 0,
-     "informational": 0
-    },
-    "filesScanned": 1,
-    "coverage": {
-     "analyzedSourceFiles": 1,
-     "notEvaluated": {}
-    },
-    "items": [
-     {
-      "rule": "PY-DEBUG",
-      "title": "Debug mode enabled",
-      "severity": "medium",
-      "confidence": "low",
-      "path": "app.py",
-      "line": 10
-     },
-     {
-      "rule": "PY-SECRET-ASSIGN",
-      "title": "Hard-coded credential in an assignment",
-      "severity": "high",
-      "confidence": "medium",
-      "path": "app.py",
-      "line": 11
-     },
-     {
-      "rule": "PY-SQLI-FLOW",
-      "title": "SQL string built in a variable, then executed",
-      "severity": "high",
-      "confidence": "low",
-      "path": "app.py",
-      "line": 23
-     },
-     {
-      "rule": "PY-PICKLE",
-      "title": "Unsafe deserialization (pickle)",
-      "severity": "medium",
-      "confidence": "medium",
-      "path": "app.py",
-      "line": 37
-     },
-     {
-      "rule": "PY-YAML",
-      "title": "yaml.load without SafeLoader",
-      "severity": "medium",
-      "confidence": "medium",
-      "path": "app.py",
-      "line": 42
-     },
-     {
-      "rule": "PY-SHELL",
-      "title": "Shell command execution",
-      "severity": "high",
-      "confidence": "medium",
-      "path": "app.py",
-      "line": 48
-     }
-    ]
-   },
-   "after": {
-    "status": "complete",
-    "decision": "pass",
-    "fixesApplied": 6,
-    "normalizedIndex": 0.0,
-    "grossUnits": 0.0,
-    "rawUnits": 0.0,
-    "findings": 0,
-    "severity": {
-     "critical": 0,
-     "high": 0,
-     "medium": 0,
-     "low": 0,
-     "informational": 0
-    },
-    "filesScanned": 1,
-    "coverage": {
-     "analyzedSourceFiles": 1,
-     "notEvaluated": {}
-    },
-    "items": []
-   }
-  },
-  "go-http-service": {
-   "name": "Go notes service",
-   "kind": "vulnerable",
-   "language": "Go",
-   "fixCount": 8,
-   "before": {
-    "status": "complete",
-    "decision": "pass",
-    "fixesApplied": 0,
-    "normalizedIndex": 58.8,
-    "grossUnits": 17.75,
-    "rawUnits": 17.75,
-    "findings": 8,
-    "severity": {
-     "critical": 0,
-     "high": 3,
-     "medium": 4,
-     "low": 1,
-     "informational": 0
-    },
-    "filesScanned": 1,
-    "coverage": {
-     "analyzedSourceFiles": 1,
-     "notEvaluated": {}
-    },
-    "items": [
-     {
-      "rule": "GO-SECRET-ASSIGN",
-      "title": "Hard-coded credential in Go",
-      "severity": "high",
-      "confidence": "medium",
-      "path": "main.go",
-      "line": 16
-     },
-     {
-      "rule": "GO-SQLI",
-      "title": "SQL built by formatting or concatenation in Go",
-      "severity": "high",
-      "confidence": "low",
-      "path": "main.go",
-      "line": 21
-     },
-     {
-      "rule": "GO-CMDI",
-      "title": "OS command built from non-literal input in Go",
-      "severity": "high",
-      "confidence": "medium",
-      "path": "main.go",
-      "line": 26
-     },
-     {
-      "rule": "GO-WEAKHASH",
-      "title": "Weak hash algorithm in Go",
-      "severity": "low",
-      "confidence": "medium",
-      "path": "main.go",
-      "line": 31
-     },
-     {
-      "rule": "GO-RANDOM",
-      "title": "math/rand used for a security value",
-      "severity": "medium",
-      "confidence": "low",
-      "path": "main.go",
-      "line": 36
-     },
-     {
-      "rule": "GO-PATH",
-      "title": "File path built from request data",
-      "severity": "medium",
-      "confidence": "medium",
-      "path": "main.go",
-      "line": 40
-     },
-     {
-      "rule": "GO-XSS-REFLECT",
-      "title": "Request data written to the response unescaped",
-      "severity": "medium",
-      "confidence": "low",
-      "path": "main.go",
-      "line": 45
-     },
-     {
-      "rule": "GO-TLS",
-      "title": "TLS verification disabled in Go",
-      "severity": "medium",
-      "confidence": "high",
-      "path": "main.go",
-      "line": 49
-     }
-    ]
-   },
-   "after": {
-    "status": "complete",
-    "decision": "pass",
-    "fixesApplied": 8,
-    "normalizedIndex": 0.0,
-    "grossUnits": 0.0,
-    "rawUnits": 0.0,
-    "findings": 0,
-    "severity": {
-     "critical": 0,
-     "high": 0,
-     "medium": 0,
-     "low": 0,
-     "informational": 0
-    },
-    "filesScanned": 1,
-    "coverage": {
-     "analyzedSourceFiles": 1,
-     "notEvaluated": {}
-    },
-    "items": []
-   }
-  },
-  "kotlin-notes-service": {
-   "name": "Kotlin notes service",
-   "kind": "vulnerable",
-   "language": "Kotlin",
-   "fixCount": 6,
-   "before": {
-    "status": "complete",
-    "decision": "pass",
-    "fixesApplied": 0,
-    "normalizedIndex": 51.0,
-    "grossUnits": 14.25,
-    "rawUnits": 14.25,
-    "findings": 6,
-    "severity": {
-     "critical": 0,
-     "high": 3,
-     "medium": 2,
-     "low": 1,
-     "informational": 0
-    },
-    "filesScanned": 1,
-    "coverage": {
-     "analyzedSourceFiles": 1,
-     "notEvaluated": {}
-    },
-    "items": [
-     {
-      "rule": "JAVA-SECRET-ASSIGN",
-      "title": "Hard-coded credential in Java/Kotlin",
-      "severity": "high",
-      "confidence": "medium",
-      "path": "Main.kt",
-      "line": 9
-     },
-     {
-      "rule": "JAVA-SQLI",
-      "title": "SQL built by concatenation in Java/Kotlin",
-      "severity": "high",
-      "confidence": "medium",
-      "path": "Main.kt",
-      "line": 14
-     },
-     {
-      "rule": "JAVA-CMDI",
-      "title": "OS command built from non-literal input in Java/Kotlin",
-      "severity": "high",
-      "confidence": "medium",
-      "path": "Main.kt",
-      "line": 19
-     },
-     {
-      "rule": "JAVA-WEAKHASH",
-      "title": "Weak hash algorithm in Java/Kotlin",
-      "severity": "low",
-      "confidence": "medium",
-      "path": "Main.kt",
-      "line": 23
-     },
-     {
-      "rule": "JAVA-RANDOM",
-      "title": "java.util.Random / Math.random for a security value",
-      "severity": "medium",
-      "confidence": "low",
-      "path": "Main.kt",
-      "line": 28
-     },
-     {
-      "rule": "JAVA-DESER",
-      "title": "Unsafe deserialization in Java/Kotlin",
-      "severity": "medium",
-      "confidence": "medium",
-      "path": "Main.kt",
-      "line": 32
-     }
-    ]
-   },
-   "after": {
-    "status": "complete",
-    "decision": "pass",
-    "fixesApplied": 6,
-    "normalizedIndex": 0.0,
-    "grossUnits": 0.0,
-    "rawUnits": 0.0,
-    "findings": 0,
-    "severity": {
-     "critical": 0,
-     "high": 0,
-     "medium": 0,
-     "low": 0,
-     "informational": 0
-    },
-    "filesScanned": 1,
-    "coverage": {
-     "analyzedSourceFiles": 1,
-     "notEvaluated": {}
-    },
-    "items": []
-   }
-  },
-  "php-legacy-shop": {
-   "name": "PHP legacy shop",
-   "kind": "vulnerable",
-   "language": "PHP",
-   "fixCount": 10,
-   "before": {
-    "status": "complete",
-    "decision": "pass",
-    "fixesApplied": 0,
-    "normalizedIndex": 71.0,
-    "grossUnits": 24.75,
-    "rawUnits": 24.75,
-    "findings": 10,
-    "severity": {
-     "critical": 0,
-     "high": 5,
-     "medium": 4,
-     "low": 1,
-     "informational": 0
-    },
-    "filesScanned": 1,
-    "coverage": {
-     "analyzedSourceFiles": 1,
-     "notEvaluated": {}
-    },
-    "items": [
-     {
-      "rule": "PHP-SECRET-ASSIGN",
-      "title": "Hard-coded credential in PHP",
-      "severity": "high",
-      "confidence": "medium",
-      "path": "index.php",
-      "line": 4
-     },
-     {
-      "rule": "PHP-SQLI",
-      "title": "SQL built by concatenation or interpolation in PHP",
-      "severity": "high",
-      "confidence": "medium",
-      "path": "index.php",
-      "line": 9
-     },
-     {
-      "rule": "PHP-CMDI",
-      "title": "OS command built from non-literal input in PHP",
-      "severity": "high",
-      "confidence": "medium",
-      "path": "index.php",
-      "line": 14
-     },
-     {
-      "rule": "PHP-WEAKHASH",
-      "title": "md5/sha1/crypt used for a password or token in PHP",
-      "severity": "low",
-      "confidence": "medium",
-      "path": "index.php",
-      "line": 19
-     },
-     {
-      "rule": "PHP-RANDOM",
-      "title": "rand/mt_rand/uniqid used for a security value in PHP",
-      "severity": "medium",
-      "confidence": "low",
-      "path": "index.php",
-      "line": 23
-     },
-     {
-      "rule": "PHP-INCLUDE",
-      "title": "File include built from request data in PHP",
-      "severity": "high",
-      "confidence": "medium",
-      "path": "index.php",
-      "line": 27
-     },
-     {
-      "rule": "PHP-DESER",
-      "title": "Unsafe deserialization in PHP",
-      "severity": "high",
-      "confidence": "medium",
-      "path": "index.php",
-      "line": 31
-     },
-     {
-      "rule": "PHP-XSS-REFLECT",
-      "title": "Request data echoed unescaped in PHP",
-      "severity": "medium",
-      "confidence": "low",
-      "path": "index.php",
-      "line": 35
-     },
-     {
-      "rule": "PHP-TLS",
-      "title": "TLS verification disabled in PHP",
-      "severity": "medium",
-      "confidence": "high",
-      "path": "index.php",
-      "line": 40
-     },
-     {
-      "rule": "PHP-PATH",
-      "title": "File path built from request data in PHP",
-      "severity": "medium",
-      "confidence": "medium",
-      "path": "index.php",
-      "line": 45
-     }
-    ]
-   },
-   "after": {
-    "status": "complete",
-    "decision": "pass",
-    "fixesApplied": 10,
-    "normalizedIndex": 0.0,
-    "grossUnits": 0.0,
-    "rawUnits": 0.0,
-    "findings": 0,
-    "severity": {
-     "critical": 0,
-     "high": 0,
-     "medium": 0,
-     "low": 0,
-     "informational": 0
-    },
-    "filesScanned": 1,
-    "coverage": {
-     "analyzedSourceFiles": 1,
-     "notEvaluated": {}
-    },
-    "items": []
-   }
-  },
-  "python-ops-cli": {
-   "name": "Python ops CLI",
-   "kind": "vulnerable",
-   "language": "Python",
-   "fixCount": 7,
-   "before": {
-    "status": "complete",
-    "decision": "pass",
-    "fixesApplied": 0,
-    "normalizedIndex": 57.8,
-    "grossUnits": 17.25,
-    "rawUnits": 17.25,
-    "findings": 7,
-    "severity": {
-     "critical": 0,
-     "high": 3,
-     "medium": 3,
-     "low": 1,
-     "informational": 0
-    },
-    "filesScanned": 1,
-    "coverage": {
-     "analyzedSourceFiles": 1,
-     "notEvaluated": {}
-    },
-    "items": [
-     {
-      "rule": "PY-SECRET-ASSIGN",
-      "title": "Hard-coded credential in an assignment",
-      "severity": "high",
-      "confidence": "medium",
-      "path": "ops.py",
-      "line": 9
-     },
-     {
-      "rule": "PY-NOVERIFY",
-      "title": "TLS certificate verification disabled",
-      "severity": "medium",
-      "confidence": "high",
-      "path": "ops.py",
-      "line": 13
-     },
-     {
-      "rule": "PY-SHELL",
-      "title": "Shell command execution",
-      "severity": "high",
-      "confidence": "medium",
-      "path": "ops.py",
-      "line": 17
-     },
-     {
-      "rule": "PY-RANDOM",
-      "title": "Non-cryptographic random used for a security value",
-      "severity": "medium",
-      "confidence": "low",
-      "path": "ops.py",
-      "line": 21
-     },
-     {
-      "rule": "PY-WEAKHASH",
-      "title": "Weak hash algorithm",
-      "severity": "low",
-      "confidence": "medium",
-      "path": "ops.py",
-      "line": 25
-     },
-     {
-      "rule": "PY-TEMPFILE",
-      "title": "Insecure temporary file",
-      "severity": "medium",
-      "confidence": "medium",
-      "path": "ops.py",
-      "line": 29
-     },
-     {
-      "rule": "PY-EVAL",
-      "title": "Dynamic code execution (eval/exec)",
-      "severity": "high",
-      "confidence": "medium",
-      "path": "ops.py",
-      "line": 33
-     }
-    ]
-   },
-   "after": {
-    "status": "complete",
-    "decision": "pass",
-    "fixesApplied": 7,
-    "normalizedIndex": 0.0,
-    "grossUnits": 0.0,
-    "rawUnits": 0.0,
-    "findings": 0,
-    "severity": {
-     "critical": 0,
-     "high": 0,
-     "medium": 0,
-     "low": 0,
-     "informational": 0
-    },
-    "filesScanned": 1,
-    "coverage": {
-     "analyzedSourceFiles": 1,
-     "notEvaluated": {}
-    },
-    "items": []
-   }
-  },
-  "rust-web-service": {
-   "name": "Rust web service (unsupported language)",
-   "kind": "unsupported",
-   "language": "Rust",
-   "fixCount": 0,
-   "before": {
-    "status": "incomplete",
-    "decision": "not_evaluated",
-    "fixesApplied": 0,
-    "normalizedIndex": null,
-    "grossUnits": null,
-    "rawUnits": null,
-    "findings": 0,
-    "severity": {
-     "critical": 0,
-     "high": 0,
-     "medium": 0,
-     "low": 0,
-     "informational": 0
-    },
-    "filesScanned": 1,
-    "coverage": {
-     "analyzedSourceFiles": 0,
-     "notEvaluated": {
-      ".rs": 1
-     }
-    },
-    "items": []
-   }
-  },
-  "secure-javascript": {
-   "name": "Secure Node.js app",
-   "kind": "secure",
-   "language": "JavaScript",
-   "fixCount": 0,
-   "before": {
-    "status": "complete",
-    "decision": "pass",
-    "fixesApplied": 0,
-    "normalizedIndex": 0.0,
-    "grossUnits": 0.0,
-    "rawUnits": 0.0,
-    "findings": 0,
-    "severity": {
-     "critical": 0,
-     "high": 0,
-     "medium": 0,
-     "low": 0,
-     "informational": 0
-    },
-    "filesScanned": 1,
-    "coverage": {
-     "analyzedSourceFiles": 1,
-     "notEvaluated": {}
-    },
-    "items": []
-   }
-  },
-  "typescript-dashboard": {
-   "name": "TypeScript dashboard",
-   "kind": "vulnerable",
-   "language": "TypeScript",
-   "fixCount": 3,
-   "before": {
-    "status": "complete",
-    "decision": "pass",
-    "fixesApplied": 0,
-    "normalizedIndex": 33.8,
-    "grossUnits": 8.25,
-    "rawUnits": 8.25,
-    "findings": 3,
-    "severity": {
-     "critical": 0,
-     "high": 1,
-     "medium": 2,
-     "low": 0,
-     "informational": 0
-    },
-    "filesScanned": 1,
-    "coverage": {
-     "analyzedSourceFiles": 1,
-     "notEvaluated": {}
-    },
-    "items": [
-     {
-      "rule": "JS-SECRET-ASSIGN",
-      "title": "Hard-coded credential in an assignment",
-      "severity": "high",
-      "confidence": "medium",
-      "path": "dashboard.ts",
-      "line": 4
-     },
-     {
-      "rule": "JS-INNERHTML",
-      "title": "Unsanitized HTML sink",
-      "severity": "medium",
-      "confidence": "medium",
-      "path": "dashboard.ts",
-      "line": 7
-     },
-     {
-      "rule": "JS-TLS",
-      "title": "TLS certificate verification disabled",
-      "severity": "medium",
-      "confidence": "high",
-      "path": "dashboard.ts",
-      "line": 11
-     }
-    ]
-   },
-   "after": {
-    "status": "complete",
-    "decision": "pass",
-    "fixesApplied": 3,
-    "normalizedIndex": 0.0,
-    "grossUnits": 0.0,
-    "rawUnits": 0.0,
-    "findings": 0,
-    "severity": {
-     "critical": 0,
-     "high": 0,
-     "medium": 0,
-     "low": 0,
-     "informational": 0
-    },
-    "filesScanned": 1,
-    "coverage": {
-     "analyzedSourceFiles": 1,
-     "notEvaluated": {}
-    },
-    "items": []
-   }
-  },
-  "vulnerable-java": {
-   "name": "Vulnerable Java app",
-   "kind": "vulnerable",
-   "language": "Java",
-   "fixCount": 6,
-   "before": {
-    "status": "complete",
-    "decision": "pass",
-    "fixesApplied": 0,
-    "normalizedIndex": 53.4,
-    "grossUnits": 15.25,
-    "rawUnits": 15.25,
-    "findings": 7,
-    "severity": {
-     "critical": 0,
-     "high": 4,
-     "medium": 2,
-     "low": 1,
-     "informational": 0
-    },
-    "filesScanned": 1,
-    "coverage": {
-     "analyzedSourceFiles": 1,
-     "notEvaluated": {}
-    },
-    "items": [
-     {
-      "rule": "JAVA-SECRET-ASSIGN",
-      "title": "Hard-coded credential in Java/Kotlin",
-      "severity": "high",
-      "confidence": "medium",
-      "path": "VulnerableApp.java",
-      "line": 15
-     },
-     {
-      "rule": "JAVA-SECRET-ASSIGN",
-      "title": "Hard-coded credential in Java/Kotlin",
-      "severity": "high",
-      "confidence": "medium",
-      "path": "VulnerableApp.java",
-      "line": 16
-     },
-     {
-      "rule": "JAVA-SQLI",
-      "title": "SQL built by concatenation in Java/Kotlin",
-      "severity": "high",
-      "confidence": "low",
-      "path": "VulnerableApp.java",
-      "line": 26
-     },
-     {
-      "rule": "JAVA-CMDI",
-      "title": "OS command built from non-literal input in Java/Kotlin",
-      "severity": "high",
-      "confidence": "low",
-      "path": "VulnerableApp.java",
-      "line": 37
-     },
-     {
-      "rule": "JAVA-WEAKHASH",
-      "title": "Weak hash algorithm in Java/Kotlin",
-      "severity": "low",
-      "confidence": "medium",
-      "path": "VulnerableApp.java",
-      "line": 51
-     },
-     {
-      "rule": "JAVA-DESER",
-      "title": "Unsafe deserialization in Java/Kotlin",
-      "severity": "medium",
-      "confidence": "medium",
-      "path": "VulnerableApp.java",
-      "line": 77
-     },
-     {
-      "rule": "JAVA-XXE",
-      "title": "XML parser factory without XXE hardening",
-      "severity": "medium",
-      "confidence": "low",
-      "path": "VulnerableApp.java",
-      "line": 84
-     }
-    ]
-   },
-   "after": {
-    "status": "complete",
-    "decision": "pass",
-    "fixesApplied": 6,
-    "normalizedIndex": 0.0,
-    "grossUnits": 0.0,
-    "rawUnits": 0.0,
-    "findings": 0,
-    "severity": {
-     "critical": 0,
-     "high": 0,
-     "medium": 0,
-     "low": 0,
-     "informational": 0
-    },
-    "filesScanned": 1,
-    "coverage": {
-     "analyzedSourceFiles": 1,
-     "notEvaluated": {}
-    },
-    "items": []
-   }
+    "vulnerable-java": {
+      "name": "Vulnerable Java app",
+      "kind": "vulnerable",
+      "language": "Java",
+      "fixCount": 6,
+      "before": {
+        "status": "complete",
+        "decision": "pass",
+        "fixesApplied": 0,
+        "normalizedIndex": 53.4,
+        "grossUnits": 15.25,
+        "rawUnits": 15.25,
+        "findings": 7,
+        "severity": {
+          "critical": 0,
+          "high": 4,
+          "medium": 2,
+          "low": 1,
+          "informational": 0
+        },
+        "filesScanned": 1,
+        "coverage": {
+          "analyzedSourceFiles": 1,
+          "notEvaluated": {}
+        },
+        "items": [
+          {
+            "rule": "JAVA-SECRET-ASSIGN",
+            "title": "Hard-coded credential in Java/Kotlin",
+            "severity": "high",
+            "confidence": "medium",
+            "path": "VulnerableApp.java",
+            "line": 15
+          },
+          {
+            "rule": "JAVA-SECRET-ASSIGN",
+            "title": "Hard-coded credential in Java/Kotlin",
+            "severity": "high",
+            "confidence": "medium",
+            "path": "VulnerableApp.java",
+            "line": 16
+          },
+          {
+            "rule": "JAVA-SQLI",
+            "title": "SQL built by concatenation in Java/Kotlin",
+            "severity": "high",
+            "confidence": "low",
+            "path": "VulnerableApp.java",
+            "line": 26
+          },
+          {
+            "rule": "JAVA-CMDI",
+            "title": "OS command built from non-literal input in Java/Kotlin",
+            "severity": "high",
+            "confidence": "low",
+            "path": "VulnerableApp.java",
+            "line": 37
+          },
+          {
+            "rule": "JAVA-WEAKHASH",
+            "title": "Weak hash algorithm in Java/Kotlin",
+            "severity": "low",
+            "confidence": "medium",
+            "path": "VulnerableApp.java",
+            "line": 51
+          },
+          {
+            "rule": "JAVA-DESER",
+            "title": "Unsafe deserialization in Java/Kotlin",
+            "severity": "medium",
+            "confidence": "medium",
+            "path": "VulnerableApp.java",
+            "line": 77
+          },
+          {
+            "rule": "JAVA-XXE",
+            "title": "XML parser factory without XXE hardening",
+            "severity": "medium",
+            "confidence": "low",
+            "path": "VulnerableApp.java",
+            "line": 84
+          }
+        ]
+      },
+      "after": {
+        "status": "complete",
+        "decision": "pass",
+        "fixesApplied": 6,
+        "normalizedIndex": 0.0,
+        "grossUnits": 0.0,
+        "rawUnits": 0.0,
+        "findings": 0,
+        "severity": {
+          "critical": 0,
+          "high": 0,
+          "medium": 0,
+          "low": 0,
+          "informational": 0
+        },
+        "filesScanned": 1,
+        "coverage": {
+          "analyzedSourceFiles": 1,
+          "notEvaluated": {}
+        },
+        "items": []
+      }
+    }
   }
- }
 }
