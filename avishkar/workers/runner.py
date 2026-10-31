@@ -5,6 +5,7 @@ import json
 import os
 import tempfile
 import threading
+import time
 import uuid
 from pathlib import Path
 
@@ -22,8 +23,9 @@ SPOOL_DIR = Path(os.environ.get("AVISHKAR_SPOOL", "data/spool"))
 
 class JobRunner:
     def __init__(self, store: Store, cfg: ScoreConfig, pol: Policy, sandbox: Sandbox,
-                 github: gh.GitHubClient | None = None, lease_seconds: int = 300, retry_delay: float = 5.0):
+                 github: gh.GitHubClient | None = None, lease_seconds: int = 300, retry_delay: float = 5.0, mailer=None):
         self.store, self.cfg, self.pol, self.sandbox, self.github = store, cfg, pol, sandbox, github
+        self.mailer = mailer
         self.lease, self.retry_delay = lease_seconds, retry_delay
         self.worker_id = "wrk_" + uuid.uuid4().hex[:8]
 
@@ -52,6 +54,91 @@ class JobRunner:
             if after["status"] == "dead":
                 self._finalize_dead(job, str(e))
         return True
+
+    # ------------------------------------------------------------ scheduled rescans
+    def schedule_tick(self, now: float | None = None) -> int:
+        """Queue a scan for every due schedule. Returns how many were queued.
+
+        The commit is resolved by GitHub at queue time. The same commit is rescanned on purpose: advisories in the
+        vulnerability database change even when the code does not. A schedule whose installation is gone is switched off,
+        and a full org queue postpones the schedule instead of dropping it."""
+        now = now or time.time()
+        quota = int(os.environ.get("AVISHKAR_MAX_ACTIVE_JOBS", "20"))
+        queued = 0
+        for s in self.store.due_schedules(now):
+            org, hours = s["organization_id"], s["every_hours"]
+            try:
+                inst = self.store.installation(s["installation_id"])
+                if not inst or inst["organization_id"] != org:
+                    self.store.delete_schedule(org, s["id"])
+                    self.store.audit("scheduler", "schedule_disabled", "schedule", s["id"], "installation_gone", org=org)
+                    continue
+                if self.store.active_job_count(org) >= quota:
+                    continue  # try again on the next tick
+                if not self.github:
+                    raise gh.GitHubError("GitHub App is not configured")
+                head = next((b for b in self.github.list_branches(s["installation_id"], s["repo"]) if b["name"] == s["branch"]), None)
+                if head is None:
+                    raise gh.GitHubError("branch no longer exists")
+                ref = f"refs/heads/{s['branch']}"
+                self.store.set_ref_head(s["repository_id"], ref, head["sha"])
+                bucket = int(now // (hours * 3600))
+                run_id = self.store.create_run(s["repository_id"], head["sha"], "scheduler")
+                job, created = self.store.enqueue(org, s["repository_id"], run_id, "github",
+                                                  {"installation": s["installation_id"], "repo": s["repo"], "sha": head["sha"], "ref": ref,
+                                                   "pr": None, "schedule_id": s["id"]}, f"sched:{s['id']}:{bucket}")
+                queued += 1 if created else 0
+                self.store.audit("scheduler", "schedule_queued", "analysis_run", job["run_id"], "ok", org=org)
+            except Exception as e:  # GitHub outage, deleted branch ...: skip this period, keep the schedule
+                self.store.audit("scheduler", "schedule_failed", "schedule", s["id"], type(e).__name__, org=org)
+            self.store.set_schedule_next(s["id"], now + hours * 3600)
+        return queued
+
+    def _notify_schedule(self, job, p, res):
+        """After a scheduled scan: remember the result and, when something changed, email a short summary.
+
+        The email contains counts, rule titles and file:line only (no code or evidence) and goes to an address that
+        belongs to a user of the same organization."""
+        s = self.store.schedule(p["schedule_id"])
+        if not s:
+            return
+        sd = res["securityDebt"]
+        new_index, new_status = sd.get("normalizedIndex"), res["status"]
+        old_index, old_status, old_run = s["last_index"], s["last_status"], s["last_run_id"]
+        self.store.set_schedule_result(s["id"], job["run_id"], p["sha"], new_index, new_status)
+        if old_status is None or not s["notify_email"] or self.mailer is None:
+            return  # first run only sets the baseline
+        lines = []
+        if new_status != old_status:
+            lines.append(f"Analysis status changed: {old_status} -> {new_status}."
+                         + (" An incomplete analysis is NOT a pass." if new_status != "complete" else ""))
+        if new_index is not None and old_index is not None and abs(new_index - old_index) >= 0.1:
+            lines.append(f"Security debt index: {old_index:g} -> {new_index:g} ({new_index - old_index:+.1f}).")
+        try:
+            from .. import analysis
+            base, head = self.store.run(old_run), self.store.run(job["run_id"])
+            if base and head:
+                cmp = analysis.compare_runs(base, head, self.store.run_findings(old_run), self.store.run_findings(job["run_id"]))
+                if cmp.get("comparable"):
+                    for label, items in (("New findings", cmp["introduced"]), ("Fixed", cmp["fixed"])):
+                        if items:
+                            lines.append(f"{label} ({len(items)}):")
+                            lines += [f"  - [{i['severity']}] {i['title']} ({i['path']}:{i['line']})" for i in items[:10]]
+                            if len(items) > 10:
+                                lines.append(f"  ... and {len(items) - 10} more")
+        except Exception:
+            pass
+        if not lines:
+            return
+        base_url = getattr(self.mailer, "public_url", "")
+        body = (f"Scheduled scan of {s['repo']} ({s['branch']}, commit {p['sha'][:8]}) found changes since the previous scan.\n\n"
+                + "\n".join(lines) + f"\n\nOpen the repository: {base_url}/#/repo/{s['repository_id']}\n\n"
+                "The index is a prioritization signal from uncalibrated weights, not proof of safety.")
+        try:
+            self.mailer.send(s["notify_email"], f"Second Read: changes in {s['repo']} ({s['branch']})", body)
+            self.store.audit("scheduler", "schedule_email_sent", "schedule", s["id"], "ok", org=s["organization_id"])
+        except Exception as e:  # advisory: a mail failure must not fail an otherwise finished scan
+            self.store.audit("scheduler", "schedule_email_failed", "schedule", s["id"], type(e).__name__, org=s["organization_id"])
 
     def drain(self, max_jobs: int = 1000) -> int:
         n = 0
@@ -114,6 +201,8 @@ class JobRunner:
         finally:
             zp.unlink(missing_ok=True)
         res = self._finish(job, collected)
+        if p.get("schedule_id"):
+            self._notify_schedule(job, p, res)
         head = self.store.ref_head(job["repository_id"], ref)
         if head and head != sha:  # a newer commit arrived: this result must not masquerade as current
             self.github.complete_check_run(inst, repo, check_id, "neutral", "Superseded by a newer commit.")
@@ -160,7 +249,14 @@ class WorkerThread:
         self._t = threading.Thread(target=self._loop, daemon=True, name="avishkar-worker")
 
     def _loop(self):
+        last_tick = 0.0
         while not self._stop.is_set():
+            if time.time() - last_tick >= 30:  # scheduled rescans are checked every 30 s
+                last_tick = time.time()
+                try:
+                    self.runner.schedule_tick()
+                except Exception:
+                    pass
             try:
                 busy = self.runner.run_once()
             except Exception:

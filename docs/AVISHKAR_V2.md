@@ -102,7 +102,8 @@ Multi-statement writes use `Database.transaction()`; `SELECT`s end their transac
 * **Vulnerability explorer**: search, severity/state/category/CWE/file filters, sorting, expandable detail with CWE, why it
   matters, impact, remediation and a secure example from a static knowledge base (`avishkar/knowledge.py`, version
   `kb-1`, not model-generated). Detail pages state whether a rule is *structural* (AST/token) or *heuristic*.
-* **Reports**: `GET /v1/analyses/{id}/report?format=json|html` (print the HTML to PDF; no PDF dependency) and SARIF with
+* **Reports**: `GET /v1/analyses/{id}/report?format=json|html|pdf` (PDF built with reportlab from the same data; untrusted
+  text is escaped, base-14 fonts only, deterministic and uncompressed) and SARIF with
   CWE tags and help text. State (complete/partial/incomplete) comes from the run itself.
 * **Demo lab**: `POST /v1/demo/scan` runs the real pipeline on bundled sample projects, optionally with fix-pack edits
   applied to a copy; stages shown in the UI are the recorded stage timeline of the run. Samples: vulnerable Python,
@@ -130,6 +131,29 @@ Multi-statement writes use `Database.transaction()`; `SELECT`s end their transac
   the API host. Use `AVISHKAR_UPLOADS=admin` to turn this off.
 * **HTTP headers**: API and HTML responses carry `nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: no-referrer`;
   HTML adds a CSP with no inline script; `/static` is `no-cache` (revalidated), everything else `no-store`.
+
+## 11. Dependency vulnerabilities (OSV.dev)
+Manifests are parsed inside the sandbox (`workers/manifests.py`: requirements.txt, package.json, package-lock.json, pom.xml,
+build.gradle(.kts), go.mod, *.csproj, composer.lock, Gemfile.lock). The sandbox may have no network, so the lookup runs later
+in the trusted stage (`adapters/vulns.py`) after the records are re-validated; only ecosystem, package name and version leave
+the server. Enable with `AVISHKAR_VULN_FEED=osv`. A pinned/exact version is reported at high confidence, a range's lower bound
+(`^1.2.3`) at medium. **A failed lookup (network, timeout, bad response) marks the dependency check incomplete**, so the
+scan has no score instead of a falsely clean one. With the feed on, findings from the built-in sample list are replaced by
+OSV results (not doubled). Limits: only exact versions resolved in the manifest are checked (no transitive resolution from
+`pom.xml` or `package.json` without a lockfile), a match does not prove the vulnerable function is reachable, and advisory
+severity comes from the database's own label (default medium when it has none). Tested against a mocked OSV plus one manual
+read-only call to the live API; CI never touches the network.
+
+## 12. Scheduled rescans and change emails
+Admins can schedule a linked GitHub branch (every 6 h to 30 days, at most 10 schedules per organization):
+`POST /v1/schedules`, `GET /v1/schedules`, `DELETE /v1/schedules/{id}`, and a panel on the console's GitHub page. The embedded
+worker checks for due schedules every 30 s. The commit is resolved by GitHub at queue time; the **same commit is rescanned
+on purpose** (advisories change while code does not). A full organization queue postpones a schedule instead of flooding it;
+a deleted branch skips that period; an uninstalled GitHub App switches the schedule off. When a scheduled scan differs from
+the previous one (status, index, or new/fixed findings) an email goes to the chosen notification address, which must belong
+to a user of the same organization; it lists counts, rule titles and file:line only (no code), and the first scan just sets
+the baseline. A mail failure never fails the scan. Needs GitHub credentials and (for emails) the Resend settings; tested
+against mocked GitHub and Resend, not live services.
 
 ## Not verified here / limitations (be honest before relying on it)
 * **Verified in CI on Linux (GitHub Actions, all three jobs green):** the full integration suite

@@ -16,9 +16,10 @@ Live demo: <https://avishkar-red.vercel.app> (static site on Vercel, API on Rend
 | Scoring | Versioned `score-v1`: `D = I x E x C x A`, `Index = 100(1 - e^(-D/K))`. Every finding's contribution is shown and the total is recomputed for a reproducibility check. Incomplete scans give "not calculated", never zero. |
 | Console | Overview, per-repository dashboard (gauge, severity, trend, vulnerable files, activity), before/after comparison, vulnerability explorer (search, filters, sorting, details), admin area. |
 | Demo lab | Pick a bundled sample, run a **real** scan, watch the recorded pipeline stages, apply the fix pack, rescan, compare. |
-| Reports | JSON, printable HTML (print to PDF), SARIF 2.1.0 with CWE tags. |
+| Reports | PDF, JSON, printable HTML, SARIF 2.1.0 with CWE tags. |
 | AI assistant | Optional, off by default, consent-gated, payload preview, secrets redacted, cannot change findings or scores. |
-| GitHub | Webhooks, check runs, PR comments, repository/branch browsing, manual branch scans (tested against a mock). |
+| GitHub | Webhooks, check runs, PR comments, repository/branch browsing, manual branch scans, and scheduled rescans of a branch with an email summary when something changed (tested against mocks). |
+| Dependencies | Manifests and lockfiles for PyPI, npm, Maven/Gradle, Go, NuGet, Packagist and RubyGems. With `AVISHKAR_VULN_FEED=osv`, exact versions are checked against live OSV.dev advisories; a failed lookup makes the dependency check incomplete, never clean. Without it only a small built-in list is used. |
 | Access | Roles (viewer/analyst/admin), API keys, read-only guest, email sign-up with verification and password reset (needs Resend settings), private organization per self-registered account, capped uploads. |
 | Operations | Durable job queue, audit log, login throttle, security headers + CSP, Docker sandbox for real isolation, PostgreSQL support, CI (tests, Postgres, Docker sandbox, API image, lint + types). |
 

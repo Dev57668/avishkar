@@ -17,6 +17,11 @@ CREATE TABLE IF NOT EXISTS organization(id TEXT PRIMARY KEY, name TEXT UNIQUE NO
 CREATE TABLE IF NOT EXISTS app_user(
   id TEXT PRIMARY KEY, organization_id TEXT NOT NULL, email TEXT UNIQUE NOT NULL, password_hash TEXT NOT NULL,
   role TEXT NOT NULL, active INTEGER NOT NULL DEFAULT 1, created_at REAL);
+CREATE TABLE IF NOT EXISTS schedule(
+  id TEXT PRIMARY KEY, organization_id TEXT NOT NULL, repository_id TEXT NOT NULL, installation_id TEXT NOT NULL,
+  repo TEXT NOT NULL, branch TEXT NOT NULL, every_hours INTEGER NOT NULL, notify_email TEXT,
+  active INTEGER NOT NULL DEFAULT 1, next_run REAL NOT NULL, last_run_id TEXT, last_sha TEXT, last_index REAL,
+  last_status TEXT, created_by TEXT, created_at REAL);
 CREATE TABLE IF NOT EXISTS email_state(user_id TEXT PRIMARY KEY, verified_at REAL);
 CREATE TABLE IF NOT EXISTS email_token(
   token_hash TEXT PRIMARY KEY, user_id TEXT NOT NULL, purpose TEXT NOT NULL, expires_at REAL NOT NULL, used_at REAL);

@@ -76,6 +76,37 @@ class Store:
         r = self.d.query("SELECT * FROM app_user WHERE email=? AND active=1", (email.lower(),))
         return r[0] if r else None
 
+    # ---- scheduled rescans of GitHub branches
+    def create_schedule(self, org, repo_id, installation, repo, branch, every_hours, notify_email, created_by, now=None):
+        sid, now = _id("sch"), now or time.time()
+        self.d.execute("INSERT INTO schedule(id,organization_id,repository_id,installation_id,repo,branch,every_hours,notify_email,"
+                       "active,next_run,created_by,created_at) VALUES(?,?,?,?,?,?,?,?,1,?,?,?)",
+                       (sid, org, repo_id, str(installation), repo, branch, every_hours, notify_email, now, created_by, now))
+        return sid
+
+    def schedules(self, org):
+        return self.d.query("SELECT * FROM schedule WHERE organization_id=? AND active=1 ORDER BY created_at", (org,))
+
+    def schedule(self, sid):
+        r = self.d.query("SELECT * FROM schedule WHERE id=? AND active=1", (sid,))
+        return r[0] if r else None
+
+    def delete_schedule(self, org, sid):
+        return self.d.execute("UPDATE schedule SET active=0 WHERE id=? AND organization_id=? AND active=1", (sid, org)) > 0
+
+    def due_schedules(self, now):
+        return self.d.query("SELECT * FROM schedule WHERE active=1 AND next_run<=? ORDER BY next_run", (now,))
+
+    def set_schedule_next(self, sid, next_run):
+        self.d.execute("UPDATE schedule SET next_run=? WHERE id=?", (next_run, sid))
+
+    def set_schedule_result(self, sid, run_id, sha, index, status):
+        self.d.execute("UPDATE schedule SET last_run_id=?, last_sha=?, last_index=?, last_status=? WHERE id=?",
+                       (run_id, sha, index, status, sid))
+
+    def deactivate_org_schedules_for_installation(self, installation):
+        self.d.execute("UPDATE schedule SET active=0 WHERE installation_id=?", (str(installation),))
+
     # ---- email verification (users without an email_state row, such as admins and the demo viewer, count as verified)
     def mark_unverified(self, uid):
         self.d.execute("INSERT INTO email_state(user_id, verified_at) VALUES(?, NULL)", (uid,))

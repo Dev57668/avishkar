@@ -98,6 +98,22 @@ class GitHubScanIn(BaseModel):
         return v
 
 
+class ScheduleIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    installation: str = Field(pattern=r"^\d{1,20}$")
+    repo: str = Field(pattern=r"^[A-Za-z0-9_.\-]{1,100}/[A-Za-z0-9_.\-]{1,100}$")
+    branch: str = Field(min_length=1, max_length=200, pattern=r"^[\w.\-/]+$")
+    everyHours: int = Field(ge=6, le=720)
+    notifyEmail: str | None = Field(default=None, pattern=r"^[^@\s]+@[^@\s]+\.[^@\s]+$", max_length=200)
+
+    @field_validator("repo")
+    @classmethod
+    def _repo(cls, v: str) -> str:
+        if not gh.REPO_RE.match(v):
+            raise ValueError("invalid repository name")
+        return v
+
+
 class InstallationIn(BaseModel):
     model_config = ConfigDict(extra="forbid")
     installation_id: str = Field(pattern=r"^\d{1,20}$")
@@ -164,7 +180,7 @@ def create_app(db_url: str | None = None, *, secret_key: str | None = None, scor
     wh_secret = webhook_secret if webhook_secret is not None else os.environ.get("GITHUB_WEBHOOK_SECRET", "")
     quota = max_active_jobs or int(os.environ.get("AVISHKAR_MAX_ACTIVE_JOBS", "20"))
     throttle = LoginThrottle(store)
-    runner = JobRunner(store, cfg, pol, sbx, github)
+    runner = JobRunner(store, cfg, pol, sbx, github, mailer=mail)
     if start_worker is None:
         start_worker = os.environ.get("AVISHKAR_EMBEDDED_WORKER", "1") != "0"
     worker = WorkerThread(runner)
@@ -855,6 +871,49 @@ def create_app(db_url: str | None = None, *, secret_key: str | None = None, scor
         store.audit(p.email or p.id, "github_scan_queued", "analysis_run", run_id, "ok", request.state.cid, org=p.org_id)
         return {"jobId": job["id"], "runId": run_id, "repositoryId": repo["id"], "commitSha": br["sha"], "status": "queued",
                 "deduplicated": not created, "statusUrl": f"/v1/repositories/{repo['id']}/analyses/{run_id}"}
+
+    # ------------------------------------------------------------ scheduled rescans of GitHub branches
+    MAX_SCHEDULES = 10
+
+    def _schedule_out(s: dict) -> dict:
+        return {"id": s["id"], "repositoryId": s["repository_id"], "installation": s["installation_id"], "repo": s["repo"],
+                "branch": s["branch"], "everyHours": s["every_hours"], "notifyEmail": s["notify_email"], "nextRun": s["next_run"],
+                "lastRunId": s["last_run_id"], "lastIndex": s["last_index"], "lastStatus": s["last_status"]}
+
+    @app.get("/v1/schedules")
+    def schedules_list(p: Principal = Depends(admin)):
+        return {"items": [_schedule_out(s) for s in store.schedules(p.org_id)], "max": MAX_SCHEDULES, "emailConfigured": mail is not None}
+
+    @app.post("/v1/schedules", status_code=201)
+    def schedules_create(body: ScheduleIn, request: Request, p: Principal = Depends(admin)):
+        """Rescan a GitHub branch every N hours. The commit is resolved by GitHub when the scan is queued, never by the client."""
+        client = _gh_client()
+        _own_installation(p, body.installation)
+        if len(store.schedules(p.org_id)) >= MAX_SCHEDULES:
+            raise ApiError(422, "schedule_limit", f"At most {MAX_SCHEDULES} schedules per organization")
+        if body.notifyEmail:
+            if mail is None:
+                raise ApiError(422, "email_not_configured", "Email is not configured on this server, so notifications cannot be sent")
+            u = store.user_by_email(body.notifyEmail)
+            if not u or u["organization_id"] != p.org_id:
+                raise ApiError(422, "invalid_input", "The notification address must belong to a user of this organization")
+        try:
+            if not any(b["name"] == body.branch for b in client.list_branches(body.installation, body.repo)):
+                raise ApiError(404, "not_found", "Branch not found")
+        except gh.GitHubError as e:
+            raise ApiError(502, "upstream_error", f"GitHub did not return the branch list: {e}")
+        repo = store.get_or_create_repo(p.org_id, body.repo)
+        sid = store.create_schedule(p.org_id, repo["id"], body.installation, body.repo, body.branch, body.everyHours,
+                                    body.notifyEmail.lower() if body.notifyEmail else None, p.email or p.id)
+        store.audit(p.email or p.id, "schedule_created", "schedule", sid, "ok", request.state.cid, {"everyHours": body.everyHours}, p.org_id)
+        return _schedule_out(store.schedule(sid))
+
+    @app.delete("/v1/schedules/{sid}")
+    def schedules_delete(sid: str, request: Request, p: Principal = Depends(admin)):
+        if not store.delete_schedule(p.org_id, sid):
+            raise ApiError(404, "not_found", "Not found")
+        store.audit(p.email or p.id, "schedule_deleted", "schedule", sid, "ok", request.state.cid, org=p.org_id)
+        return {"status": "deleted"}
 
     @app.post("/v1/github/webhook")
     async def webhook(request: Request, x_hub_signature_256: str | None = Header(default=None),
