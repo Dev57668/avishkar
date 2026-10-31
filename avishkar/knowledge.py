@@ -432,6 +432,13 @@ RULES: dict[str, dict] = {
         "Man-in-the-middle attackers can read and change traffic.",
         "Leave verification on (the default) and configure the CA bundle if needed.",
         "php", "curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);", A02),
+    "DEP-VULN": _r([1395], "dependency", "manifest", "database", "Dependency version listed in a known advisory",
+        "The exact version of this package, read from a manifest or lockfile, is listed in the OSV vulnerability database "
+        "(GitHub advisories, PyPI, Go, RustSec and others). The advisory describes a flaw in that version.",
+        "Depends on the advisory: from denial of service to remote code execution. Whether your code reaches the vulnerable "
+        "function is not checked.",
+        "Upgrade to the fixed version named in the advisory, rebuild, and re-run the scan. Prefer lockfiles so the version is exact.",
+        "text", "# requirements.txt\nexample-package==2.0.1  # fixed release", A06),
     # ------------------------------------------------------------------ shared / regex
     "ANY-CORS": _r([942], "config", "regex", "heuristic", "Wildcard CORS origin",
         "Access-Control-Allow-Origin: * (or allow_origins=['*']) lets any website read responses from this API in a user's "

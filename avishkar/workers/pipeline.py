@@ -20,6 +20,7 @@ from ..domain import policy as policy_mod
 from ..domain.models import Completeness, FindingRecord, RawFinding, State
 from ..domain.scoring import ScoreConfig, compute_score
 from .detectors import DETECTORS, SUPPORT_MATRIX
+from .manifests import parse_manifests
 
 MAX_FILES = 5000
 MAX_FILE_BYTES = 1_000_000
@@ -104,6 +105,7 @@ def collect_findings(required: tuple[str, ...], source_dir: Path | None = None, 
     stages: dict = {}
     files: list = []
     notes: list = []
+    deps: list = []
     workspace = Path(tempfile.mkdtemp(prefix="avishkar-"))
     try:
         root = workspace / "src"
@@ -120,6 +122,11 @@ def collect_findings(required: tuple[str, ...], source_dir: Path | None = None, 
                 failed[d] = f"checkout failed: {type(e).__name__}: {e}"
             stages["checkout"] = "failed"
         if stages["checkout"] == "ok":
+            if "dependencies" in required:
+                try:  # parsed here (untrusted files); looked up later in the trusted stage
+                    deps = parse_manifests(root, files)
+                except Exception:
+                    deps = []
             for name in required:
                 fn = detectors.get(name)
                 if fn is None:
@@ -142,7 +149,7 @@ def collect_findings(required: tuple[str, ...], source_dir: Path | None = None, 
     coverage = {"analyzedSourceFiles": sum(1 for f in files if f.suffix.lower() in SUPPORTED_SOURCE),
                 "notEvaluated": dict(sorted(not_evaluated.items()))}
     return {"raw": raw, "completed": completed, "failed": failed, "stages": stages,
-            "files": len(files), "notes": notes, "coverage": coverage}
+            "files": len(files), "notes": notes, "coverage": coverage, "deps": deps}
 
 
 def failed_collection(required, reason: str, stage: str = "sandbox") -> dict:
@@ -150,13 +157,29 @@ def failed_collection(required, reason: str, stage: str = "sandbox") -> dict:
             "files": 0, "notes": []}
 
 
-def assemble(cfg: ScoreConfig, pol: policy_mod.Policy, collected: dict, baseline: dict | None = None) -> dict:
+def assemble(cfg: ScoreConfig, pol: policy_mod.Policy, collected: dict, baseline: dict | None = None,
+             vuln_source=None) -> dict:
     """Trusted stage: validate, dedupe, baseline-compare, score, evaluate policy."""
     baseline = baseline or {}
     failed, completed, stages = dict(collected["failed"]), list(collected["completed"]), dict(collected["stages"])
+    from ..adapters import vulns  # trusted stage only: the sandbox worker (and its Docker image) must not need httpx
     raw: list[RawFinding] = []
+    raw_dicts = list(collected["raw"])
+    vs = vuln_source if vuln_source is not None else vulns.default_source()
+    deps = [d for d in (collected.get("deps") or []) if vulns.valid_dep(d)]
+    if vs is not None and deps and "dependencies" in cfg.required_detectors and "dependencies" in completed:
+        # Trusted stage: ask the vulnerability database about the (validated) dependency list. A failed lookup makes the
+        # dependency check INCOMPLETE; it is never reported as "no known vulnerabilities".
+        try:
+            found = vs.lookup(deps)
+            builtin = vulns.builtin_advisory_ids()
+            raw_dicts = [d for d in raw_dicts if d.get("rule_id") not in builtin] + found
+        except vulns.VulnLookupError as e:
+            failed["dependencies"] = f"vulnerability lookup failed: {e}"
+            completed = [c for c in completed if c != "dependencies"]
+            stages["dependencies"] = "failed"
     try:
-        raw = [RawFinding.from_dict(d) for d in collected["raw"]]
+        raw = [RawFinding.from_dict(d) for d in raw_dicts]
     except Exception as e:  # malformed detector output must never be scored as clean
         for d in cfg.required_detectors:
             failed.setdefault(d, f"malformed detector output: {type(e).__name__}")

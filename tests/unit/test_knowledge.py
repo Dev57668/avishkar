@@ -8,7 +8,7 @@ from avishkar.workers import csscan, detectors, goscan, javascan, jsscan, phpsca
 def emitted_rule_ids() -> set[str]:
     ids = {r[0] for r in detectors.PATTERN_RULES} | {r[0] for r in detectors.SECRET_RULES}
     ids |= set(pyast.PY_RULES) | set(jsscan.JS_RULES) | set(javascan.JAVA_RULES) | set(goscan.GO_RULES) | set(csscan.CS_RULES) | set(phpscan.PHP_RULES)
-    ids |= {row[1] for rows in detectors.ADVISORIES.values() for row in rows} | {"DEP-UNPINNED", "DEP-NOLOCK"}
+    ids |= {row[1] for rows in detectors.ADVISORIES.values() for row in rows} | {"DEP-UNPINNED", "DEP-NOLOCK", "DEP-VULN"}
     return ids
 
 

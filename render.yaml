@@ -26,6 +26,8 @@ services:
         sync: false
       - key: AVISHKAR_PUBLIC_URL        # the site visitors use (the Vercel URL); verification links point here
         sync: false
+      - key: AVISHKAR_VULN_FEED         # live dependency advisories from OSV.dev (a failed lookup marks the dependency check incomplete)
+        value: osv
       - key: AVISHKAR_SIGNUP            # public self sign-up, always read-only viewers, email unverified
         value: "1"
       - key: AVISHKAR_PUBLISH_DEMO_LOGIN

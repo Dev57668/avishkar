@@ -23,7 +23,9 @@ SUPPORT_MATRIX = {
     "c#": {"status": "supported", "ext": [".cs"]},
     "php": {"status": "supported", "ext": [".php"]},
     "config/iac": {"status": "experimental", "ext": [".env", ".yml", ".yaml", ".json", ".tf", ".ini", ".cfg"]},
-    "dependencies": {"status": "supported", "files": ["requirements.txt", "package.json"]},
+    "dependencies": {"status": "supported", "files": ["requirements.txt", "package.json", "package-lock.json", "pom.xml", "build.gradle",
+                                                       "go.mod", "*.csproj", "composer.lock", "Gemfile.lock"],
+                     "note": "built-in advisory sample; live OSV.dev lookups when AVISHKAR_VULN_FEED=osv"},
     "other languages": {"status": "unsupported", "ext": []},
 }
 
