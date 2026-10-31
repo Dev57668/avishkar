@@ -326,7 +326,7 @@ class _Analyzer:
                 )
                 if _CMD_WORDS.search(t.text):
                     interp_names = re.findall(r"#\{(\w+)", t.text)
-                    if any(self._tainted_by_name(n, i) for n in interp_names):
+                    if any(n in SOURCES or self._tainted_by_name(n, i) for n in interp_names):
                         self._hit("RB-CMDI", i)
 
             # eval: eval(expr) where expr is not a literal
@@ -423,7 +423,7 @@ class _Analyzer:
             # XSS: bare interpolated HTML string (Sinatra route returning "<tag>#{tainted}</tag>")
             if t.kind == "str" and t.interp and "<" in t.text:
                 interp_names = re.findall(r"#\{(\w+)", t.text)
-                if any(self._tainted_by_name(n, i) for n in interp_names):
+                if any(n in SOURCES or self._tainted_by_name(n, i) for n in interp_names):
                     self._hit("RB-XSS-REFLECT", i)
 
             i += 1
