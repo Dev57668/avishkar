@@ -130,17 +130,17 @@ def validate(raw: str, pkg: dict) -> tuple[Answer | None, list[str], str | None]
     for n in sorted(set(CWE_ID.findall(text)), key=int):
         if f"CWE-{n}" not in ctx_cwe:
             warnings.append(f"Mentions CWE-{n}, which is not part of this scan's evidence"
-                            + ("" if int(n) in knowledge.CWE_NAMES else " (and is not in Avishkar's CWE list)") + ".")
+                            + ("" if int(n) in knowledge.CWE_NAMES else " (and is not in Second Read's CWE list)") + ".")
     if ans.secureCode and ans.secureCode.language.lower() in ("python", "py", "javascript", "js", "typescript", "ts"):
         try:
             found = (scan_python if ans.secureCode.language.lower() in ("python", "py") else scan_js)(ans.secureCode.code, "suggestion")
             if found:
-                warnings.append("Avishkar's own scanner still flags the suggested code: "
+                warnings.append("Second Read's own scanner still flags the suggested code: "
                                 + ", ".join(sorted({f.rule_id for f in found})) + ". Review it before using it.")
         except Exception:
-            warnings.append("The suggested code could not be parsed by Avishkar's scanner; review it carefully.")
+            warnings.append("The suggested code could not be parsed by Second Read's scanner; review it carefully.")
     if re.search(r"(?i)\b(is|are|code is|this is) (completely |fully |now )?(secure|safe|vulnerability[- ]free)\b", ans.answer):
-        warnings.append("The answer claims the code is secure/safe. Avishkar cannot support that claim.")
+        warnings.append("The answer claims the code is secure/safe. Second Read cannot support that claim.")
     return ans, warnings, None
 
 

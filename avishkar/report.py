@@ -65,14 +65,14 @@ def build_report(*, repo: dict, run: dict, rows: list[dict], explain: dict, comp
     sev = {s: sum(1 for f in findings if f["severity"] == s and f["state"] == "open") for s in SEV}
     open_n = sum(sev.values())
     if sd.get("status") == "calculated":
-        summary = (f"Avishkar analyzed {comp.get('filesScanned', '?')} file(s) of {repo['name']}"
+        summary = (f"Second Read analyzed {comp.get('filesScanned', '?')} file(s) of {repo['name']}"
                    f"{' at commit ' + run['commit_sha'][:12] if run.get('commit_sha') else ''}. The security debt index is "
                    f"{sd['normalizedIndex']} out of 100 ({sd['scoreVersion']}, uncalibrated), from {sd['grossUnits']:g} debt units "
                    f"across {open_n} open finding(s): {sev['critical']} critical, {sev['high']} high, {sev['medium']} medium, "
                    f"{sev['low']} low. Policy outcome ({(run['decision'] or {}).get('mode', '').replace('_', '-')}): "
                    f"{(run['decision'] or {}).get('outcome', 'n/a').replace('_', ' ')}.")
     else:
-        summary = (f"Avishkar could not complete the analysis of {repo['name']}, so no security debt index was calculated. "
+        summary = (f"Second Read could not complete the analysis of {repo['name']}, so no security debt index was calculated. "
                    "This is not a pass.")
     return {
         "reportVersion": REPORT_VERSION, "generatedAt": _ts(generated_at),
@@ -119,7 +119,7 @@ def _e(x) -> str:
 def render_html(rep: dict) -> str:
     sd, scan = rep["securityDebt"], rep["scan"]
     parts = [f"<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">"
-             f"<title>Avishkar report — {_e(rep['repository']['name'])}</title><style>{CSS}</style></head><body><main>",
+             f"<title>Second Read report — {_e(rep['repository']['name'])}</title><style>{CSS}</style></head><body><main>",
              f"<h1>Security debt report</h1><div class=\"mut\">{_e(rep['repository']['name'])} · generated {_e(rep['generatedAt'])} · "
              f"{_e(scan['service'])} · {_e(rep['reportVersion'])}</div>"]
     if scan["status"] != "complete":

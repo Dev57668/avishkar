@@ -21,7 +21,7 @@ def test_sarif_endpoint_structure_and_separate_debt_fields(env):
     r = env.client.get(f"/v1/analyses/{q.json()['runId']}/sarif", headers=env.h)
     assert r.status_code == 200 and r.headers["content-type"].startswith("application/sarif+json")
     s = r.json()
-    assert s["version"] == "2.1.0" and s["runs"][0]["tool"]["driver"]["name"] == "Avishkar"
+    assert s["version"] == "2.1.0" and s["runs"][0]["tool"]["driver"]["name"] == "Second Read"
     res = s["runs"][0]["results"]
     assert res and all({"ruleId", "level", "locations", "partialFingerprints"} <= set(x) for x in res)
     ids = {r["id"] for r in s["runs"][0]["tool"]["driver"]["rules"]}

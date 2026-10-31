@@ -169,7 +169,7 @@ def test_unknown_cwe_and_safety_claims_become_warnings(setup):
     r = ask(e, body(rid, fid)).json()
     assert r["status"] == "ok"
     w = " ".join(r["warnings"])
-    assert "CWE-1234" in w and "not in Avishkar's CWE list" in w and "claims the code is secure" in w
+    assert "CWE-1234" in w and "not in Second Read's CWE list" in w and "claims the code is secure" in w
 
 
 def test_suggested_code_is_checked_by_our_own_scanner(setup):

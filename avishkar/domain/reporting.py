@@ -12,7 +12,7 @@ MARKER = "<!-- avishkar-summary -->"
 
 def to_sarif(run: dict, findings: list[dict], tool_version: str = "2.0.0") -> dict:
     """`findings` rows: rule_id,title,severity,confidence,category,remediation,path,line_start,evidence,fingerprint,state.
-    Avishkar-specific debt fields live under run.properties, not in standard SARIF fields."""
+    Second Read-specific debt fields live under run.properties, not in standard SARIF fields."""
     rules: list[dict] = []
     seen: dict = {}
     results: list[dict] = []
@@ -55,7 +55,7 @@ def to_sarif(run: dict, findings: list[dict], tool_version: str = "2.0.0") -> di
             "level": "warning", "message": {"text": "Not evaluated (unsupported language): " +
                                             ", ".join(f"{n} {e}" for e, n in cov["notEvaluated"].items())}})
     return {"$schema": SARIF_SCHEMA, "version": "2.1.0", "runs": [{
-        "tool": {"driver": {"name": "Avishkar", "version": tool_version, "rules": rules}},
+        "tool": {"driver": {"name": "Second Read", "version": tool_version, "rules": rules}},
         "results": results, "invocations": [invocation],
         "properties": {"avishkar": {"runId": run["id"], "commitSha": run.get("commit_sha"),
                                     "scoreVersion": sd.get("scoreVersion"), "scoreStatus": sd.get("status"),
@@ -67,7 +67,7 @@ def to_sarif(run: dict, findings: list[dict], tool_version: str = "2.0.0") -> di
 def render_summary(run_status: str, score: dict, decision: dict, completeness: dict, findings: list[dict],
                    limit: int = 15) -> str:
     """Markdown for the PR comment. No source, no secrets, explicit about incomplete analysis."""
-    lines = [MARKER, "### Avishkar security debt"]
+    lines = [MARKER, "### Second Read security debt"]
     if run_status != "complete":
         miss = ", ".join(completeness.get("missing") or ["unknown"])
         lines += [f"**Analysis incomplete — this is not a pass.** Missing coverage: {miss}.", ""]

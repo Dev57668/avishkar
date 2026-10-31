@@ -42,11 +42,11 @@ class Mailer:
             raise MailError(f"email provider returned {r.status_code}")
 
     def send_verification(self, to: str, token: str) -> None:
-        self.send(to, "Confirm your Avishkar account",
-                  f"Confirm your email to finish creating your Avishkar account (valid 24 hours):\n\n{self.link('verify', token)}\n\n"
+        self.send(to, "Confirm your Second Read account",
+                  f"Confirm your email to finish creating your Second Read account (valid 24 hours):\n\n{self.link('verify', token)}\n\n"
                   "If you did not sign up, ignore this email.")
 
     def send_reset(self, to: str, token: str) -> None:
-        self.send(to, "Reset your Avishkar password",
+        self.send(to, "Reset your Second Read password",
                   f"Use this link to choose a new password (valid 1 hour):\n\n{self.link('reset', token)}\n\n"
                   "If you did not ask for this, ignore this email; your password is unchanged.")

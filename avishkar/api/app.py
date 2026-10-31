@@ -179,7 +179,7 @@ def create_app(db_url: str | None = None, *, secret_key: str | None = None, scor
         if start_worker:
             worker.stop()
 
-    app = FastAPI(title="Avishkar", version="2.0.0", lifespan=lifespan,
+    app = FastAPI(title="Second Read", version="2.0.0", lifespan=lifespan,
                   description="AI Generated Code Security Debt Scorer. The score is a prioritization "
                               "signal, not proof of safety.")
     app.state.store, app.state.runner, app.state.tokens = store, runner, tokens

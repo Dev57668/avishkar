@@ -23,7 +23,7 @@ SHA_RE = re.compile(r"^[0-9a-f]{40}$")
 REPO_RE = re.compile(r"^(?!\.+/)(?!.*/\.+$)[A-Za-z0-9_.\-]{1,100}/[A-Za-z0-9_.\-]{1,100}$")  # no "." / ".." path components
 ALLOWED_EVENTS = {"ping", "pull_request", "push", "installation", "installation_repositories"}
 PR_ACTIONS = {"opened", "synchronize", "reopened"}
-CHECK_NAME = "Avishkar security debt"
+CHECK_NAME = "Second Read security debt"
 
 
 class GitHubError(Exception):

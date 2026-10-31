@@ -1,8 +1,8 @@
-# Avishkar: AI-Generated Code Security Debt Scorer
+# Second Read: AI-Generated Code Security Debt Scorer
 
 > Avishkar Industrial-Ready Hackathon project. A working prototype, honest about its limits.
 
-Avishkar scans a code snapshot with **deterministic detectors**, turns the evidence into a **0-100 security-debt index**, and shows the exact file and line, CWE, impact, fix and a secure example for every finding. You can fix the code, rescan, and see what moved and why.
+Second Read scans a code snapshot with **deterministic detectors**, turns the evidence into a **0-100 security-debt index**, and shows the exact file and line, CWE, impact, fix and a secure example for every finding. You can fix the code, rescan, and see what moved and why.
 
 **The index is a prioritization signal from provisional, uncalibrated weights. It is not a probability of compromise, a compliance grade, or proof that code is safe. Zero findings is not a pass.**
 

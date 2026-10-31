@@ -57,7 +57,7 @@ async function route() {
 function uploadPanel(view) {
   if (!canUpload()) {
     view.append(h('p', { class: 'mut sm' }, session.cfg && !['all', 'limited'].includes(session.cfg.uploads)
-      ? 'Uploading your own code is disabled for this account on this instance (it cannot sandbox untrusted code here). Run Avishkar locally with the Docker sandbox to scan your own repositories.' : 'Your role cannot upload.'));
+      ? 'Uploading your own code is disabled for this account on this instance (it cannot sandbox untrusted code here). Run Second Read locally with the Docker sandbox to scan your own repositories.' : 'Your role cannot upload.'));
     return;
   }
   const repo = h('input', { id: 'up-repo', required: true, maxlength: '100', placeholder: 'my-project or org/name', 'aria-label': 'Repository name' });

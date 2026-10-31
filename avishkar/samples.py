@@ -126,7 +126,7 @@ PY_FIXES = (
          "    safe_name = os.path.basename(filename)\n    with open(os.path.join(\"./uploads\", safe_name), 'wb') as f:"),)),
     PY("py-temp-file", "Create temporary files atomically", "utils.py", (),
        "NamedTemporaryFile picks an unpredictable name and sets private permissions, unlike a fixed /tmp path. "
-       "Avishkar does not currently flag this pattern (the path sits in a variable), so the score will not move: the "
+       "Second Read does not currently flag this pattern (the path sits in a variable), so the score will not move: the "
        "fix is correct even though the scanner cannot see the problem.",
        (("    temp_path = \"/tmp/data.txt\"\n    with open(temp_path, 'w') as f:\n        f.write(data)\n    return temp_path",
          "    with tempfile.NamedTemporaryFile('w', delete=False) as f:\n        f.write(data)\n        return f.name"),)),

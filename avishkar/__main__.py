@@ -47,7 +47,7 @@ def main(argv=None) -> int:
             from .demo import seed_demo
             print("demo mode: seeding", seed_demo(app.state.store, app.state.cfg, app.state.pol, app.state.sandbox,
                                                   app.state.demo))
-        print(f"Avishkar dashboard: http://{a.host}:{a.port}/")
+        print(f"Second Read dashboard: http://{a.host}:{a.port}/")
         if boot:
             print(f"First-run admin created: {boot['email']} / "
                   f"{boot['password'] or '(password from AVISHKAR_ADMIN_PASSWORD)'}")
