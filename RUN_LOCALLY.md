@@ -1,4 +1,4 @@
-# Run Avishkar on your PC
+# Run Second Read on your PC
 
 You need **Python 3.10 or newer**. Check with `python --version`.
 

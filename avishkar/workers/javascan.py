@@ -127,6 +127,7 @@ class _Analyzer:
         self.tainted: set[str] = set()   # names assigned from an HTTP request source (simple same-file flow)
         self.built: set[str] = set()     # names assigned an SQL text built by concatenation / formatting
         self.runtimes: set[str] = set()  # names assigned Runtime.getRuntime()
+        self.argv: set[str] = set()      # String[] names whose first element is a fixed, non-shell program: no shell parses them
         # a web handler reads HTTP request data somewhere in the file; only then is a concatenated path suspicious
         self.web = any(t.kind == "id" and (t.text in SOURCES or t.text in ("HttpServletRequest", "MultipartFile", "RequestParam", "PathVariable"))
                        for t in toks)
@@ -255,6 +256,7 @@ class _Analyzer:
             name = T[i - 1].text
             if any(t.text == "getRuntime" for t in T[i + 1:end]):
                 self.runtimes.add(name)
+            self._argv_decl(i, end)
             if self.mentions_source(i + 1, end):
                 self.tainted.add(name)
             lits = " ".join(t.text for t in T[i + 1:end] if t.kind == "str")
@@ -262,6 +264,16 @@ class _Analyzer:
                 self.built.add(name)
                 if self.mentions_source(i + 1, end):
                     self.tainted.add(name)
+
+    def _argv_decl(self, eq: int, end: int):
+        """`String[] cmd = {"xxd", path};` / `= new String[] {"xxd", path}`: a fixed program name followed by arguments."""
+        T = self.T
+        b = next((k for k in range(eq + 1, end) if self.is_p(k, "{")), None)
+        if b is None or not (self.txt(eq - 2) == "]" or any(t.text == "String" for t in T[max(0, eq - 4):eq])):
+            return
+        first = T[b + 1] if b + 1 < self.n else None
+        if first is not None and first.kind == "str" and first.text.lower() not in SHELL_PROGS:
+            self.argv.add(T[eq - 1].text)
 
     def _constructor(self, i: int):
         T = self.T
@@ -321,7 +333,9 @@ class _Analyzer:
                 self.hit("JAVA-SQLI", line, L)
         elif name == "exec" and ("getRuntime" in recv or recv[-1:] and recv[-1] in self.runtimes) and first:
             lo, hi = first
-            if not self.literal_only(lo, hi):
+            fixed_argv = (hi - lo == 1 and T[lo].text in self.argv) or (T[lo].text == "new" and self.txt(lo + 1) == "String" and any(
+                self.is_p(k, "{") and T[k + 1].kind == "str" and T[k + 1].text.lower() not in SHELL_PROGS for k in range(lo, min(hi, lo + 5))))
+            if not self.literal_only(lo, hi) and not fixed_argv:
                 self.hit("JAVA-CMDI", line, M if (self.has_concat(lo, hi) or self.mentions_source(lo, hi)) else L)
         elif name == "getInstance" and first and recv[-1:] == ["MessageDigest"]:
             alg = "".join(t.text for t in T[first[0]:first[1]] if t.kind == "str").upper()
@@ -370,7 +384,14 @@ class _Analyzer:
     def _xxe(self):
         if any(w in self.text for w in XXE_SAFE):
             return
+        parses_input = any(t.text in ("StreamSource", "SAXSource", "InputSource", "parse", "createXMLStreamReader",
+                                      "createXMLEventReader", "newSAXParser", "newDocumentBuilder") for t in self.T)
         for i in range(self.n - 2):
+            # a TransformerFactory that only writes XML out (DOMSource -> StreamResult) is not an XXE risk
+            if self.T[i].text == "TransformerFactory" and not any(t.text in ("StreamSource", "SAXSource") for t in self.T):
+                continue
+            if not parses_input and self.T[i].text != "TransformerFactory":
+                continue
             if self.T[i].text in XML_FACTORIES and self.is_p(i + 1, ".") and self.txt(i + 2) in ("newInstance", "newFactory"):
                 self.hit("JAVA-XXE", self.T[i].line, L)
 

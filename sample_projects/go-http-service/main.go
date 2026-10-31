@@ -1,7 +1,7 @@
 package main
 
 // An HTTP service in Go. Intentionally insecure, for education.
-// Avishkar has no Go detector, so a scan reports this repository as NOT EVALUATED.
+// Second Read has no Go detector, so a scan reports this repository as NOT EVALUATED.
 
 import (
 	"database/sql"

@@ -2,7 +2,7 @@
   "name": "Go HTTP service (unsupported language)",
   "language": "Go",
   "kind": "unsupported",
-  "description": "A Go file. Avishkar has no Go detector, so the honest result is 'not evaluated', never 'clean'.",
+  "description": "A Go file. Second Read has no Go detector, so the honest result is 'not evaluated', never 'clean'.",
   "expected": "Incomplete / not evaluated, no score.",
   "fixes": []
 }

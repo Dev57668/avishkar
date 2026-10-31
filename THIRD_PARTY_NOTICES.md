@@ -1,6 +1,6 @@
 # Third-party notices
 
-Avishkar's own code is not yet released under a license (see the repository root). The files below are third-party
+Second Read's own code is not yet released under a license (see the repository root). The files below are third-party
 and keep their own terms. They are bundled in `web/vendor/` so the site works offline.
 
 | Component | Version | License | Where |

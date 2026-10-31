@@ -1,4 +1,4 @@
-# Avishkar v2 package (`avishkar/`)
+# Second Read v2 package (the `avishkar/` Python package)
 
 Spec-driven scorer: deterministic detectors → versioned score → explicit policy. Lives beside the older
 `backend/`/`frontend/` project and shares nothing with it (own DB at `data/avishkar_v2.db`).
