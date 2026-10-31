@@ -38,6 +38,7 @@ FILE_SINKS = {"Open", "OpenFile", "ReadFile", "ReadDir", "Create", "Remove", "Re
 ESCAPERS = {"EscapeString", "HTMLEscapeString", "HTMLEscaper", "QueryEscape", "Clean", "Base"}
 SHELL_PROGS = {"sh", "bash", "zsh", "cmd", "cmd.exe", "powershell", "powershell.exe", "/bin/sh", "/bin/bash"}
 SHELL_FLAGS = {"-c", "/c", "-command"}
+CONST_NAME = re.compile(r"^[A-Z][A-Z0-9_]{2,}$")
 PUNCT2 = {":=", "==", "!=", "<=", ">=", "&&", "||", "++", "--", "+=", "<-", "..", "->"}
 
 
@@ -119,8 +120,8 @@ class _Analyzer:
                 self.pair[stack.pop()] = i
         self.open_of = {b: a for a, b in self.pair.items()}
         self.func_at = self._funcs()
-        self.tainted: set[str] = set()
-        self.built: set[str] = set()
+        self.tainted: dict[tuple[str, str], list[tuple[int, bool]]] = {}
+        self.built: dict[tuple[str, str], list[tuple[int, bool]]] = {}
         self.weak_rand = bool(re.search(r'"math/rand"', text)) and not re.search(r'"crypto/rand"', text)
         # a web handler reads HTTP request data somewhere in the file; only then is a concatenated path suspicious
         self.web = any(self._is_source(i) for i in range(self.n))
@@ -192,12 +193,42 @@ class _Analyzer:
 
     def has_concat(self, lo: int, hi: int) -> bool:
         seg = self.T[lo:hi]
+        if self.const_only(lo, hi):
+            return False
         if any(t.kind == "punct" and t.text == "+" for t in seg) and not self.literal_only(lo, hi):
             return True
         return any(t.text in ("Sprintf", "Sprint") and k > 1 and seg[k - 2].text == "fmt" for k, t in enumerate(seg))
 
     def mentions_source(self, lo: int, hi: int) -> bool:
-        return any(self._is_source(k) or (self.T[k].kind == "id" and self.T[k].text in self.tainted) for k in range(lo, hi))
+        return any(self._is_source(k) or (self.T[k].kind == "id" and self._scoped(self.tainted, k, self.T[k].text)) for k in range(lo, hi))
+
+    def const_only(self, lo: int, hi: int) -> bool:
+        """True when the expression is made of literals and constant-style names (ALL_CAPS, or qualified like Tables.USER_TB).
+        `"DELETE FROM " + USER_TB_NAME + " WHERE id = ?"` is a fixed text, not data-dependent SQL."""
+        seg = self.T[lo:hi]
+        ok = False
+        for k, t in enumerate(seg):
+            if t.kind in ("str", "chr", "num") and not getattr(t, "interp", False):
+                continue
+            if t.kind == "punct" and t.text in ("+", ".", "(", ")"):
+                continue
+            if t.kind == "id" and (CONST_NAME.match(t.text) or (k + 1 < len(seg) and seg[k + 1].text == ".")):
+                ok = ok or bool(CONST_NAME.match(t.text))
+                continue
+            return False
+        return ok or self.literal_only(lo, hi)
+
+    def _scoped(self, hist: dict, idx: int, name: str) -> bool:
+        """State of `name` at token `idx`: decided by its latest assignment before idx in the same scope (or a parameter marker)."""
+        for key in ((self.func_at[idx], name), ("*", name)):
+            events = [flag for (j, flag) in hist.get(key, ()) if j < idx]
+            if events:
+                return events[-1]
+        return False
+
+    def _rec(self, hist: dict, idx: int, name: str, flag: bool) -> None:
+        hist.setdefault((self.func_at[idx], name), []).append((idx, flag))
+
 
     def receiver(self, i: int) -> list[str]:
         out, k = [], i - 1
@@ -256,10 +287,8 @@ class _Analyzer:
             for nm in names:
                 if nm == "_":
                     continue
-                if src:
-                    self.tainted.add(nm)
-                if self.has_concat(i + 1, end) and SQL_WORDS.search(lits):
-                    self.built.add(nm)
+                self._rec(self.tainted, i, nm, src)
+                self._rec(self.built, i, nm, self.has_concat(i + 1, end) and bool(SQL_WORDS.search(lits)))
 
     def _stmt_end(self, k: int, start: int) -> bool:
         """A new statement begins on a later line when the previous line did not end with an operator or an open bracket."""
@@ -280,7 +309,7 @@ class _Analyzer:
                 lits = " ".join(t.text for t in T[lo:hi] if t.kind == "str")
                 if self.has_concat(lo, hi) and (SQL_WORDS.search(lits) or self.mentions_source(lo, hi)):
                     self.hit("GO-SQLI", line, M)
-                elif hi - lo == 1 and T[lo].kind == "id" and T[lo].text in self.built:
+                elif hi - lo == 1 and T[lo].kind == "id" and self._scoped(self.built, lo, T[lo].text):
                     self.hit("GO-SQLI", line, L)
         elif last == "exec" and name in ("Command", "CommandContext"):
             args = a[1:] if name == "CommandContext" else a

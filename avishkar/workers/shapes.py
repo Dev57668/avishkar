@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import re
 
-PLACEHOLDER = re.compile(r"(?i)(example|placeholder|changeme|change[_-]?me|your[_-]|xxxx|<.*>|dummy|test|sample|todo|\*{3,})")
+PLACEHOLDER = re.compile(r"(?i)(example|placeholder|changeme|change[_-]?me|your[_-]|xxxx|<.*>|dummy|test|sample|todo|[_-]here$|\*{3,})")
 
 # a variable / key name that suggests a credential
 CRED_NAME = re.compile(r"(?i)(pass(word|wd|phrase)?|secret|token|api[_-]?key|apikey|private[_-]?key|auth[_-]?key|"

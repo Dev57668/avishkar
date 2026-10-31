@@ -39,6 +39,7 @@ More: [RUN_LOCALLY.md](RUN_LOCALLY.md) (step by step), [docs/AVISHKAR_V2.md](doc
 ## Honest limitations
 
 * **Detectors miss things.** Held-out recall on our own labelled cases was about 0.8; precision about 0.8 on the same cohort. Detection is heuristic (no full JS or Java parser, no cross-file data flow). The Java, Kotlin, Go, C# and PHP rules each have at most one labelled case written by us (no real-world code in those languages was tested), so their accuracy is largely unmeasured.
+* **Real-world check:** six open-source training apps were scanned and hand-reviewed ([docs/REAL_WORLD_EVAL.md](docs/REAL_WORLD_EVAL.md)); it found and fixed false alarms, and shows recall is far from complete.
 * **Not calibrated.** The corpus is 81 small cases written by us with no independent second reviewer. Do not use the index to block releases.
 * **Public uploads are small and capped.** On Render the `process` sandbox is not an isolation boundary; the scanner only parses uploaded code and never executes it. Use `AVISHKAR_UPLOADS=admin` to turn public uploads off, or the Docker sandbox for real isolation.
 * **Tested against mocks, not live services:** GitHub, the AI provider and email (Resend).

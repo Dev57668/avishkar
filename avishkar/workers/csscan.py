@@ -41,6 +41,7 @@ FILE_SINKS = {"ReadAllText", "ReadAllBytes", "ReadAllLines", "OpenRead", "OpenTe
 ESCAPERS = {"HtmlEncode", "Encode", "HtmlAttributeEncode", "JavaScriptStringEncode", "UrlEncode", "GetFileName", "GetFullPath"}
 SHELL_PROGS = {"cmd", "cmd.exe", "powershell", "powershell.exe", "pwsh", "bash", "sh", "/bin/sh", "/bin/bash"}
 PUNCT2 = {"=>", "::", "+=", "==", "!=", "<=", ">=", "&&", "||", "++", "--", "??", "?."}
+CONST_NAME = re.compile(r"^[A-Z][A-Z0-9_]{2,}$")
 INTERP = re.compile(r"\{[^{}]")
 
 
@@ -146,8 +147,8 @@ class _Analyzer:
                 self.pair[stack.pop()] = i
         self.open_of = {b: a for a, b in self.pair.items()}
         self.method_at = self._methods()
-        self.tainted: set[str] = set()
-        self.built: set[str] = set()
+        self.tainted: dict[tuple[str, str], list[tuple[int, bool]]] = {}
+        self.built: dict[tuple[str, str], list[tuple[int, bool]]] = {}
         self._attr_params()
         self.web = bool(self.tainted) or any(self._is_source(i) for i in range(self.n))
         self.shell_file = any(t.kind == "str" and t.text.lower() in SHELL_PROGS for t in toks)
@@ -199,7 +200,7 @@ class _Analyzer:
                         last = T[k].text
                     k += 1
                 if last:
-                    self.tainted.add(last)
+                    self.tainted.setdefault(("*", last), []).append((-1, True))  # a parameter belongs to the method that follows, whose body has its own scope
 
     def _is_source(self, i: int) -> bool:
         t = self.T[i]
@@ -230,13 +231,43 @@ class _Analyzer:
         seg = self.T[lo:hi]
         if any(t.kind == "str" and t.interp for t in seg):
             return True
+        if self.const_only(lo, hi):
+            return False
         if any(t.kind == "punct" and t.text == "+" for t in seg) and not self.literal_only(lo, hi):
             return True
         return any(t.text == "Format" and k > 1 and seg[k - 2].text == "string" or (t.text == "Format" and k > 1 and seg[k - 2].text == "String")
                    for k, t in enumerate(seg))
 
     def mentions_source(self, lo: int, hi: int) -> bool:
-        return any(self._is_source(k) or (self.T[k].kind == "id" and self.T[k].text in self.tainted) for k in range(lo, hi))
+        return any(self._is_source(k) or (self.T[k].kind == "id" and self._scoped(self.tainted, k, self.T[k].text)) for k in range(lo, hi))
+
+    def const_only(self, lo: int, hi: int) -> bool:
+        """True when the expression is made of literals and constant-style names (ALL_CAPS, or qualified like Tables.USER_TB).
+        `"DELETE FROM " + USER_TB_NAME + " WHERE id = ?"` is a fixed text, not data-dependent SQL."""
+        seg = self.T[lo:hi]
+        ok = False
+        for k, t in enumerate(seg):
+            if t.kind in ("str", "chr", "num") and not t.interp:
+                continue
+            if t.kind == "punct" and t.text in ("+", ".", "(", ")"):
+                continue
+            if t.kind == "id" and (CONST_NAME.match(t.text) or (k + 1 < len(seg) and seg[k + 1].text == ".")):
+                ok = ok or bool(CONST_NAME.match(t.text))
+                continue
+            return False
+        return ok or self.literal_only(lo, hi)
+
+    def _scoped(self, hist: dict, idx: int, name: str) -> bool:
+        """State of `name` at token `idx`: decided by its latest assignment before idx in the same scope (or a parameter marker)."""
+        for key in ((self.method_at[idx], name), ("*", name)):
+            events = [flag for (j, flag) in hist.get(key, ()) if j < idx]
+            if events:
+                return events[-1]
+        return False
+
+    def _rec(self, hist: dict, idx: int, name: str, flag: bool) -> None:
+        hist.setdefault((self.method_at[idx], name), []).append((idx, flag))
+
 
     def receiver(self, i: int) -> list[str]:
         out, k = [], i - 1
@@ -288,7 +319,7 @@ class _Analyzer:
                 lits = " ".join(x.text for x in T[i + 2:end] if x.kind == "str")
                 if self.has_concat(i + 2, end) and (SQL_WORDS.search(lits) or self.mentions_source(i + 2, end)):
                     self.hit("CS-SQLI", t.line, M)
-                elif end - (i + 2) == 1 and T[i + 2].text in self.built:
+                elif end - (i + 2) == 1 and self._scoped(self.built, i + 2, T[i + 2].text):
                     self.hit("CS-SQLI", t.line, L)
             elif t.text == "Arguments" and self.is_p(i + 1, "=") and self.shell_file:
                 end = self._stmt_end(i + 2)
@@ -317,12 +348,8 @@ class _Analyzer:
             end = min(end, i + 80)
             name = T[i - 1].text
             lits = " ".join(t.text for t in T[i + 1:end] if t.kind == "str")
-            if self.mentions_source(i + 1, end):
-                self.tainted.add(name)
-            if self.has_concat(i + 1, end) and SQL_WORDS.search(lits):
-                self.built.add(name)
-                if self.mentions_source(i + 1, end):
-                    self.tainted.add(name)
+            self._rec(self.tainted, i, name, self.mentions_source(i + 1, end))
+            self._rec(self.built, i, name, self.has_concat(i + 1, end) and bool(SQL_WORDS.search(lits)))
 
     def _constructor(self, i: int):
         T = self.T
@@ -345,7 +372,7 @@ class _Analyzer:
             lits = " ".join(t.text for t in T[lo:hi] if t.kind == "str")
             if self.has_concat(lo, hi) and (SQL_WORDS.search(lits) or self.mentions_source(lo, hi)):
                 self.hit("CS-SQLI", line, M)
-            elif hi - lo == 1 and T[lo].text in self.built:
+            elif hi - lo == 1 and self._scoped(self.built, lo, T[lo].text):
                 self.hit("CS-SQLI", line, L)
         elif cls in DESER_TYPES:
             self.hit("CS-DESER", line, M)
@@ -376,7 +403,7 @@ class _Analyzer:
             lits = " ".join(t.text for t in T[lo:hi] if t.kind == "str")
             if self.has_concat(lo, hi) and (SQL_WORDS.search(lits) or self.mentions_source(lo, hi)):
                 self.hit("CS-SQLI", line, M)
-            elif hi - lo == 1 and T[lo].text in self.built:
+            elif hi - lo == 1 and self._scoped(self.built, lo, T[lo].text):
                 self.hit("CS-SQLI", line, L)
         elif name == "Start" and last == "Process" and first:
             texts = [("".join(T[x].text for x in range(lo, hi) if T[x].kind == "str").lower(), self.literal_only(lo, hi)) for lo, hi in a]

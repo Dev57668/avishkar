@@ -423,7 +423,8 @@ class _Analyzer:
         last = names[-1]
 
         if qual == "eval":
-            self.hit("JS-EVAL", line)
+            if any(not self.is_literal(a) for a in args):  # eval("require('crypto')") runs a constant: bad style, not injection
+                self.hit("JS-EVAL", line)
         elif names[0] in ("setTimeout", "setInterval", "setImmediate") and len(names) == 1 and args \
                 and (self.lone_str(args[0]) is not None or (T[args[0][0]].kind == "tpl" and args[0][1] - args[0][0] == 1)):
             self.hit("JS-EVAL", line)

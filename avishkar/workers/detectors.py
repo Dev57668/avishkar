@@ -126,6 +126,13 @@ def _regex_scan(text: str, rel: str, ext: str, only: set[str] | None = None) -> 
 JS_EXT = {".js", ".jsx", ".ts", ".tsx", ".mjs"}
 
 
+def _looks_minified(rel: str, text: str) -> bool:
+    if rel.endswith((".min.js", ".min.mjs")):
+        return True
+    lines = text.splitlines()
+    return len(text) > 5000 and bool(lines) and max(len(l) for l in lines) > 1500 and len(text) / len(lines) > 400
+
+
 def detect_patterns(root: Path, files: list[Path]) -> list[RawFinding]:
     """Python -> AST detector; JavaScript/TypeScript, Java, Kotlin, Go, C# and PHP -> token-stream detectors (alias-aware, ignore comments
     and strings). A file the structural scanners cannot handle falls back to the legacy regex rules so it is still
@@ -143,6 +150,8 @@ def detect_patterns(root: Path, files: list[Path]) -> list[RawFinding]:
             continue
         rel = p.relative_to(root).as_posix()
         text = p.read_text(errors="replace")
+        if ext in JS_EXT and _looks_minified(rel, text):
+            continue  # third-party bundles (jquery.min.js, ...): not the project's own code; the dependency check covers libraries
         structural = None
         try:
             if ext == ".py":

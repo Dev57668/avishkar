@@ -43,6 +43,7 @@ SHELL_PROGS = {"sh", "bash", "zsh", "cmd", "cmd.exe", "powershell", "powershell.
 SHELL_FLAGS = {"-c", "/c", "-command"}
 CONTROL = {"if", "for", "while", "switch", "catch", "synchronized", "try", "return", "new", "else", "do"}
 KT_INTERP = re.compile(r"\$[A-Za-z_{]")
+CONST_NAME = re.compile(r"^[A-Z][A-Z0-9_]{2,}$")
 PUNCT2 = {"->", "::", "+=", "==", "!=", "<=", ">=", "&&", "||", "++", "--"}
 
 
@@ -128,8 +129,8 @@ class _Analyzer:
             elif t.kind == "punct" and t.text in ")]}" and stack:
                 self.pair[stack.pop()] = i
         self.method_at = self._methods()
-        self.tainted: set[str] = set()   # names assigned from an HTTP request source (simple same-file flow)
-        self.built: set[str] = set()     # names assigned an SQL text built by concatenation / formatting
+        self.tainted: dict[tuple[str, str], list[tuple[int, bool]]] = {}   # (method, name) assigned from an HTTP request source (simple same-file flow)
+        self.built: dict[tuple[str, str], list[tuple[int, bool]]] = {}     # (method, name) assigned an SQL text built by concatenation / formatting
         self.runtimes: set[str] = set()  # names assigned Runtime.getRuntime()
         self.argv: set[str] = set()      # String[] names whose first element is a fixed, non-shell program: no shell parses them
         # a web handler reads HTTP request data somewhere in the file; only then is a concatenated path suspicious
@@ -194,13 +195,43 @@ class _Analyzer:
         seg = self.T[lo:hi]
         if any(t.kind == "str" and t.interp for t in seg):
             return True  # Kotlin "...$x..." / "...${x}..."
+        if self.const_only(lo, hi):
+            return False
         if any(t.kind == "punct" and t.text == "+" for t in seg) and not self.literal_only(lo, hi):
             return True
         return any(t.text in ("format", "formatted", "concat") and k > 0 and self.T[lo + k - 1].text in (".",)
                    for k, t in enumerate(seg))
 
+
+    def const_only(self, lo: int, hi: int) -> bool:
+        """True when the expression is made of literals and constant-style names (ALL_CAPS, or qualified like Tables.USER_TB).
+        `"DELETE FROM " + USER_TB_NAME + " WHERE id = ?"` is a fixed text, not data-dependent SQL."""
+        seg = self.T[lo:hi]
+        ok = False
+        for k, t in enumerate(seg):
+            if t.kind in ("str", "chr", "num") and not t.interp:
+                continue
+            if t.kind == "punct" and t.text in ("+", ".", "(", ")"):
+                continue
+            if t.kind == "id" and (CONST_NAME.match(t.text) or (k + 1 < len(seg) and seg[k + 1].text == ".")):
+                ok = ok or bool(CONST_NAME.match(t.text))
+                continue
+            return False
+        return ok or self.literal_only(lo, hi)
+
+    def _scoped(self, hist: dict, idx: int, name: str) -> bool:
+        """State of `name` at token `idx`: decided by its latest assignment before idx in the same scope (or a parameter marker)."""
+        for key in ((self.method_at[idx], name), ("*", name)):
+            events = [flag for (j, flag) in hist.get(key, ()) if j < idx]
+            if events:
+                return events[-1]
+        return False
+
+    def _rec(self, hist: dict, idx: int, name: str, flag: bool) -> None:
+        hist.setdefault((self.method_at[idx], name), []).append((idx, flag))
+
     def mentions_source(self, lo: int, hi: int) -> bool:
-        return any((t.kind == "id" and (t.text in SOURCES or t.text in self.tainted)) for t in self.T[lo:hi])
+        return any(self.T[k].kind == "id" and (self.T[k].text in SOURCES or self._scoped(self.tainted, k, self.T[k].text)) for k in range(lo, hi))
 
     def receiver(self, i: int) -> list[str]:
         """Identifiers of the dotted chain before the method name at index i: `Runtime.getRuntime().exec` -> [Runtime, getRuntime]."""
@@ -265,13 +296,9 @@ class _Analyzer:
             if any(t.text == "getRuntime" for t in T[i + 1:end]):
                 self.runtimes.add(name)
             self._argv_decl(i, end)
-            if self.mentions_source(i + 1, end):
-                self.tainted.add(name)
             lits = " ".join(t.text for t in T[i + 1:end] if t.kind == "str")
-            if self.has_concat(i + 1, end) and SQL_WORDS.search(lits):
-                self.built.add(name)
-                if self.mentions_source(i + 1, end):
-                    self.tainted.add(name)
+            self._rec(self.tainted, i, name, self.mentions_source(i + 1, end))
+            self._rec(self.built, i, name, self.has_concat(i + 1, end) and bool(SQL_WORDS.search(lits)))
 
     def _argv_decl(self, eq: int, end: int):
         """`String[] cmd = {"xxd", path};` / `= new String[] {"xxd", path}`: a fixed program name followed by arguments."""
@@ -341,7 +368,7 @@ class _Analyzer:
             lits = " ".join(t.text for t in T[lo:hi] if t.kind == "str")
             if self.has_concat(lo, hi) and (SQL_WORDS.search(lits) or self.mentions_source(lo, hi)):
                 self.hit("JAVA-SQLI", line, M)
-            elif hi - lo == 1 and T[lo].kind == "id" and T[lo].text in self.built:
+            elif hi - lo == 1 and T[lo].kind == "id" and self._scoped(self.built, lo, T[lo].text):
                 self.hit("JAVA-SQLI", line, L)
         elif name == "exec" and ("getRuntime" in recv or recv[-1:] and recv[-1] in self.runtimes) and first:
             lo, hi = first

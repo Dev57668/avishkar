@@ -43,6 +43,7 @@ INCLUDES = {"include", "include_once", "require", "require_once"}
 ESCAPERS = {"htmlspecialchars", "htmlentities", "esc_html", "esc_attr", "esc_url", "intval", "floatval", "basename", "realpath",
             "escapeshellarg", "escapeshellcmd", "mysqli_real_escape_string", "real_escape_string", "addslashes", "filter_var",
             "strip_tags", "urlencode", "json_encode", "ctype_digit", "is_numeric", "absint", "sanitize_text_field", "quote"}
+CONST_NAME = re.compile(r"^[A-Z][A-Z0-9_]{2,}$")
 PUNCT2 = {"->", "::", "=>", "==", "!=", "<=", ">=", "&&", "||", "++", "--", ".=", "+=", "??", "?->"}
 INTERP = re.compile(r"\$[A-Za-z_{]|\{\$")
 
@@ -167,9 +168,9 @@ class _Analyzer:
                 self.pair[stack.pop()] = i
         self.open_of = {b: a for a, b in self.pair.items()}
         self.func_at = self._funcs()
-        self.tainted: set[str] = set()
-        self.built: set[str] = set()
-        self.safe: set[str] = set()   # names assigned a request value that was cast/escaped on the way in
+        self.tainted: dict[tuple[str, str], list[tuple[int, bool]]] = {}
+        self.built: dict[tuple[str, str], list[tuple[int, bool]]] = {}
+        self.safe: dict[tuple[str, str], list[tuple[int, bool]]] = {}   # names assigned a request value that was cast/escaped on the way in
         self.web = any(t.kind == "var" and t.text in SUPERGLOBALS for t in toks)
 
     # ------------------------------------------------------------------ helpers
@@ -227,6 +228,8 @@ class _Analyzer:
         seg = self.T[lo:hi]
         if any(t.kind == "str" and t.interp for t in seg):
             return True
+        if self.const_only(lo, hi):
+            return False
         if any(t.kind == "punct" and t.text == "." for t in seg) and any(t.kind == "var" for t in seg):
             return True
         return any(t.text in ("sprintf", "vsprintf") for t in seg)
@@ -234,11 +237,40 @@ class _Analyzer:
     def mentions_source(self, lo: int, hi: int) -> bool:
         for k in range(lo, hi):
             t = self.T[k]
-            if t.kind == "var" and (t.text in SUPERGLOBALS or t.text in self.tainted):
+            if t.kind == "var" and (t.text in SUPERGLOBALS or self._scoped(self.tainted, k, t.text)):
                 return True
-            if t.kind == "str" and t.interp and any(v in t.text for v in self.tainted | SUPERGLOBALS):
-                return True
+            if t.kind == "str" and t.interp:
+                names = {n for (s, n), ev in self.tainted.items() if s in (self.func_at[k], "*") and self._scoped(self.tainted, k, n)} | SUPERGLOBALS
+                if any(v in t.text for v in names):
+                    return True
         return False
+
+    def const_only(self, lo: int, hi: int) -> bool:
+        """True when the expression is made of literals and constant-style names (ALL_CAPS, or qualified like Tables.USER_TB).
+        `"DELETE FROM " + USER_TB_NAME + " WHERE id = ?"` is a fixed text, not data-dependent SQL."""
+        seg = self.T[lo:hi]
+        ok = False
+        for k, t in enumerate(seg):
+            if t.kind in ("str", "chr", "num") and not t.interp:
+                continue
+            if t.kind == "punct" and t.text in ("+", ".", "(", ")"):
+                continue
+            if t.kind in ("id", "var") and (CONST_NAME.match(t.text) or (k + 1 < len(seg) and seg[k + 1].text == ".")):
+                ok = ok or bool(CONST_NAME.match(t.text))
+                continue
+            return False
+        return ok or self.literal_only(lo, hi)
+
+    def _scoped(self, hist: dict, idx: int, name: str) -> bool:
+        """State of `name` at token `idx`: decided by its latest assignment before idx in the same scope (or a parameter marker)."""
+        for key in ((self.func_at[idx], name), ("*", name)):
+            events = [flag for (j, flag) in hist.get(key, ()) if j < idx]
+            if events:
+                return events[-1]
+        return False
+
+    def _rec(self, hist: dict, idx: int, name: str, flag: bool) -> None:
+        hist.setdefault((self.func_at[idx], name), []).append((idx, flag))
 
     def escaped(self, lo: int, hi: int) -> bool:
         return any(self.T[x].kind == "id" and self.T[x].text in ESCAPERS for x in range(lo, hi)) or \
@@ -309,26 +341,21 @@ class _Analyzer:
             lits = " ".join(t.text for t in T[i + 1:end] if t.kind == "str")
             sink_result = any(T[k].kind == "id" and T[k].text.lower() in SINK_RESULT and self.is_p(k + 1, "(") for k in range(i + 1, end))
             from_request = self.mentions_source(i + 1, end) and not sink_result
-            if from_request and self.escaped(i + 1, end):
-                self.safe.add(name)
+            self._rec(self.safe, i, name, from_request and self.escaped(i + 1, end))
             src = from_request and not self.escaped(i + 1, end)
-            if src:
-                self.tainted.add(name)
-            if self.has_concat(i + 1, end) and SQL_WORDS.search(lits):
-                self.built.add(name)
-                if src:
-                    self.tainted.add(name)
+            self._rec(self.tainted, i, name, src)
+            self._rec(self.built, i, name, self.has_concat(i + 1, end) and bool(SQL_WORDS.search(lits)))
 
     def _sql_check(self, line: int, rng):
         lo, hi = rng
         T = self.T
         lits = " ".join(t.text for t in T[lo:hi] if t.kind == "str")
         names = [t.text for t in T[lo:hi] if t.kind == "var"]
-        if names and all(v in self.safe for v in names):
+        if names and all(self._scoped(self.safe, lo, v) for v in names):
             return  # every variable in the query was cast or escaped when it was read from the request
         if self.has_concat(lo, hi) and (SQL_WORDS.search(lits) or self.mentions_source(lo, hi)) and not self.escaped(lo, hi):
             self.hit("PHP-SQLI", line, M)
-        elif hi - lo == 1 and T[lo].kind == "var" and T[lo].text in self.built:
+        elif hi - lo == 1 and T[lo].kind == "var" and self._scoped(self.built, lo, T[lo].text):
             self.hit("PHP-SQLI", line, L)
 
     def _function(self, i: int, low: str):
@@ -377,15 +404,15 @@ class _Analyzer:
         lo, hi = i + 1, end
         if self.source_only_as_index(lo, hi):
             return  # include $pages[$_GET['p']] ?? 'home.php': the request value only selects a key of a fixed map
-        if (self.mentions_source(lo, hi) or (self.web and self.has_concat(lo, hi))) and not self.escaped(lo, hi):
-            self.hit("PHP-INCLUDE", self.T[i].line, M if self.mentions_source(lo, hi) else L)
+        if self.mentions_source(lo, hi) and not self.escaped(lo, hi):
+            self.hit("PHP-INCLUDE", self.T[i].line, M)
 
     def source_only_as_index(self, lo: int, hi: int) -> bool:
         """True when every request value in [lo, hi) is used as an array subscript of some other variable."""
         T, seen = self.T, False
         for k in range(lo, hi):
             t = T[k]
-            if t.kind != "var" or not (t.text in SUPERGLOBALS or t.text in self.tainted):
+            if t.kind != "var" or not (t.text in SUPERGLOBALS or self._scoped(self.tainted, k, t.text)):
                 continue
             seen = True
             depth, j, indexed = 0, k - 1, False
