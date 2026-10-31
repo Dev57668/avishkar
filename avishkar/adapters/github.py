@@ -73,7 +73,10 @@ class GitHubClient:
 
     def _app_jwt(self) -> str:
         now = int(time.time())
-        return jwt.encode({"iat": now - 30, "exp": now + 540, "iss": self.app_id}, self.private_key, algorithm="RS256")
+        try:
+            return jwt.encode({"iat": now - 30, "exp": now + 540, "iss": self.app_id}, self.private_key, algorithm="RS256")
+        except Exception:  # bad PEM text, missing BEGIN/END lines, wrong key type: say so without echoing the key
+            raise GitHubError("GitHub App private key could not be used (check GITHUB_APP_PRIVATE_KEY is the full .pem text)") from None
 
     def _req(self, method, path, token, **kw):
         r = self._http.request(method, self.api + path, headers={

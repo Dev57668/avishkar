@@ -815,8 +815,8 @@ def create_app(db_url: str | None = None, *, secret_key: str | None = None, scor
         _own_installation(p, installation)
         try:
             return {"items": client.list_repositories(installation)}
-        except gh.GitHubError:
-            raise ApiError(502, "upstream_error", "GitHub did not return the repository list")
+        except gh.GitHubError as e:
+            raise ApiError(502, "upstream_error", f"GitHub did not return the repository list: {e}")
 
     @app.get("/v1/github/branches")
     def gh_branches(installation: str = Query(pattern=r"^\d{1,20}$"), repo: str = Query(pattern=r"^[A-Za-z0-9_.\-]{1,100}/[A-Za-z0-9_.\-]{1,100}$"),
@@ -827,8 +827,8 @@ def create_app(db_url: str | None = None, *, secret_key: str | None = None, scor
         _own_installation(p, installation)
         try:
             return {"items": client.list_branches(installation, repo)}
-        except gh.GitHubError:
-            raise ApiError(502, "upstream_error", "GitHub did not return the branch list")
+        except gh.GitHubError as e:
+            raise ApiError(502, "upstream_error", f"GitHub did not return the branch list: {e}")
 
     @app.post("/v1/github/scan", status_code=202)
     def gh_scan(body: GitHubScanIn, request: Request, p: Principal = Depends(analyst)):
@@ -838,8 +838,8 @@ def create_app(db_url: str | None = None, *, secret_key: str | None = None, scor
         _own_installation(p, body.installation)
         try:
             br = next((b for b in client.list_branches(body.installation, body.repo) if b["name"] == body.branch), None)
-        except gh.GitHubError:
-            raise ApiError(502, "upstream_error", "GitHub did not return the branch list")
+        except gh.GitHubError as e:
+            raise ApiError(502, "upstream_error", f"GitHub did not return the branch list: {e}")
         if not br:
             raise ApiError(404, "not_found", "Branch not found")
         repo = store.get_or_create_repo(p.org_id, body.repo)

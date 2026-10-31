@@ -88,3 +88,21 @@ def test_viewers_cannot_browse_or_scan(tmp_path, keypair):
     vh = e.login("v@acme.test")
     assert e.client.get("/v1/github/repositories?installation=777", headers=vh).status_code == 403
     assert e.client.post("/v1/github/scan", headers=vh, json={"installation": "777", "repo": "acme/app", "branch": "main"}).status_code == 403
+
+
+def test_bad_private_key_is_reported_clearly_and_never_echoed(tmp_path):
+    client = gh.GitHubClient("123", "not a pem key SECRETMARKER", "https://api.github.test", transport=httpx.MockTransport(lambda r: httpx.Response(200)))
+    e = Env(tmp_path, github=client, webhook_secret="whsec_test")
+    link(e)
+    r = e.client.get("/v1/github/repositories?installation=777", headers=e.h)
+    assert r.status_code == 502 and "GITHUB_APP_PRIVATE_KEY" in r.json()["error"]["message"]
+    assert "SECRETMARKER" not in r.text
+
+
+def test_github_rejection_status_is_surfaced(tmp_path, keypair):
+    priv, _ = keypair
+    client = gh.GitHubClient("123", priv, "https://api.github.test", transport=httpx.MockTransport(lambda r: httpx.Response(401)))
+    e = Env(tmp_path, github=client, webhook_secret="whsec_test")
+    link(e)
+    r = e.client.get("/v1/github/repositories?installation=777", headers=e.h)
+    assert r.status_code == 502 and "401" in r.json()["error"]["message"]
