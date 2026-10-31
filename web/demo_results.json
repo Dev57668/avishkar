@@ -397,36 +397,6 @@
     "items": []
    }
   },
-  "vulnerable-java": {
-   "name": "Java app (unsupported language)",
-   "kind": "unsupported",
-   "language": "Java",
-   "fixCount": 0,
-   "before": {
-    "status": "incomplete",
-    "decision": "not_evaluated",
-    "fixesApplied": 0,
-    "normalizedIndex": null,
-    "grossUnits": null,
-    "rawUnits": null,
-    "findings": 0,
-    "severity": {
-     "critical": 0,
-     "high": 0,
-     "medium": 0,
-     "low": 0,
-     "informational": 0
-    },
-    "filesScanned": 1,
-    "coverage": {
-     "analyzedSourceFiles": 0,
-     "notEvaluated": {
-      ".java": 1
-     }
-    },
-    "items": []
-   }
-  },
   "django-blog-backend": {
    "name": "Django blog backend",
    "kind": "vulnerable",
@@ -716,6 +686,36 @@
     "items": []
    }
   },
+  "go-http-service": {
+   "name": "Go HTTP service (unsupported language)",
+   "kind": "unsupported",
+   "language": "Go",
+   "fixCount": 0,
+   "before": {
+    "status": "incomplete",
+    "decision": "not_evaluated",
+    "fixesApplied": 0,
+    "normalizedIndex": null,
+    "grossUnits": null,
+    "rawUnits": null,
+    "findings": 0,
+    "severity": {
+     "critical": 0,
+     "high": 0,
+     "medium": 0,
+     "low": 0,
+     "informational": 0
+    },
+    "filesScanned": 1,
+    "coverage": {
+     "analyzedSourceFiles": 0,
+     "notEvaluated": {
+      ".go": 1
+     }
+    },
+    "items": []
+   }
+  },
   "python-ops-cli": {
    "name": "Python ops CLI",
    "kind": "vulnerable",
@@ -907,6 +907,113 @@
     "status": "complete",
     "decision": "pass",
     "fixesApplied": 3,
+    "normalizedIndex": 0.0,
+    "grossUnits": 0.0,
+    "rawUnits": 0.0,
+    "findings": 0,
+    "severity": {
+     "critical": 0,
+     "high": 0,
+     "medium": 0,
+     "low": 0,
+     "informational": 0
+    },
+    "filesScanned": 1,
+    "coverage": {
+     "analyzedSourceFiles": 1,
+     "notEvaluated": {}
+    },
+    "items": []
+   }
+  },
+  "vulnerable-java": {
+   "name": "Vulnerable Java app",
+   "kind": "vulnerable",
+   "language": "Java",
+   "fixCount": 6,
+   "before": {
+    "status": "complete",
+    "decision": "pass",
+    "fixesApplied": 0,
+    "normalizedIndex": 53.4,
+    "grossUnits": 15.25,
+    "rawUnits": 15.25,
+    "findings": 7,
+    "severity": {
+     "critical": 0,
+     "high": 4,
+     "medium": 2,
+     "low": 1,
+     "informational": 0
+    },
+    "filesScanned": 1,
+    "coverage": {
+     "analyzedSourceFiles": 1,
+     "notEvaluated": {}
+    },
+    "items": [
+     {
+      "rule": "JAVA-SECRET-ASSIGN",
+      "title": "Hard-coded credential in Java",
+      "severity": "high",
+      "confidence": "medium",
+      "path": "VulnerableApp.java",
+      "line": 15
+     },
+     {
+      "rule": "JAVA-SECRET-ASSIGN",
+      "title": "Hard-coded credential in Java",
+      "severity": "high",
+      "confidence": "medium",
+      "path": "VulnerableApp.java",
+      "line": 16
+     },
+     {
+      "rule": "JAVA-SQLI",
+      "title": "SQL built by concatenation in Java",
+      "severity": "high",
+      "confidence": "low",
+      "path": "VulnerableApp.java",
+      "line": 26
+     },
+     {
+      "rule": "JAVA-CMDI",
+      "title": "OS command built from non-literal input in Java",
+      "severity": "high",
+      "confidence": "low",
+      "path": "VulnerableApp.java",
+      "line": 37
+     },
+     {
+      "rule": "JAVA-WEAKHASH",
+      "title": "Weak hash algorithm in Java",
+      "severity": "low",
+      "confidence": "medium",
+      "path": "VulnerableApp.java",
+      "line": 51
+     },
+     {
+      "rule": "JAVA-DESER",
+      "title": "Unsafe deserialization in Java",
+      "severity": "medium",
+      "confidence": "medium",
+      "path": "VulnerableApp.java",
+      "line": 77
+     },
+     {
+      "rule": "JAVA-XXE",
+      "title": "XML parser factory without XXE hardening",
+      "severity": "medium",
+      "confidence": "low",
+      "path": "VulnerableApp.java",
+      "line": 84
+     }
+    ]
+   },
+   "after": {
+    "status": "complete",
+    "decision": "pass",
+    "fixesApplied": 6,
     "normalizedIndex": 0.0,
     "grossUnits": 0.0,
     "rawUnits": 0.0,

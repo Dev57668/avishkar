@@ -11,7 +11,7 @@ API is asleep or gone.
 ## What the public gets, and what it deliberately does not
 * **Read-only demo login** (`demo@avishkar.dev`, published on the page on purpose; role `viewer`). It browses pre-scanned
   sample projects: the real pipeline run on the files in `sample_projects/` at startup, including the before/after fix,
-  and the Java sample correctly shown as *not evaluated*. A viewer cannot upload, triage, explain, or see users/keys/audit.
+  and the Go sample correctly shown as *not evaluated*. A viewer cannot upload, triage, explain, or see users/keys/audit.
 * **Uploads are admin-only** (`AVISHKAR_UPLOADS=admin`). Render has no Docker daemon, so the worker runs as a plain child
   process, which is *not* an isolation boundary. The public instance therefore never scans code from strangers.
   Only you (the admin account you create) can upload, and should only upload code you trust.

@@ -26,9 +26,9 @@ MAX_FILE_BYTES = 1_000_000
 MAX_TOTAL_BYTES = 100_000_000  # uncompressed total across all files; per-file (1 MB) and file-count (5000) limits still apply
 # Source languages we recognise but have no detector for. They are reported as NOT EVALUATED so a repo that is
 # mostly e.g. Java can never look "clean" just because nothing analysed it (spec §2: never silently treated as clean).
-UNSUPPORTED_SOURCE = {".java", ".kt", ".kts", ".go", ".rb", ".php", ".cs", ".c", ".cc", ".cpp", ".h", ".hpp", ".rs",
+UNSUPPORTED_SOURCE = {".kt", ".kts", ".go", ".rb", ".php", ".cs", ".c", ".cc", ".cpp", ".h", ".hpp", ".rs",
                       ".swift", ".scala", ".pl", ".lua", ".dart", ".m", ".mm", ".vb", ".ps1", ".sh"}
-SUPPORTED_SOURCE = {".py", ".js", ".jsx", ".ts", ".tsx", ".mjs"}
+SUPPORTED_SOURCE = {".py", ".js", ".jsx", ".ts", ".tsx", ".mjs", ".java"}
 SKIP_DIRS = {".git", "node_modules", "__pycache__", ".venv", "venv", "dist", "build"}
 
 

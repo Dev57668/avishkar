@@ -1,7 +1,7 @@
 # Calibration report - score-v1
 **NOT CALIBRATED - evidence only; the scoring owner must approve (App. P.7)**
 
-Corpus: 81 cases (3 independent), 0 adjudicated by >=2 reviewers.
+Corpus: 82 cases (4 independent), 0 adjudicated by >=2 reviewers.
 
 ## Precision by rule
 | Rule | TP | FP | Unlabeled | n | Precision | Wilson 95% lower |
@@ -12,6 +12,12 @@ Corpus: 81 cases (3 independent), 0 adjudicated by >=2 reviewers.
 | DEP-NOLOCK | 2 | 0 | 0 | 2 | 1.0 | 0.342 |
 | DEP-PYYAML | 2 | 0 | 0 | 2 | 1.0 | 0.342 |
 | DEP-UNPINNED | 2 | 1 | 0 | 3 | 0.667 | 0.208 |
+| JAVA-CMDI | 1 | 0 | 0 | 1 | 1.0 | 0.207 |
+| JAVA-DESER | 1 | 0 | 0 | 1 | 1.0 | 0.207 |
+| JAVA-SECRET-ASSIGN | 2 | 0 | 0 | 2 | 1.0 | 0.342 |
+| JAVA-SQLI | 1 | 0 | 0 | 1 | 1.0 | 0.207 |
+| JAVA-WEAKHASH | 1 | 0 | 0 | 1 | 1.0 | 0.207 |
+| JAVA-XXE | 1 | 0 | 0 | 1 | 1.0 | 0.207 |
 | JS-CMDI | 4 | 0 | 0 | 4 | 1.0 | 0.51 |
 | JS-EVAL | 4 | 0 | 0 | 4 | 1.0 | 0.51 |
 | JS-INNERHTML | 2 | 0 | 0 | 2 | 1.0 | 0.342 |
@@ -49,6 +55,12 @@ Corpus: 81 cases (3 independent), 0 adjudicated by >=2 reviewers.
 | DEP-NOLOCK@medium | 2 | 0 | 2 | 0.342 |
 | DEP-PYYAML@high | 2 | 0 | 2 | 0.342 |
 | DEP-UNPINNED@high | 2 | 1 | 3 | 0.208 |
+| JAVA-CMDI@low | 1 | 0 | 1 | 0.207 |
+| JAVA-DESER@medium | 1 | 0 | 1 | 0.207 |
+| JAVA-SECRET-ASSIGN@medium | 2 | 0 | 2 | 0.342 |
+| JAVA-SQLI@low | 1 | 0 | 1 | 0.207 |
+| JAVA-WEAKHASH@medium | 1 | 0 | 1 | 0.207 |
+| JAVA-XXE@low | 1 | 0 | 1 | 0.207 |
 | JS-CMDI@medium | 4 | 0 | 4 | 0.51 |
 | JS-EVAL@medium | 4 | 0 | 4 | 0.51 |
 | JS-INNERHTML@medium | 2 | 0 | 2 | 0.342 |
@@ -86,29 +98,29 @@ Corpus: 81 cases (3 independent), 0 adjudicated by >=2 reviewers.
 |---|---|---|---|---|---|---|---|
 | holdout | 21 | 21 | 5 | 0.808 | 21 | 0 | 1.0 |
 | holdout-2 | 11 | 10 | 1 | 0.909 | 10 | 3 | 0.769 |
-| tuning | 48 | 71 | 2 | 0.973 | 71 | 7 | 0.91 |
+| tuning | 49 | 78 | 2 | 0.975 | 78 | 9 | 0.897 |
 
 ## Recall by vulnerability kind
 | Kind | Found | Missed | Recall |
 |---|---|---|---|
-| cmdi | 12 | 0 | 1.0 |
+| cmdi | 13 | 0 | 1.0 |
 | cors | 0 | 1 | 0.0 |
 | debug | 5 | 0 | 1.0 |
 | dependency | 10 | 0 | 1.0 |
-| deserialization | 2 | 0 | 1.0 |
+| deserialization | 3 | 0 | 1.0 |
 | eval | 7 | 0 | 1.0 |
 | info-disclosure | 0 | 2 | 0.0 |
 | noverify | 6 | 0 | 1.0 |
-| path-traversal | 6 | 0 | 1.0 |
+| path-traversal | 6 | 1 | 0.857 |
 | pickle | 4 | 0 | 1.0 |
 | redos | 0 | 1 | 0.0 |
-| secret | 20 | 4 | 0.833 |
-| sqli | 15 | 0 | 1.0 |
+| secret | 22 | 5 | 0.815 |
+| sqli | 16 | 0 | 1.0 |
 | tempfile | 0 | 1 | 0.0 |
 | weak-random | 3 | 0 | 1.0 |
-| weakhash | 7 | 0 | 1.0 |
+| weakhash | 8 | 0 | 1.0 |
 | xss | 4 | 1 | 0.8 |
-| xxe | 1 | 0 | 1.0 |
+| xxe | 2 | 0 | 1.0 |
 
 ## Factor sensitivity (one factor at a time)
 - impact: monotonic=True debt=[0.75, 1.5, 2.25, 3.0, 3.75]
@@ -126,37 +138,37 @@ Corpus: 81 cases (3 independent), 0 adjudicated by >=2 reviewers.
 ```json
 {
  "currentK": 20.0,
- "cases": 80,
+ "cases": 81,
  "rawUnits": {
   "min": 0.0,
   "p25": 1.5,
   "median": 3.0,
-  "p75": 3.75,
+  "p75": 4.0,
   "max": 55.75
  },
  "indexAtLandmarks": {
   "10": {
    "p25": 13.9,
    "median": 25.9,
-   "p75": 31.3,
+   "p75": 33.0,
    "max": 99.6
   },
   "20": {
    "p25": 7.2,
    "median": 13.9,
-   "p75": 17.1,
+   "p75": 18.1,
    "max": 93.8
   },
   "40": {
    "p25": 3.7,
    "median": 7.2,
-   "p75": 8.9,
+   "p75": 9.5,
    "max": 75.2
   },
   "80": {
    "p25": 1.9,
    "median": 3.7,
-   "p75": 4.6,
+   "p75": 4.9,
    "max": 50.2
   }
  }
@@ -165,5 +177,5 @@ Corpus: 81 cases (3 independent), 0 adjudicated by >=2 reviewers.
 
 ## Approval blockers
 - labels are not adjudicated by >=2 reviewers (App. P.2)
-- only 3 independent (not written by the detector author) cases; synthetic cases measure self-consistency, not real-world precision
-- 31 rule(s) have fewer than 8 labeled findings: confidence stays low
+- only 4 independent (not written by the detector author) cases; synthetic cases measure self-consistency, not real-world precision
+- 37 rule(s) have fewer than 8 labeled findings: confidence stays low

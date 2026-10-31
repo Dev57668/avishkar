@@ -2,12 +2,12 @@ import ast
 import re
 
 from avishkar import knowledge
-from avishkar.workers import detectors, jsscan, pyast
+from avishkar.workers import detectors, javascan, jsscan, pyast
 
 
 def emitted_rule_ids() -> set[str]:
     ids = {r[0] for r in detectors.PATTERN_RULES} | {r[0] for r in detectors.SECRET_RULES}
-    ids |= set(pyast.PY_RULES) | set(jsscan.JS_RULES)
+    ids |= set(pyast.PY_RULES) | set(jsscan.JS_RULES) | set(javascan.JAVA_RULES)
     ids |= {row[1] for rows in detectors.ADVISORIES.values() for row in rows} | {"DEP-UNPINNED", "DEP-NOLOCK"}
     return ids
 
@@ -41,6 +41,8 @@ def test_secure_examples_do_not_trigger_their_own_rule():
             assert rid not in {f.rule_id for f in pyast.scan_python(ex["code"], "x.py")}, rid
         if ex["language"] == "javascript" and rid.startswith("JS-"):
             assert rid not in {f.rule_id for f in jsscan.scan_js(ex["code"], "x.js")}, rid
+        if ex["language"] == "java" and rid.startswith("JAVA-"):
+            assert rid not in {f.rule_id for f in javascan.scan_java(ex["code"], "X.java")}, rid
 
 
 def test_describe_returns_cwe_urls_and_honest_fallback():

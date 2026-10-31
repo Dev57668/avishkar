@@ -40,7 +40,7 @@ def test_every_fix_removes_its_findings_and_adds_none(sid, tmp_path):
             assert after["securityDebt"]["grossUnits"] == base["securityDebt"]["grossUnits"], fix.id
 
 
-@pytest.mark.parametrize("sid", ["vulnerable-python", "vulnerable-javascript"])
+@pytest.mark.parametrize("sid", [k for k, v in samples.SAMPLES.items() if v.fixes])
 def test_all_fixes_together_clear_the_sample_and_order_does_not_matter(sid, tmp_path):
     ids = [f.id for f in samples.SAMPLES[sid].fixes]
     a = scan_variant(sid, ids, tmp_path)
@@ -64,8 +64,8 @@ def test_secure_sample_is_clean_but_not_called_proof_of_safety(tmp_path):
     assert "not proof" in samples.SAMPLES["secure-python"].description.lower()
 
 
-def test_java_sample_is_not_evaluated(tmp_path):
-    r = scan_variant("vulnerable-java", [], tmp_path)
+def test_unsupported_language_sample_is_not_evaluated(tmp_path):
+    r = scan_variant("go-http-service", [], tmp_path)
     assert r["status"] == "incomplete" and r["securityDebt"]["normalizedIndex"] is None
 
 

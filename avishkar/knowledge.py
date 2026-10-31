@@ -20,6 +20,7 @@ CWE_NAMES = {
     89: "Improper Neutralization of Special Elements used in an SQL Command ('SQL Injection')",
     95: "Improper Neutralization of Directives in Dynamically Evaluated Code ('Eval Injection')",
     295: "Improper Certificate Validation",
+    327: "Use of a Broken or Risky Cryptographic Algorithm",
     328: "Use of Weak Hash",
     338: "Use of Cryptographically Weak Pseudo-Random Number Generator (PRNG)",
     377: "Insecure Temporary File",
@@ -186,6 +187,79 @@ RULES: dict[str, dict] = {
         "Reading or overwriting files outside the intended directory.",
         "Resolve the path and check it stays inside a base directory.",
         "javascript", "const full = path.resolve(BASE, name);\nif (!full.startsWith(BASE + path.sep)) throw new Error('invalid path');\nfs.readFileSync(full);", "A01:2021 Broken Access Control"),
+    # ------------------------------------------------------------------ Java (token scanner)
+    "JAVA-SQLI": _r([89], "injection", "tokens", "structural", "SQL built by concatenation in Java",
+        "A query passed to Statement.execute*/prepareStatement/createQuery is built with + or String.format from request "
+        "data or other variables, so the value becomes part of the SQL text.",
+        "Read, modify or delete any data the database account can reach; authentication bypass.",
+        "Use PreparedStatement with ? placeholders (or named parameters in JPA) and bind values; never concatenate input.",
+        "java", "PreparedStatement ps = conn.prepareStatement(\"SELECT * FROM users WHERE name = ?\");\nps.setString(1, name);\nResultSet rs = ps.executeQuery();", A03),
+    "JAVA-CMDI": _r([78], "injection", "tokens", "structural", "OS command built from non-literal input in Java",
+        "Runtime.exec with a concatenated string, or ProcessBuilder driving a shell (sh -c / cmd /c) with variable parts, "
+        "lets shell metacharacters in the input add commands.",
+        "Arbitrary command execution on the server with the application's privileges.",
+        "Pass a fixed argument array to ProcessBuilder without a shell, and validate or allow-list user-controlled values.",
+        "java", "ProcessBuilder pb = new ProcessBuilder(\"ping\", \"-c\", \"1\", host);\npb.redirectErrorStream(true);", A03),
+    "JAVA-DESER": _r([502], "injection", "tokens", "structural", "Unsafe deserialization in Java",
+        "ObjectInputStream, XMLDecoder and a default SnakeYAML Yaml() rebuild arbitrary object graphs from bytes; gadget "
+        "classes on the classpath can execute code while the data is being read.",
+        "Remote code execution from a crafted payload.",
+        "Do not deserialize untrusted data. Use JSON with a fixed schema, or an ObjectInputFilter allow-list; use "
+        "new Yaml(new SafeConstructor(...)).",
+        "java", "Gson gson = new Gson();\nDto dto = gson.fromJson(json, Dto.class); // data only, no object graph", A03),
+    "JAVA-WEAKHASH": _r([328], "crypto", "tokens", "structural", "Weak hash algorithm in Java",
+        "MessageDigest.getInstance with MD5, MD2, MD4 or SHA-1 uses broken or weakened algorithms; they are also far too "
+        "fast for storing passwords.",
+        "Forged integrity checks; fast password cracking after a leak.",
+        "Use SHA-256 or stronger for integrity and a password hash (Argon2, scrypt, bcrypt, PBKDF2) for passwords.",
+        "java", "MessageDigest md = MessageDigest.getInstance(\"SHA-256\");", A02),
+    "JAVA-WEAKCIPHER": _r([327], "crypto", "tokens", "structural", "Weak cipher or ECB mode in Java",
+        "Cipher.getInstance with DES, RC2, RC4, Blowfish, an ECB mode, or plain \"AES\" (which defaults to ECB) leaks "
+        "patterns or has a small key.",
+        "Plaintext structure is revealed and ciphertext can be rearranged or forged.",
+        "Use AES-GCM (\"AES/GCM/NoPadding\") with a fresh random IV for every message.",
+        "java", "Cipher c = Cipher.getInstance(\"AES/GCM/NoPadding\");", A02),
+    "JAVA-RANDOM": _r([338], "crypto", "tokens", "heuristic", "java.util.Random / Math.random for a security value",
+        "java.util.Random and Math.random are predictable and are used in code whose name suggests a token, secret, "
+        "session or similar.",
+        "Predictable tokens can be guessed or forged.",
+        "Use java.security.SecureRandom.",
+        "java", "SecureRandom rnd = new SecureRandom();\nbyte[] sessionToken = new byte[32];\nrnd.nextBytes(sessionToken);", A02),
+    "JAVA-SECRET-ASSIGN": _r([798], "secret", "tokens", "heuristic", "Hard-coded credential in Java",
+        "A field, variable or setter named like a credential is assigned a string literal, or a password literal is passed "
+        "to DriverManager.getConnection. Placeholders and test values can match.",
+        "Anyone who can read the code or a decompiled jar holds a working credential.",
+        "Read secrets from the environment or a secret store and rotate any value that was committed.",
+        "java", "String password = System.getenv(\"DB_PASSWORD\");", A07),
+    "JAVA-TLS": _r([295], "crypto", "tokens", "structural", "TLS verification disabled in Java",
+        "A TrustManager whose checkServerTrusted does nothing, or a HostnameVerifier that always returns true, accepts any "
+        "certificate or host name.",
+        "Man-in-the-middle attackers can read and change traffic.",
+        "Use the default trust store and hostname verification; add the specific CA to a trust store if needed.",
+        "java", "HttpsURLConnection c = (HttpsURLConnection) url.openConnection(); // default verification stays on", A02),
+    "JAVA-XXE": _r([611], "injection", "tokens", "heuristic", "XML parser factory without XXE hardening",
+        "DocumentBuilderFactory, SAXParserFactory, XMLInputFactory and similar factories are created in a file that never "
+        "disables DOCTYPE or external entities.",
+        "Local file disclosure, SSRF and entity-expansion denial of service from crafted XML.",
+        "Set disallow-doctype-decl (or FEATURE_SECURE_PROCESSING plus no external entities) on the factory.",
+        "java", "DocumentBuilderFactory f = DocumentBuilderFactory.newInstance();\nf.setFeature(\"http://apache.org/xml/features/disallow-doctype-decl\", true);", A05),
+    "JAVA-PATH": _r([22], "filesystem", "tokens", "heuristic", "File path built from request data",
+        "new File / FileInputStream / Paths.get receives a value taken straight from an HTTP request without being "
+        "constrained to a base directory.",
+        "Reading or overwriting files outside the intended directory.",
+        "Resolve against a base directory, normalize, and check the result still starts with it.",
+        "java", "Path p = base.resolve(name).normalize();\nif (!p.startsWith(base)) throw new SecurityException(\"invalid path\");", "A01:2021 Broken Access Control"),
+    "JAVA-XSS-REFLECT": _r([79], "injection", "tokens", "heuristic", "Request data written to the response unescaped",
+        "A servlet writes a request parameter or header into the HTML response without an escaping call.",
+        "Script runs in a victim's browser in the site's origin: session theft, forged actions.",
+        "HTML-escape every untrusted value (OWASP Java Encoder, template auto-escaping) before output.",
+        "java", "out.println(Encode.forHtml(request.getParameter(\"q\")));", A03),
+    "JAVA-EVAL": _r([95], "injection", "tokens", "structural", "Dynamic script evaluation in Java",
+        "ScriptEngine.eval runs a string as script code (JavaScript, Groovy, ...). If any part comes from a user, the user "
+        "can run code.",
+        "Remote code execution with the application's privileges.",
+        "Do not evaluate strings; use a restricted expression parser or an allow-list of operations.",
+        "java", "double total = Double.parseDouble(input); // parse data, do not evaluate it", A03),
     # ------------------------------------------------------------------ shared / regex
     "ANY-CORS": _r([942], "config", "regex", "heuristic", "Wildcard CORS origin",
         "Access-Control-Allow-Origin: * (or allow_origins=['*']) lets any website read responses from this API in a user's "

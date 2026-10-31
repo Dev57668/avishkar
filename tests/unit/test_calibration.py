@@ -96,27 +96,27 @@ def test_corpus_is_well_formed():
 
 
 def test_independent_cases_are_byte_identical_to_sample_projects():
-    for case, src in [("ind_python_app", "vulnerable-python"), ("ind_javascript_app", "vulnerable-javascript")]:
+    for case, src in [("ind_python_app", "vulnerable-python"), ("ind_javascript_app", "vulnerable-javascript"), ("ind_java_app", "vulnerable-java")]:
         for f in (CORPUS / case).iterdir():
             orig = ROOT / "sample_projects" / src / f.name
-            if f.suffix in (".py", ".js"):
+            if f.suffix in (".py", ".js", ".java"):
                 assert f.read_bytes().replace(b"\r\n", b"\n") == orig.read_bytes().replace(b"\r\n", b"\n"), f
 
 
 def test_unsupported_language_case_is_not_evaluated_not_clean():
-    res = assemble(CFG, POL, collect_findings(CFG.required_detectors, source_dir=CORPUS / "ind_java_unsupported"))
+    res = assemble(CFG, POL, collect_findings(CFG.required_detectors, source_dir=CORPUS / "ind_go_unsupported"))
     assert res["status"] == "incomplete" and res["decision"]["outcome"] == "not_evaluated"
     assert res["securityDebt"]["normalizedIndex"] is None
-    assert res["securityDebt"]["coverage"]["notEvaluated"] == {".java": 1}
+    assert res["securityDebt"]["coverage"]["notEvaluated"] == {".go": 1}
     assert any("NOT EVALUATED" in n for n in res["notes"])
 
 
 def test_mixed_language_repo_is_complete_but_discloses_coverage(tmp_path):
     (tmp_path / "a.py").write_text("x = 1\n")
-    (tmp_path / "B.java").write_text("class B {}\n")
+    (tmp_path / "B.go").write_text("package b\n")
     res = assemble(CFG, POL, collect_findings(CFG.required_detectors, source_dir=tmp_path))
     assert res["status"] == "complete" and res["securityDebt"]["coverage"] == {
-        "analyzedSourceFiles": 1, "notEvaluated": {".java": 1}}
+        "analyzedSourceFiles": 1, "notEvaluated": {".go": 1}}
     assert any("NOT EVALUATED" in n for n in res["notes"])
 
 
@@ -126,7 +126,7 @@ def test_report_never_claims_calibration_and_lists_honest_blockers():
     text = " ".join(r["approvalBlockers"])
     assert "adjudicated" in text and "independent" in text and "fewer than" in text
     assert r["detectors"]["statusMismatches"] == []
-    assert r["detectors"]["independentCases"] == 3 and r["detectors"]["adjudicatedCases"] == 0
+    assert r["detectors"]["independentCases"] == 4 and r["detectors"]["adjudicatedCases"] == 0
 
 
 def test_precision_counts_and_known_detector_weaknesses_are_measured():

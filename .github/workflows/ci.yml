@@ -92,11 +92,12 @@ jobs:
           tok = call("/v1/auth/login", json.dumps({"email": st["demoLogin"]["email"], "password": st["demoLogin"]["password"]}).encode(),
                      {"Content-Type": "application/json"})["token"]
           repos = {r["name"]: r for r in call("/v1/repositories", headers={"Authorization": "Bearer " + tok})["items"]}
-          assert set(repos) == {"demo/" + s for s in ["vulnerable-python", "vulnerable-javascript", "secure-python", "vulnerable-java", "flask-notes-api", "django-blog-backend", "express-todo-api", "typescript-dashboard", "python-ops-cli", "secure-javascript"]}, repos
+          assert set(repos) == {"demo/" + s for s in ["vulnerable-python", "vulnerable-javascript", "secure-python", "vulnerable-java", "flask-notes-api", "django-blog-backend", "express-todo-api", "typescript-dashboard", "python-ops-cli", "secure-javascript", "go-http-service"]}, repos
           # each vulnerable sample is scanned as shipped, then with every fix applied, so the latest run is the fixed one
           assert repos["demo/vulnerable-python"]["latestIndex"] == 0.0 and repos["demo/vulnerable-python"]["runs"] == 2, repos
           assert repos["demo/vulnerable-javascript"]["latestIndex"] == 0.0 and repos["demo/secure-python"]["latestIndex"] == 0.0, repos
-          assert repos["demo/vulnerable-java"]["latestIndex"] is None, repos  # unsupported language: incomplete, never zero
+          assert repos["demo/vulnerable-java"]["latestIndex"] == 0.0 and repos["demo/vulnerable-java"]["runs"] == 2, repos
+          assert repos["demo/go-http-service"]["latestIndex"] is None, repos  # unsupported language: incomplete, never zero
           print("seeded demo OK:", {k: v["latestIndex"] for k, v in repos.items()})
           EOF
       - name: logs on failure

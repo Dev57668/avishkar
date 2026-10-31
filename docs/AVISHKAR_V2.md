@@ -66,8 +66,11 @@ translation (`adapters/db.py`).
 (`infra/semgrep-rules.yml`, never `--config auto`), Gitleaks with `--redact`. Missing binary, crash, timeout or bad output
 => the run is incomplete. A secret flagged by two detectors on one line counts once. `infra/Dockerfile.worker` installs
 both (pin the base digest and Gitleaks checksum placeholders before use). Python rules now use an AST detector
-(`workers/pyast.py`) that resolves aliases, tracks same-function flows and ignores comments/strings; JS/TS use a heuristic
-token-stream scanner (`workers/jsscan.py`: no full parser, no cross-file flow). Other languages are reported as *not evaluated*.
+(`workers/pyast.py`) that resolves aliases, tracks same-function flows and ignores comments/strings; JS/TS and Java use heuristic
+token-stream scanners (`workers/jsscan.py`, `workers/javascan.py`: no full parser, no types, no cross-file or cross-method
+flow). Java has 12 rules (SQL/command injection, deserialization, weak hash/cipher/random, secrets, TLS, XXE, path, XSS,
+script eval) and only one independent labelled case, so its precision and recall are essentially unmeasured. Other
+languages (Go, PHP, C#, ...) are reported as *not evaluated*.
 
 ## 8. Shared state for multiple API replicas
 Login lockout and counters are in the database (`login_failure`, `metric_counter`); job quotas and the queue already were.
@@ -102,7 +105,7 @@ Multi-statement writes use `Database.transaction()`; `SELECT`s end their transac
 * **Demo lab**: `POST /v1/demo/scan` runs the real pipeline on bundled sample projects, optionally with fix-pack edits
   applied to a copy; stages shown in the UI are the recorded stage timeline of the run. Samples: vulnerable Python,
   vulnerable Node.js, secure Python (scans clean, which still does not prove it is secure) and an unsupported-language
-  Java app (reported incomplete). `web/demo_results.json` records real scan results for the landing page; a test fails
+  Go service (an unsupported language, reported incomplete) and a vulnerable Java app. `web/demo_results.json` records real scan results for the landing page; a test fails
   when it goes stale (`python scripts/gen_demo_results.py` regenerates it).
 * **AI assistant** (`/v1/assistant/*`, off unless `AVISHKAR_AI_ENABLED=1`): consent-gated, preview of the exact payload,
   secrets redacted, strict output schema with citation checks, suggested code re-scanned by our own scanner, labeled as

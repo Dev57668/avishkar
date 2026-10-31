@@ -38,7 +38,7 @@
   <p class="lede">AI assistants write code faster than anyone reviews it. We built a tool that scans a repository snapshot with deterministic detectors, turns what it finds into a <span class="mono">0&ndash;100</span> security-debt index, and points at <span class="hl">the exact lines responsible</span>.</p>
   <div class="sticky" style="top:40px;right:24px;--r:3deg">everything on this page is real output from our scanner. no mockups!</div>
   <ul class="facts">
-    <li><b>40</b> documented rules</li>
+    <li><b>52</b> documented rules</li>
     <li><b>3</b> required detectors</li>
     <li><b>390+</b> automated tests</li>
     <li>SARIF export</li>
@@ -141,7 +141,7 @@
       <ul class="ticks">
         <li>Zero findings is not a pass: detectors only know the patterns they were written for.</li>
         <li>Weights are provisional: the calibration corpus is about 80 small labeled cases written by us, split into tuning and held-out sets, with no independent second reviewer. Held-out recall was about 0.8, so real misses exist, and nothing is calibrated or approved.</li>
-        <li>Python uses an AST detector; JavaScript/TypeScript use a heuristic token-stream scanner (no full parser, no cross-file data flow). Other languages, such as Java, are reported as not evaluated, never as clean.</li>
+        <li>Python uses an AST detector; JavaScript/TypeScript and Java use heuristic token-stream scanners (no full parser, no cross-file data flow). Other languages, such as Go, are reported as not evaluated, never as clean.</li>
         <li>AI explanations are optional and advisory. They can't change severity, state or score.</li>
       </ul>
     </div>

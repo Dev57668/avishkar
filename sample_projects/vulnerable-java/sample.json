@@ -1,0 +1,103 @@
+{
+  "name": "Vulnerable Java app",
+  "language": "Java",
+  "kind": "vulnerable",
+  "description": "A Java class with hard-coded credentials, SQL built by concatenation, a shell command, MD5, unsafe deserialization and an unhardened XML parser. Intentionally insecure, for education.",
+  "expected": "Findings from the Java token scanner. The path traversal and the secret returned from a method are not flagged (known misses).",
+  "fixes": [
+    {
+      "id": "jv-secrets",
+      "title": "Read credentials from the environment",
+      "file": "VulnerableApp.java",
+      "removes": [
+        "JAVA-SECRET-ASSIGN"
+      ],
+      "explanation": "The database password and API key come from environment variables (rotate the exposed values).",
+      "edits": [
+        [
+          "    private static final String DB_PASSWORD = \"admin123\";",
+          "    private static final String DB_PASSWORD = System.getenv(\"DB_PASSWORD\");"
+        ],
+        [
+          "    private static final String API_KEY = \"sk-java-1234567890abcdef\";",
+          "    private static final String API_KEY = System.getenv(\"API_KEY\");"
+        ]
+      ]
+    },
+    {
+      "id": "jv-sqli",
+      "title": "Use a PreparedStatement",
+      "file": "VulnerableApp.java",
+      "removes": [
+        "JAVA-SQLI"
+      ],
+      "explanation": "User input is bound as parameters instead of being concatenated into the SQL text.",
+      "edits": [
+        [
+          "        Statement stmt = conn.createStatement();\n\n        // SQL Injection vulnerability\n        String query = \"SELECT * FROM users WHERE username='\" + username +\n                      \"' AND password='\" + password + \"'\";\n        ResultSet rs = stmt.executeQuery(query);",
+          "        PreparedStatement stmt = conn.prepareStatement(\"SELECT * FROM users WHERE username = ? AND password = ?\");\n        stmt.setString(1, username);\n        stmt.setString(2, password);\n        ResultSet rs = stmt.executeQuery();"
+        ]
+      ]
+    },
+    {
+      "id": "jv-cmdi",
+      "title": "Run a fixed program with an argument",
+      "file": "VulnerableApp.java",
+      "removes": [
+        "JAVA-CMDI"
+      ],
+      "explanation": "ProcessBuilder runs one fixed program and passes the user value as a single argument; no shell parses it.",
+      "edits": [
+        [
+          "        Runtime runtime = Runtime.getRuntime();\n        Process process = runtime.exec(command);",
+          "        Process process = new ProcessBuilder(\"echo\", command).start();"
+        ]
+      ]
+    },
+    {
+      "id": "jv-hash",
+      "title": "Use SHA-256 instead of MD5",
+      "file": "VulnerableApp.java",
+      "removes": [
+        "JAVA-WEAKHASH"
+      ],
+      "explanation": "MD5 is broken for security use. (A real password store should use a slow password hash such as Argon2 or bcrypt.)",
+      "edits": [
+        [
+          "MessageDigest.getInstance(\"MD5\")",
+          "MessageDigest.getInstance(\"SHA-256\")"
+        ]
+      ]
+    },
+    {
+      "id": "jv-deser",
+      "title": "Do not deserialize untrusted bytes",
+      "file": "VulnerableApp.java",
+      "removes": [
+        "JAVA-DESER"
+      ],
+      "explanation": "The bytes are treated as text data instead of being turned back into Java objects.",
+      "edits": [
+        [
+          "        ByteArrayInputStream bis = new ByteArrayInputStream(data);\n        ObjectInputStream ois = new ObjectInputStream(bis);\n        return ois.readObject();",
+          "        return new String(data, java.nio.charset.StandardCharsets.UTF_8);"
+        ]
+      ]
+    },
+    {
+      "id": "jv-xxe",
+      "title": "Disable DOCTYPE processing in the XML parser",
+      "file": "VulnerableApp.java",
+      "removes": [
+        "JAVA-XXE"
+      ],
+      "explanation": "With DOCTYPE declarations disallowed, external entities cannot be defined.",
+      "edits": [
+        [
+          "        // XXE vulnerability - no secure processing",
+          "        dbf.setFeature(\"http://apache.org/xml/features/disallow-doctype-decl\", true);"
+        ]
+      ]
+    }
+  ]
+}

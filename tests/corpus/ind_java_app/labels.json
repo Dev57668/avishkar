@@ -1,0 +1,57 @@
+{
+ "source": "independent",
+ "fully_labeled": true,
+ "adjudicated": false,
+ "reviewers": 0,
+ "note": "sample_projects/vulnerable-java (path traversal and the returned JWT secret are real vulnerabilities the scanner misses)",
+ "vulns": [
+  {
+   "path": "VulnerableApp.java",
+   "line": 15,
+   "kind": "secret"
+  },
+  {
+   "path": "VulnerableApp.java",
+   "line": 16,
+   "kind": "secret"
+  },
+  {
+   "path": "VulnerableApp.java",
+   "kind": "sqli",
+   "lines": [
+    24,
+    26
+   ]
+  },
+  {
+   "path": "VulnerableApp.java",
+   "line": 37,
+   "kind": "cmdi"
+  },
+  {
+   "path": "VulnerableApp.java",
+   "line": 51,
+   "kind": "weakhash"
+  },
+  {
+   "path": "VulnerableApp.java",
+   "line": 63,
+   "kind": "path-traversal"
+  },
+  {
+   "path": "VulnerableApp.java",
+   "line": 77,
+   "kind": "deserialization"
+  },
+  {
+   "path": "VulnerableApp.java",
+   "line": 84,
+   "kind": "xxe"
+  },
+  {
+   "path": "VulnerableApp.java",
+   "line": 92,
+   "kind": "secret"
+  }
+ ]
+}

@@ -40,6 +40,9 @@ RULE_KIND = {
     "PY-TEMPPATH": "tempfile", "PY-RANDOM": "weak-random", "PY-PATH": "path-traversal", "JS-XSS-REFLECT": "xss",
     "JS-SQLI": "sqli", "JS-WEAKHASH": "weakhash", "JS-RANDOM": "weak-random", "JS-SECRET-ASSIGN": "secret",
     "JS-PATH": "path-traversal",
+    "JAVA-SQLI": "sqli", "JAVA-CMDI": "cmdi", "JAVA-DESER": "deserialization", "JAVA-WEAKHASH": "weakhash",
+    "JAVA-WEAKCIPHER": "weak-crypto", "JAVA-RANDOM": "weak-random", "JAVA-SECRET-ASSIGN": "secret", "JAVA-TLS": "noverify",
+    "JAVA-XXE": "xxe", "JAVA-PATH": "path-traversal", "JAVA-XSS-REFLECT": "xss", "JAVA-EVAL": "eval",
 }
 # Confidence tiers proposed from measured precision (Wilson 95% lower bound, minimum sample).
 MIN_N = 8
