@@ -51,6 +51,18 @@ jobs:
       - run: ruff check avishkar scripts --select E9,F --ignore F401
       - run: mypy avishkar --ignore-missing-imports --platform linux
 
+  # Drives the real web console in Chromium against a locally started server (demo mode, temp database).
+  console-e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.12"}
+      - run: pip install -r requirements.txt "playwright==1.64.1"
+      - run: python -m playwright install --with-deps chromium
+      - run: python -m pytest tests/e2e -v -x
+
   # Builds the worker image and runs the real Docker sandbox + Semgrep + Gitleaks end to end.
   docker-sandbox:
     runs-on: ubuntu-latest
